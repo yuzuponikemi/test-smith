@@ -1,2 +1,13 @@
-# requirements.in
 pytest
+langgraph
+langchain-core
+langchain-community
+duckduckgo-search
+langsmith
+python-dotenv
+ollama
+lark
+ddgs
+langchain-ollama
+SQLAlchemy
+langgraph-checkpoint-sqlite
