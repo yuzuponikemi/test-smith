@@ -208,5 +208,9 @@ __marimo__/
 
 documents/
 chroma_db/
+chroma_db_backup_*/
+
+# Ingestion logs
+ingestion_*.log
 
 .DS_Store
