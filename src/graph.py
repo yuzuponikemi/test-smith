@@ -4,6 +4,7 @@ import operator
 
 from src.nodes.planner_node import planner
 from src.nodes.searcher_node import searcher
+from src.nodes.rag_retriever_node import rag_retriever
 from src.nodes.analyzer_node import analyzer_node
 from src.nodes.synthesizer_node import synthesizer_node
 from src.nodes.evaluator_node import evaluator_node
@@ -13,6 +14,7 @@ class AgentState(TypedDict):
     query: str
     plan: list[str]
     search_results: Annotated[list[str], operator.add]
+    rag_results: Annotated[list[str], operator.add]
     analyzed_data: Annotated[list[str], operator.add]
     report: str
     evaluation: str
@@ -30,13 +32,16 @@ def router(state):
 workflow = StateGraph(AgentState)
 workflow.add_node("planner", planner)
 workflow.add_node("searcher", searcher)
+workflow.add_node("rag_retriever", rag_retriever)
 workflow.add_node("analyzer", analyzer_node)
 workflow.add_node("evaluator", evaluator_node)
 workflow.add_node("synthesizer", synthesizer_node)
 
 workflow.set_entry_point("planner")
 workflow.add_edge("planner", "searcher")
+workflow.add_edge("planner", "rag_retriever")
 workflow.add_edge("searcher", "analyzer")
+workflow.add_edge("rag_retriever", "analyzer")
 workflow.add_edge("analyzer", "evaluator")
 workflow.add_conditional_edges(
     "evaluator",
