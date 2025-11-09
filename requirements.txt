@@ -208,5 +208,6 @@ jupyter
 ipywidgets
 matplotlib
 seaborn
+plotly
 
 scikit-learn
