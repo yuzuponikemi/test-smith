@@ -112,22 +112,29 @@ embeddings = OllamaEmbeddings(model="nomic-embed-text")
 
 **Note:** RAG Retriever runs in **parallel** with Searcher for performance.
 
-### 4. Analyzer
+### 4. Analyzer (Context-Aware Combiner)
 **File:** `src/nodes/analyzer_node.py`
 
-**Purpose:** Merges and summarizes results from both Searcher and RAG Retriever
+**Purpose:** Intelligently merges results from both sources with understanding of strategic intent
 
 **Input:**
+- Original user `query`
+- `allocation_strategy` (reasoning from planner)
+- `web_queries` and `rag_queries` (what was asked of each source)
 - `search_results` from Tavily
 - `rag_results` from ChromaDB
 
-**Output:** Structured analysis combining both sources
+**Output:** Strategic analysis combining both sources
 
 **Behavior:**
-- Combines web results and knowledge base chunks
-- Extracts key insights and relevant information
-- Summarizes findings for evaluation
-- Prepares context for synthesizer
+1. **Understands strategic context** - Receives the planner's reasoning for query allocation
+2. **Respects source priorities** - Gives appropriate weight based on strategic intent
+3. **Prevents RAG dismissal** - Understands that internal docs may be concise but authoritative
+4. **Combines complementary info** - Uses web to enhance RAG and vice versa
+5. **Maintains source attribution** - Tracks which information came from which source
+6. **Addresses original query** - Synthesizes information to answer the user's question
+
+**Key Improvement:** The analyzer now receives strategic context, preventing it from misunderstanding or ignoring RAG results when they're the primary source of relevant information.
 
 **Model:** `llama3` (via `get_analyzer_model()`)
 
@@ -247,10 +254,16 @@ class AgentState(TypedDict):
      Final Report
 ```
 
-**Key Improvement:** The planner now performs **strategic allocation** instead of sending the same queries to both sources. This:
-- **Saves API calls** - Only queries web when needed
-- **Improves relevance** - KB queries target internal docs, web queries target current info
-- **Adapts dynamically** - Allocation changes based on KB contents and query type
+**Key Improvements:**
+1. **Strategic Allocation** - The planner performs intelligent query distribution instead of sending the same queries to both sources:
+   - **Saves API calls** - Only queries web when needed
+   - **Improves relevance** - KB queries target internal docs, web queries target current info
+   - **Adapts dynamically** - Allocation changes based on KB contents and query type
+
+2. **Context-Aware Analysis** - The analyzer receives strategic context to properly understand and combine results:
+   - **Understands intent** - Knows why each source was chosen
+   - **Respects priorities** - Gives appropriate weight to each source based on strategy
+   - **Prevents dismissal** - Won't ignore RAG results even if web results seem more detailed
 
 ### Iteration Logic
 

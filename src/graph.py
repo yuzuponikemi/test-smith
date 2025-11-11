@@ -20,6 +20,7 @@ class AgentState(TypedDict):
     analyzed_data: Annotated[list[str], operator.add]
     report: str
     evaluation: str
+    reason: str  # Evaluator's reasoning (used as feedback for planner refinement)
     loop_count: int
 
 def router(state):

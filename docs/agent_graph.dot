@@ -1,0 +1,53 @@
+digraph agent_graph {
+    rankdir=TB;
+    node [shape=box, style=rounded, fontname="Arial", fontsize=10];
+    edge [fontname="Arial", fontsize=9];
+
+    // Define nodes with colors
+    user [label="User Query", shape=ellipse, fillcolor="#e1f5ff", style=filled];
+    planner [label="Strategic Planner\n\n1. Check KB contents\n2. Analyze query intent\n3. Allocate queries:\n   - rag_queries (0-5)\n   - web_queries (0-5)\n4. Provide strategy reasoning", fillcolor="#fff4e6", style=filled, width=3];
+    searcher [label="Searcher\n(Tavily API)\n\nReceives: web_queries\nReturns: Web results", fillcolor="#e8f5e9", style=filled];
+    rag [label="RAG Retriever\n(ChromaDB)\n\nReceives: rag_queries\nReturns: KB chunks", fillcolor="#e8f5e9", style=filled];
+    analyzer [label="Context-Aware Analyzer\n\nReceives:\n- Original query\n- allocation_strategy\n- web_queries & rag_queries\n- web results & rag results\n\nCombines with strategic intent", fillcolor="#f3e5f5", style=filled, width=3];
+    evaluator [label="Evaluator\n\nAssesses sufficiency", fillcolor="#fce4ec", style=filled];
+    router [label="Router\n\nDecision point", shape=diamond, fillcolor="#fff9c4", style=filled];
+    synthesizer [label="Synthesizer\n\nFinal report", fillcolor="#e0f2f1", style=filled];
+    output [label="Final Report", shape=ellipse, fillcolor="#e1f5ff", style=filled];
+
+    // Define edges
+    user -> planner [label="query"];
+
+    // Strategic allocation
+    planner -> searcher [label="web_queries\n(current/external)", color="#4CAF50", penwidth=2];
+    planner -> rag [label="rag_queries\n(domain-specific)", color="#2196F3", penwidth=2];
+
+    // Parallel execution
+    searcher -> analyzer [label="search_results"];
+    rag -> analyzer [label="rag_results"];
+
+    // Analysis flow
+    analyzer -> evaluator [label="analyzed_data"];
+    evaluator -> router;
+
+    // Router decisions
+    router -> synthesizer [label="sufficient OR\nloop_count >= 2", color="#4CAF50"];
+    router -> planner [label="insufficient\nwith feedback", color="#FF9800", style=dashed];
+
+    synthesizer -> output;
+
+    // Legend
+    subgraph cluster_legend {
+        label="Key Features";
+        fontsize=11;
+        style=dashed;
+
+        leg1 [label="Strategic Query Allocation\n- Checks KB availability\n- Separates web vs RAG queries\n- Provides reasoning", shape=note, fillcolor="#fff4e6", style=filled];
+        leg2 [label="Context-Aware Analysis\n- Understands strategic intent\n- Respects source priorities\n- Prevents RAG dismissal", shape=note, fillcolor="#f3e5f5", style=filled];
+        leg3 [label="Parallel Execution\n- Searcher & RAG run simultaneously\n- Different queries per source\n- Can skip if query list empty", shape=note, fillcolor="#e8f5e9", style=filled];
+
+        leg1 -> leg2 -> leg3 [style=invis];
+    }
+
+    // Layout hints
+    {rank=same; searcher; rag}
+}
