@@ -5,47 +5,67 @@ digraph agent_graph {
 
     // Define nodes with colors
     user [label="User Query", shape=ellipse, fillcolor="#e1f5ff", style=filled];
-    planner [label="Strategic Planner\n\n1. Check KB contents\n2. Analyze query intent\n3. Allocate queries:\n   - rag_queries (0-5)\n   - web_queries (0-5)\n4. Provide strategy reasoning", fillcolor="#fff4e6", style=filled, width=3];
-    searcher [label="Searcher\n(Tavily API)\n\nReceives: web_queries\nReturns: Web results", fillcolor="#e8f5e9", style=filled];
-    rag [label="RAG Retriever\n(ChromaDB)\n\nReceives: rag_queries\nReturns: KB chunks", fillcolor="#e8f5e9", style=filled];
-    analyzer [label="Context-Aware Analyzer\n\nReceives:\n- Original query\n- allocation_strategy\n- web_queries & rag_queries\n- web results & rag results\n\nCombines with strategic intent", fillcolor="#f3e5f5", style=filled, width=3];
-    evaluator [label="Evaluator\n\nAssesses sufficiency", fillcolor="#fce4ec", style=filled];
-    router [label="Router\n\nDecision point", shape=diamond, fillcolor="#fff9c4", style=filled];
-    synthesizer [label="Synthesizer\n\nFinal report", fillcolor="#e0f2f1", style=filled];
+
+    planner [label="Strategic Planner\n━━━━━━━━━━━━━━━━━\n1. Check KB contents (chroma_db/)\n2. Analyze query intent\n3. Strategic allocation:\n   • rag_queries (0-5)\n   • web_queries (0-5)\n4. Output: allocation_strategy", fillcolor="#fff4e6", style=filled, width=3.5];
+
+    searcher [label="Searcher\n(Tavily API)\n━━━━━━━━━━━\nInput: web_queries\nOutput: search_results", fillcolor="#e8f5e9", style=filled];
+
+    rag [label="RAG Retriever\n(ChromaDB)\n━━━━━━━━━━━\nInput: rag_queries\nOutput: rag_results\n\nEmbedding: nomic-embed-text", fillcolor="#e8f5e9", style=filled];
+
+    analyzer [label="Context-Aware Analyzer\n━━━━━━━━━━━━━━━━━━━━━━\nInputs:\n• original query\n• allocation_strategy (WHY queries allocated)\n• web_queries + rag_queries (WHAT was asked)\n• search_results + rag_results (RESULTS)\n\nOutput: analyzed_data\n\nPrevents RAG dismissal via strategic context", fillcolor="#f3e5f5", style=filled, width=3.8];
+
+    evaluator [label="Evaluator (Structured Output)\n━━━━━━━━━━━━━━━━━━━━━━━\nInputs:\n• original query\n• allocation_strategy\n• analyzed_data\n• loop_count\n\nOutputs:\n• evaluation (sufficient/insufficient)\n• reason (feedback for refinement)\n\nSchema: Evaluation", fillcolor="#fce4ec", style=filled, width=3.2];
+
+    router [label="Router\n\nDecision:\nsufficient OR\nloop >= 2?", shape=diamond, fillcolor="#fff9c4", style=filled];
+
+    synthesizer [label="Synthesizer\n━━━━━━━━━━━━━━━\nInputs:\n• original query\n• allocation_strategy\n• web_queries + rag_queries\n• analyzed_data (all iterations)\n• loop_count\n\nOutput: Final structured report\n\nRespects source priorities", fillcolor="#e0f2f1", style=filled, width=3.2];
+
     output [label="Final Report", shape=ellipse, fillcolor="#e1f5ff", style=filled];
 
-    // Define edges
+    // Define edges with context labels
     user -> planner [label="query"];
 
-    // Strategic allocation
-    planner -> searcher [label="web_queries\n(current/external)", color="#4CAF50", penwidth=2];
+    // Strategic allocation with different colors
+    planner -> searcher [label="web_queries\n(current/external info)", color="#4CAF50", penwidth=2];
     planner -> rag [label="rag_queries\n(domain-specific)", color="#2196F3", penwidth=2];
 
-    // Parallel execution
-    searcher -> analyzer [label="search_results"];
-    rag -> analyzer [label="rag_results"];
+    // Context flow to analyzer
+    planner -> analyzer [label="allocation_strategy\nweb_queries\nrag_queries", color="#9C27B0", style=dashed, penwidth=1.5];
+    searcher -> analyzer [label="search_results", color="#4CAF50"];
+    rag -> analyzer [label="rag_results", color="#2196F3"];
 
-    // Analysis flow
+    // Analysis flow with context
     analyzer -> evaluator [label="analyzed_data"];
+    planner -> evaluator [label="allocation_strategy\nloop_count", color="#9C27B0", style=dashed];
+
+    // Evaluation
     evaluator -> router;
 
     // Router decisions
-    router -> synthesizer [label="sufficient OR\nloop_count >= 2", color="#4CAF50"];
-    router -> planner [label="insufficient\nwith feedback", color="#FF9800", style=dashed];
+    router -> synthesizer [label="✓ sufficient OR\nloop_count >= 2", color="#4CAF50", penwidth=2];
+    router -> planner [label="✗ insufficient\n+ reason (feedback)", color="#FF9800", style=dashed, penwidth=2];
+
+    // Context to synthesizer
+    planner -> synthesizer [label="allocation_strategy\nweb_queries\nrag_queries", color="#9C27B0", style=dashed];
 
     synthesizer -> output;
 
     // Legend
     subgraph cluster_legend {
-        label="Key Features";
+        label="Key Improvements";
         fontsize=11;
         style=dashed;
+        color="#666666";
 
-        leg1 [label="Strategic Query Allocation\n- Checks KB availability\n- Separates web vs RAG queries\n- Provides reasoning", shape=note, fillcolor="#fff4e6", style=filled];
-        leg2 [label="Context-Aware Analysis\n- Understands strategic intent\n- Respects source priorities\n- Prevents RAG dismissal", shape=note, fillcolor="#f3e5f5", style=filled];
-        leg3 [label="Parallel Execution\n- Searcher & RAG run simultaneously\n- Different queries per source\n- Can skip if query list empty", shape=note, fillcolor="#e8f5e9", style=filled];
+        leg1 [label="Strategic Allocation\n━━━━━━━━━━━━━━━━\n✓ KB-aware planning\n✓ Separate query lists\n✓ Reasoning provided", shape=note, fillcolor="#fff4e6", style=filled];
 
-        leg1 -> leg2 -> leg3 [style=invis];
+        leg2 [label="Context-Aware Analysis\n━━━━━━━━━━━━━━━━━━━\n✓ Understands WHY queries allocated\n✓ Respects source priorities\n✓ Prevents RAG dismissal", shape=note, fillcolor="#f3e5f5", style=filled];
+
+        leg3 [label="Improved Evaluation\n━━━━━━━━━━━━━━━━━\n✓ Uses structured output\n✓ Strategy-aware criteria\n✓ Detailed feedback/reasoning", shape=note, fillcolor="#fce4ec", style=filled];
+
+        leg4 [label="Enhanced Synthesis\n━━━━━━━━━━━━━━━━\n✓ Full strategic context\n✓ Source attribution\n✓ Structured report format", shape=note, fillcolor="#e0f2f1", style=filled];
+
+        leg1 -> leg2 -> leg3 -> leg4 [style=invis];
     }
 
     // Layout hints
