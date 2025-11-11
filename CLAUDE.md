@@ -77,8 +77,11 @@ python main.py --version
 ### Knowledge Base Ingestion
 
 ```bash
-# Standard ingestion (use for production)
-python ingest.py
+# RECOMMENDED: Production ingestion with intelligent preprocessing
+python ingest_with_preprocessor.py
+
+# With quality filtering (skip files with score < 0.5)
+python ingest_with_preprocessor.py --min-quality 0.5
 
 # Diagnostic ingestion (use for debugging embedding issues)
 python ingest_diagnostic.py
@@ -90,9 +93,18 @@ python ingest_diagnostic.py
 **Ingestion Configuration:**
 - **Source:** `documents/` directory
 - **Destination:** `chroma_db/` (ChromaDB vector store)
-- **Chunking:** 1000 chars, 200 char overlap (RecursiveCharacterTextSplitter)
-- **Embedding:** nomic-embed-text via Ollama
+- **Preprocessing:** 6-phase pipeline with quality analysis
+- **Chunking:** Smart strategy selection per document (target: 500-1000 chars)
+- **Cleaning:** Exact + near-duplicate removal, boilerplate filtering
+- **Embedding:** nomic-embed-text via Ollama (768 dimensions)
 - **Collection:** "research_agent_collection"
+
+**Preprocessor Features:**
+- Document quality analysis before ingestion
+- Intelligent chunking strategy selection (Recursive, Markdown, Hybrid)
+- Duplicate detection and removal (exact + 95% similarity threshold)
+- Boilerplate pattern removal
+- Quality metrics and recommendations
 
 ### Diagnostic Tools
 
@@ -123,11 +135,17 @@ src/
 │   ├── analyzer_node.py
 │   ├── evaluator_node.py
 │   └── synthesizer_node.py
-└── prompts/              # LangChain prompt templates
-    ├── planner_prompt.py
-    ├── analyzer_prompt.py
-    ├── evaluator_prompt.py
-    └── synthesizer_prompt.py
+├── prompts/              # LangChain prompt templates
+│   ├── planner_prompt.py
+│   ├── analyzer_prompt.py
+│   ├── evaluator_prompt.py
+│   └── synthesizer_prompt.py
+└── preprocessor/         # Document preprocessing system
+    ├── __init__.py
+    ├── document_analyzer.py    # Quality analysis & scoring
+    ├── chunking_strategy.py    # Smart chunking selection
+    ├── content_cleaner.py      # Deduplication & cleaning
+    └── quality_metrics.py      # Validation & metrics
 ```
 
 ### Customization Points
@@ -157,12 +175,21 @@ Edit `src/graph.py`:
 3. Add model function to `src/models.py`
 4. Register in `src/graph.py` workflow
 
-**Tune Ingestion:**
-Edit parameters in `ingest.py`:
+**Tune Preprocessing:**
+Edit parameters in `ingest_with_preprocessor.py`:
 ```python
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 200
+min_quality_score=0.5        # Minimum quality threshold
+similarity_threshold=0.95    # Near-duplicate threshold
+min_content_length=100       # Minimum chunk size
 ```
+
+**Create RAG-Friendly Documentation:**
+Follow guidelines in `docs/WRITING_RAG_FRIENDLY_DOCUMENTATION.md`:
+- Target 500-1500 characters per section
+- Include topic in every header
+- Use consistent terminology
+- Define acronyms on first use
+- Make sections self-contained
 
 ### Dependencies
 
@@ -246,16 +273,25 @@ LANGCHAIN_PROJECT="deep-research-v1-proto"
 - Visual diagnostics (histograms, variance plots)
 
 **Healthy Embeddings:**
-- Mean cosine similarity: 0.3 - 0.8
-- Std deviation: > 0.01
-- PCA needs 20+ components for 95% variance
+- Median chunk size: 500-800 characters
+- Duplication rate: <5%
+- Quality score: >0.7
+- PCA needs 20-40 components for 95% variance
+- Mean cosine similarity: 0.3-0.8
 
 **Problematic Embeddings:**
+- Median chunk size: <200 characters (chunks too small)
+- Duplication rate: >15% (too much repetition)
+- Quality score: <0.5 (poor quality)
+- PCA needs only 1-10 components for 99% variance (critical - lack of diversity)
 - Mean similarity > 0.95 (documents too similar)
-- Std < 0.01 (low variance - model may not be working)
-- PCA needs only 1 component for 99% variance (critical issue)
 
-See `EMBEDDING_DIAGNOSTICS.md` for troubleshooting guide.
+**Common Root Causes:**
+- UnstructuredLoader over-splitting → Use preprocessor
+- Repeated headers/footers → Enable boilerplate removal
+- Small sections in source docs → Follow `WRITING_RAG_FRIENDLY_DOCUMENTATION.md`
+
+**Solution:** Always use `ingest_with_preprocessor.py` for production ingestion.
 
 ## Configuration Files
 
@@ -274,12 +310,21 @@ TAVILY_API_KEY="<tavily-key>"
 - **Max 2 iterations:** Hardcoded in router to prevent infinite loops
 - **No test coverage:** pytest installed but no tests written yet
 - **Print-based logging:** Use structured logging for production
-- **README outdated:** References DuckDuckGo but system uses Tavily
-- **Embedding diagnostics:** If PCA shows 1 component for 99% variance, re-run `ingest_diagnostic.py`
 
 ## Additional Resources
 
-- **docs/system-overview.md** - 400+ line architecture deep dive
-- **EMBEDDING_DIAGNOSTICS.md** - Troubleshooting guide for vector DB issues
-- **chroma_explorer.ipynb** - Interactive notebook for database analysis
+**Architecture & System Design:**
+- **docs/system-overview.md** - Comprehensive architecture deep dive with preprocessing details
+- **CLAUDE.md** - This file - Quick reference for Claude Code
+
+**RAG & Knowledge Base:**
+- **docs/RAG_DATA_PREPARATION_GUIDE.md** - 400+ line comprehensive guide
+- **docs/WRITING_RAG_FRIENDLY_DOCUMENTATION.md** - Best practices for document authors
+- **docs/DOCUMENT_DESIGN_EVALUATION.md** - Reproducible quality metrics
+- **PREPROCESSOR_QUICKSTART.md** - Quick start guide for preprocessing
+
+**Tools & Analysis:**
+- **chroma_explorer.ipynb** - Interactive notebook for database analysis with PCA
+- **ingest_with_preprocessor.py** - Production ingestion with quality pipeline
 - **ingest_diagnostic.py** - Enhanced ingestion with real-time quality checks
+- **clean_and_reingest.sh** - Automated clean re-ingest workflow
