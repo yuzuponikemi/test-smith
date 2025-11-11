@@ -1,27 +1,152 @@
 from src.models import get_planner_model
-from src.prompts.planner_prompt import PLANNER_PROMPT
-from src.schemas import Plan
-from langchain_core.output_parsers import PydanticOutputParser
+from src.prompts.planner_prompt import STRATEGIC_PLANNER_PROMPT
+from src.schemas import StrategicPlan
+from langchain_chroma import Chroma
+from langchain_ollama import OllamaEmbeddings
+import os
 import re
 import json
 
+def check_kb_contents():
+    """
+    Quick check of what's in the knowledge base
+    Returns metadata about KB contents to inform query allocation
+    """
+    try:
+        # Check if KB exists
+        if not os.path.exists("chroma_db"):
+            return {
+                'available': False,
+                'total_chunks': 0,
+                'document_types': [],
+                'summary': 'Knowledge base not found. Use web search only.'
+            }
+
+        embeddings = OllamaEmbeddings(model="nomic-embed-text")
+        vectorstore = Chroma(
+            collection_name="research_agent_collection",
+            embedding_function=embeddings,
+            persist_directory="chroma_db"
+        )
+
+        collection = vectorstore._collection
+        total_docs = collection.count()
+
+        if total_docs == 0:
+            return {
+                'available': False,
+                'total_chunks': 0,
+                'document_types': [],
+                'summary': 'Knowledge base is empty. Use web search only.'
+            }
+
+        # Sample some documents to understand content
+        sample = collection.peek(limit=10)
+        sources = set()
+        if sample and 'metadatas' in sample:
+            for meta in sample['metadatas']:
+                if meta and 'source' in meta:
+                    # Extract filename from path
+                    source = os.path.basename(meta['source'])
+                    sources.add(source)
+
+        # Create summary
+        doc_list = ', '.join(list(sources)[:5])
+        if len(sources) > 5:
+            doc_list += f" and {len(sources) - 5} more"
+
+        summary = f"Knowledge base contains {total_docs} chunks from documents including: {doc_list}"
+
+        return {
+            'available': True,
+            'total_chunks': total_docs,
+            'document_types': list(sources),
+            'summary': summary
+        }
+
+    except Exception as e:
+        print(f"Warning: Could not check KB contents: {e}")
+        return {
+            'available': False,
+            'total_chunks': 0,
+            'document_types': [],
+            'summary': 'Could not access knowledge base. Use web search only.'
+        }
+
+
 def planner(state):
-    print("---PLANNER---")
-    model = get_planner_model()
-    parser = PydanticOutputParser(pydantic_object=Plan)
-    prompt = PLANNER_PROMPT.partial(format_instructions=parser.get_format_instructions())
-    chain = prompt | model
+    """
+    Strategic Planner - Intelligently allocates queries between RAG and web sources
+
+    Checks KB contents and decides optimal query distribution based on:
+    - What information is likely in the knowledge base
+    - What needs current/external information from web
+    - Query complexity and information requirements
+    """
+    print("---STRATEGIC PLANNER---")
+
+    query = state["query"]
     feedback = state.get("reason", "")
     loop_count = state.get("loop_count", 0)
-    response = chain.invoke({"query": state["query"], "feedback": feedback})
 
-    # Extract the JSON object from the response string
-    json_match = re.search(r"{\s*\"queries\":\s*\[.*?\]\s*}", response.content, re.DOTALL)
-    if json_match:
-        json_str = json_match.group(0)
-        plan = json.loads(json_str)
-        return {"plan": plan["queries"], "loop_count": loop_count + 1}
-    else:
-        # Fallback to splitting by newline if no JSON is found
-        plan = response.content.split("\n")
-        return {"plan": [line for line in plan if line.strip()], "loop_count": loop_count + 1}
+    # Step 1: Check what's in the knowledge base
+    print("  Checking knowledge base contents...")
+    kb_info = check_kb_contents()
+    print(f"  KB Status: {kb_info['summary']}")
+
+    # Step 2: Get strategic plan from LLM
+    model = get_planner_model()
+
+    # Use structured output for reliable parsing
+    structured_llm = model.with_structured_output(StrategicPlan)
+
+    prompt = STRATEGIC_PLANNER_PROMPT.format(
+        query=query,
+        feedback=feedback,
+        kb_summary=kb_info['summary'],
+        kb_available=kb_info['available']
+    )
+
+    try:
+        plan = structured_llm.invoke(prompt)
+
+        print(f"\n  Strategy: {plan.strategy}")
+        print(f"  RAG Queries ({len(plan.rag_queries)}): {plan.rag_queries}")
+        print(f"  Web Queries ({len(plan.web_queries)}): {plan.web_queries}\n")
+
+        return {
+            "rag_queries": plan.rag_queries,
+            "web_queries": plan.web_queries,
+            "allocation_strategy": plan.strategy,
+            "loop_count": loop_count + 1
+        }
+
+    except Exception as e:
+        print(f"  Warning: Structured output failed, using fallback parsing: {e}")
+
+        # Fallback: Try manual parsing
+        response = model.invoke(prompt)
+        content = response.content
+
+        # Try to extract JSON from response
+        json_match = re.search(r'\{[\s\S]*\}', content)
+        if json_match:
+            try:
+                plan_dict = json.loads(json_match.group(0))
+                return {
+                    "rag_queries": plan_dict.get("rag_queries", []),
+                    "web_queries": plan_dict.get("web_queries", [query]),
+                    "allocation_strategy": plan_dict.get("strategy", "Fallback allocation"),
+                    "loop_count": loop_count + 1
+                }
+            except json.JSONDecodeError:
+                pass
+
+        # Final fallback: Use original query for both
+        print("  Using fallback: sending query to both sources")
+        return {
+            "rag_queries": [query] if kb_info['available'] else [],
+            "web_queries": [query],
+            "allocation_strategy": "Fallback: using original query for both sources",
+            "loop_count": loop_count + 1
+        }

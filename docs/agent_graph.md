@@ -8,40 +8,72 @@ The agent is a LangGraph-based workflow with 6 specialized nodes collaborating t
 
 ## Agent Nodes
 
-### 1. Planner
+### 1. Planner (Strategic Query Allocator)
 **File:** `src/nodes/planner_node.py`
 
-**Purpose:** Decomposes user queries into targeted research strategies
+**Purpose:** Intelligently allocates queries between RAG and web search based on information availability
 
-**Input:** User query, feedback from previous iterations
-**Output:** List of 3-5 search queries
+**Input:** User query, feedback from previous iterations, KB metadata
+**Output:** Strategic plan with separate query sets for RAG and web search
 
 **Behavior:**
-- Analyzes the user's question
-- Generates specific, actionable search queries
-- Considers feedback from evaluator if information was insufficient
-- Increments loop counter for iteration control
+1. **Checks knowledge base contents** using `check_kb_contents()`:
+   - Verifies if `chroma_db/` exists
+   - Counts total chunks available
+   - Samples documents to understand what's in the KB
+   - Generates summary for strategic decision-making
+
+2. **Strategic allocation** via LLM:
+   - Analyzes which information is likely in KB vs needs web
+   - Allocates queries to RAG for domain-specific/internal content
+   - Allocates queries to web for current events/general knowledge
+   - Provides reasoning for the allocation strategy
+
+3. **Refines based on feedback:**
+   - Adjusts allocation if evaluator indicates missing information
+   - Increments loop counter for iteration control
 
 **Model:** `llama3` (via `get_planner_model()`)
 
-**Output Validation:** Uses `Plan` Pydantic schema
+**Output Validation:** Uses `StrategicPlan` Pydantic schema
 ```python
-class Plan(BaseModel):
-    queries: List[str] = Field(description="List of search queries")
+class StrategicPlan(BaseModel):
+    rag_queries: List[str] = Field(
+        description="Queries for knowledge base retrieval"
+    )
+    web_queries: List[str] = Field(
+        description="Queries for web search"
+    )
+    strategy: str = Field(
+        description="Reasoning for this allocation"
+    )
 ```
+
+**Allocation Examples:**
+- **KB-heavy:** Internal API docs query → 4 RAG queries, 1 web query
+- **Web-heavy:** Current AI trends → 1 RAG query, 4 web queries
+- **Balanced:** Implementation with best practices → 2 RAG, 3 web queries
+- **Web-only:** No KB available or query needs current events → 0 RAG, 5 web queries
 
 ### 2. Searcher
 **File:** `src/nodes/searcher_node.py`
 
 **Purpose:** Executes web searches via Tavily API
 
-**Input:** Search queries from planner
+**Input:** `web_queries` from strategic planner (0-5 queries)
 **Output:** Web search results
 
 **Behavior:**
-- Executes each query against Tavily search API
+- Receives strategically allocated queries for web search
+- Skips execution if `web_queries` is empty (saves API calls)
+- Executes each query against Tavily search API (max 5 results per query)
 - Aggregates results from multiple queries
 - Handles errors gracefully
+
+**Strategic Allocation:**
+- Receives queries that need **current information** (news, trends, recent events)
+- Receives queries for **general knowledge** not in the knowledge base
+- Receives queries for **external references** and comparisons
 
 **API:** Tavily (configured via `TAVILY_API_KEY` environment variable)
 
@@ -50,14 +82,22 @@ class Plan(BaseModel):
 
 **Purpose:** Retrieves relevant chunks from ChromaDB knowledge base
 
-**Input:** Search queries from planner
+**Input:** `rag_queries` from strategic planner (0-5 queries)
 **Output:** Retrieved document chunks
 
 **Behavior:**
+- Receives strategically allocated queries for knowledge base search
+- Skips execution if `rag_queries` is empty (KB not available or not needed)
 - Embeds each query using `nomic-embed-text` model
 - Performs semantic similarity search in ChromaDB
 - Returns top 5 most relevant chunks per query
 - Includes source metadata for provenance
+
+**Strategic Allocation:**
+- Receives queries for **domain-specific content** (internal documentation, APIs)
+- Receives queries for **established concepts** and procedures
+- Receives queries for **technical details** that should be in uploaded docs
+- Skipped entirely if KB is empty or query needs only current/external info
 
 **Critical Configuration:**
 ```python
@@ -136,7 +176,9 @@ class Evaluation(BaseModel):
 ```python
 class AgentState(TypedDict):
     query: str                                      # Original user query
-    plan: list[str]                                 # Current search queries
+    web_queries: list[str]                          # Queries allocated for web search
+    rag_queries: list[str]                          # Queries allocated for KB retrieval
+    allocation_strategy: str                        # Reasoning for query allocation
     search_results: Annotated[list[str], operator.add]  # Web results (accumulated)
     rag_results: Annotated[list[str], operator.add]     # KB results (accumulated)
     analyzed_data: Annotated[list[str], operator.add]   # Processed info (accumulated)
@@ -145,7 +187,10 @@ class AgentState(TypedDict):
     loop_count: int                                 # Iteration counter
 ```
 
-**Key Pattern:** `Annotated[list[str], operator.add]` enables cumulative accumulation across iterations.
+**Key Patterns:**
+- `Annotated[list[str], operator.add]` enables cumulative accumulation across iterations
+- `web_queries` and `rag_queries` are separate lists allocated strategically by the planner
+- `allocation_strategy` provides transparency into planner's decision-making
 
 ### Execution Flow
 
@@ -156,20 +201,27 @@ class AgentState(TypedDict):
 └──────┬──────┘
        │
        ▼
-┌─────────────┐
-│  Planner    │  ← Generates 3-5 search queries
-└──────┬──────┘
+┌─────────────────────────────────────────┐
+│         Strategic Planner               │
+│                                         │
+│  1. Check KB contents (chroma_db/)      │
+│  2. Analyze information needs           │
+│  3. Allocate queries strategically:     │
+│     - rag_queries (domain-specific)     │
+│     - web_queries (current/external)    │
+└──────┬──────────────────────────────────┘
        │
-       ├──────────────────────┐
-       │                      │
-       ▼                      ▼
-┌─────────────┐        ┌─────────────┐
-│  Searcher   │        │    RAG      │  ← Execute in PARALLEL
-│  (Tavily)   │        │  Retriever  │
-│             │        │  (ChromaDB) │
-└──────┬──────┘        └──────┬──────┘
-       │                      │
-       └──────────┬───────────┘
+       ├─────────────────────────┐
+       │ web_queries             │ rag_queries
+       ▼                         ▼
+┌─────────────┐          ┌─────────────┐
+│  Searcher   │          │    RAG      │  ← Execute in PARALLEL
+│  (Tavily)   │          │  Retriever  │    with DIFFERENT queries
+│             │          │  (ChromaDB) │
+│ 0-5 queries │          │ 0-5 queries │
+└──────┬──────┘          └──────┬──────┘
+       │                        │
+       └──────────┬─────────────┘
                   │
                   ▼
            ┌─────────────┐
@@ -187,13 +239,18 @@ class AgentState(TypedDict):
          │                 │
          ▼                 ▼
   ┌─────────────┐    ┌─────────────┐
-  │ Synthesizer │    │  Planner    │ ← Refine with feedback
-  │             │    │  (Loop)     │    (max 2 iterations)
-  └──────┬──────┘    └─────────────┘
+  │ Synthesizer │    │  Planner    │ ← Refine allocation
+  │             │    │  (Loop)     │    with feedback
+  └──────┬──────┘    └─────────────┘    (max 2 iterations)
          │
          ▼
      Final Report
 ```
+
+**Key Improvement:** The planner now performs **strategic allocation** instead of sending the same queries to both sources. This:
+- **Saves API calls** - Only queries web when needed
+- **Improves relevance** - KB queries target internal docs, web queries target current info
+- **Adapts dynamically** - Allocation changes based on KB contents and query type
 
 ### Iteration Logic
 
@@ -241,12 +298,20 @@ def get_synthesizer_model():
 
 Prompts are defined in `src/prompts/`:
 
-- `planner_prompt.py` - Query decomposition and planning
+- `planner_prompt.py` - Strategic query allocation between RAG and web search
+  - `STRATEGIC_PLANNER_PROMPT` - Main prompt for intelligent allocation with examples
+  - `PLANNER_PROMPT` - Legacy simple planning (not currently used)
 - `analyzer_prompt.py` - Result summarization
 - `evaluator_prompt.py` - Sufficiency assessment
 - `synthesizer_prompt.py` - Final report generation
 
-**To customize:** Edit the `PromptTemplate` in each file.
+**To customize:** Edit the prompt strings in each file.
+
+**Strategic Planner Prompt** includes:
+- Framework for deciding RAG vs web allocation
+- KB-heavy, web-heavy, balanced, and web-only examples
+- Guidelines for query diversity and specificity
+- Instructions for handling feedback and refinement
 
 ### Web Search
 
@@ -456,4 +521,4 @@ ollama pull nomic-embed-text
 
 ---
 
-**Key Takeaway:** The system combines real-time web search (Tavily) with local knowledge base retrieval (ChromaDB) in parallel, using iterative refinement to ensure comprehensive, high-quality research outputs.
+**Key Takeaway:** The system uses **strategic query allocation** to intelligently distribute queries between real-time web search (Tavily) and local knowledge base retrieval (ChromaDB). The planner checks KB contents and allocates queries based on information type—internal/domain-specific content goes to RAG, current/external info goes to web search. Both sources execute in parallel with their optimized query sets, then iterative refinement ensures comprehensive, high-quality research outputs.

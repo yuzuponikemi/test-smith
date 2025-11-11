@@ -16,14 +16,19 @@ Test-Smith implements a "Plan-and-Execute" strategy with specialized AI agents c
 
 ### Multi-Agent Workflow
 
-1. **Planner** - Decomposes user queries into targeted search strategies
-2. **Searcher** - Executes web searches via Tavily API
-3. **RAG Retriever** - Retrieves relevant chunks from knowledge base
+1. **Strategic Planner** - Intelligently allocates queries between RAG and web search
+   - Checks knowledge base contents and availability
+   - Allocates domain-specific queries to RAG retrieval
+   - Allocates current/external queries to web search
+   - Adapts strategy based on feedback from evaluator
+
+2. **Searcher** - Executes strategically allocated web searches via Tavily API
+3. **RAG Retriever** - Retrieves relevant chunks using strategically allocated queries
 4. **Analyzer** - Merges and summarizes results from multiple sources
 5. **Evaluator** - Assesses information sufficiency and quality
 6. **Synthesizer** - Generates comprehensive final reports
 
-The system executes iteratively (max 2 iterations) with conditional routing based on evaluation results.
+**Key Innovation:** The planner performs **strategic query allocation** instead of sending the same queries to both sources. This saves API calls, improves relevance, and adapts dynamically based on knowledge base contents. The system executes iteratively (max 2 iterations) with conditional routing based on evaluation results.
 
 ### Intelligent Document Preprocessing
 

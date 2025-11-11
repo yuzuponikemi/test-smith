@@ -20,12 +20,18 @@ Test-Smith is a **LangGraph-based multi-agent research assistant** that autonomo
 
 The system executes a **6-node graph** with conditional routing and iterative loops:
 
-1. **Planner** → Decomposes query into 3-5 search queries
-2. **Searcher** (Tavily) + **RAG Retriever** (ChromaDB) → Execute in parallel
+1. **Strategic Planner** → Intelligently allocates queries between RAG and web search
+   - Checks knowledge base contents and availability
+   - Allocates domain-specific queries to RAG (0-5 queries)
+   - Allocates current/external queries to web search (0-5 queries)
+   - Provides reasoning for allocation strategy
+2. **Searcher** (Tavily) + **RAG Retriever** (ChromaDB) → Execute in parallel with DIFFERENT query sets
 3. **Analyzer** → Merges and summarizes results
 4. **Evaluator** → Assesses information sufficiency
 5. **Router** → Decides: sufficient → synthesize, insufficient → refine (max 2 iterations)
 6. **Synthesizer** → Generates final comprehensive report
+
+**Key Innovation:** Strategic query allocation saves API calls and improves relevance by targeting queries to the right information source.
 
 **Key Pattern:** Uses `Annotated[list[str], operator.add]` for cumulative result accumulation across iterations.
 
@@ -34,13 +40,18 @@ The system executes a **6-node graph** with conditional routing and iterative lo
 ```python
 class AgentState(TypedDict):
     query: str                      # Original user query
-    plan: list[str]                 # Current search plan
+    web_queries: list[str]          # Queries allocated for web search
+    rag_queries: list[str]          # Queries allocated for KB retrieval
+    allocation_strategy: str        # Reasoning for query allocation
     search_results: Annotated[list[str], operator.add]  # Accumulated results
+    rag_results: Annotated[list[str], operator.add]     # KB results
     analyzed_data: Annotated[list[str], operator.add]   # Processed information
     report: str                     # Final synthesis
     evaluation: str                 # Sufficiency assessment
     loop_count: int                 # Iteration counter
 ```
+
+**Strategic Allocation:** The planner checks `chroma_db/` contents and populates `web_queries` and `rag_queries` separately based on information needs.
 
 State persists via **SQLite checkpointing** (`langgraph-checkpoint-sqlite`) for conversation continuity.
 
@@ -205,15 +216,30 @@ pip-compile requirements.in
 
 ## Important Implementation Details
 
-### Parallel Execution
+### Parallel Execution & Strategic Allocation
 
-Searcher (Tavily) and RAG Retriever (ChromaDB) run **simultaneously** for performance:
+Searcher (Tavily) and RAG Retriever (ChromaDB) run **simultaneously** but with **different query sets**:
 ```python
 workflow.add_edge("planner", "searcher")
 workflow.add_edge("planner", "rag_retriever")
 workflow.add_edge("searcher", "analyzer")
 workflow.add_edge("rag_retriever", "analyzer")
 ```
+
+**Strategic Allocation Process:**
+1. Planner checks KB contents using `check_kb_contents()`:
+   - Verifies `chroma_db/` exists
+   - Counts total chunks
+   - Samples documents to understand content
+2. LLM allocates queries strategically:
+   - **RAG queries:** Domain-specific, internal docs, established concepts
+   - **Web queries:** Current events, general knowledge, external references
+3. Nodes skip execution if their query list is empty (saves API calls)
+
+**Example Allocation:**
+- Query: "How does our auth system work compared to OAuth2 best practices?"
+- KB Status: Contains internal auth documentation
+- Result: 3 RAG queries (internal implementation) + 2 web queries (OAuth2 best practices)
 
 ### Iterative Refinement
 
@@ -242,9 +268,13 @@ search_results: Annotated[list[str], operator.add]
 
 Nodes use Pydantic schemas with `.with_structured_output()`:
 ```python
-from src.schemas import Plan
+from src.schemas import StrategicPlan
 
-planner_llm = get_planner_model().with_structured_output(Plan)
+planner_llm = get_planner_model().with_structured_output(StrategicPlan)
+# StrategicPlan schema ensures:
+#   - rag_queries: List[str]
+#   - web_queries: List[str]
+#   - strategy: str (reasoning for allocation)
 # Ensures type-safe, validated outputs
 ```
 

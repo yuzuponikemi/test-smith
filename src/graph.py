@@ -12,7 +12,9 @@ from src.nodes.evaluator_node import evaluator_node
 # Define the state
 class AgentState(TypedDict):
     query: str
-    plan: list[str]
+    web_queries: list[str]  # Queries for web search
+    rag_queries: list[str]  # Queries for RAG retrieval
+    allocation_strategy: str  # Reasoning for query allocation
     search_results: Annotated[list[str], operator.add]
     rag_results: Annotated[list[str], operator.add]
     analyzed_data: Annotated[list[str], operator.add]
