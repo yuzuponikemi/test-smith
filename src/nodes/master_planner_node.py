@@ -54,7 +54,10 @@ def master_planner(state):
             "master_plan": master_plan.dict() if master_plan.is_complex else None,
             "current_subtask_index": 0,
             "current_subtask_id": "",
-            "subtask_results": {}
+            "subtask_results": {},
+            # Phase 2 fields
+            "max_depth": 2,  # Maximum recursion depth for Phase 2-beta
+            "subtask_evaluations": {}
         }
 
     except Exception as e:

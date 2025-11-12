@@ -16,6 +16,9 @@ from src.nodes.subtask_router import subtask_router
 from src.nodes.subtask_executor import subtask_executor
 from src.nodes.subtask_result_aggregator import save_subtask_result
 
+# New hierarchical nodes (Phase 2)
+from src.nodes.depth_evaluator_node import depth_evaluator
+
 # Define the state
 class AgentState(TypedDict):
     # Original query
@@ -27,6 +30,11 @@ class AgentState(TypedDict):
     current_subtask_id: str  # ID of currently executing subtask
     current_subtask_index: int  # Index in subtask list
     subtask_results: dict  # subtask_id → analyzed_data
+
+    # === Hierarchical Mode Fields (Phase 2) ===
+    max_depth: int  # Maximum recursion depth (default: 2 for Phase 2-beta)
+    depth_evaluation: dict  # Current subtask's DepthEvaluation (as dict)
+    subtask_evaluations: dict  # All depth evaluations: subtask_id → DepthEvaluation dict
 
     # === Existing Fields (used per-subtask in hierarchical mode) ===
     web_queries: list[str]  # Queries for web search
@@ -79,10 +87,13 @@ workflow.add_node("analyzer", analyzer_node)
 workflow.add_node("evaluator", evaluator_node)
 workflow.add_node("synthesizer", synthesizer_node)
 
-# Register new hierarchical nodes
+# Register new hierarchical nodes (Phase 1)
 workflow.add_node("master_planner", master_planner)
 workflow.add_node("subtask_executor", subtask_executor)
 workflow.add_node("save_result", save_subtask_result)
+
+# Register new hierarchical nodes (Phase 2)
+workflow.add_node("depth_evaluator", depth_evaluator)
 
 # Entry point: Master Planner (Phase 1 change)
 workflow.set_entry_point("master_planner")
@@ -101,12 +112,34 @@ workflow.add_conditional_edges(
 # Subtask executor → Strategic Planner (for this specific subtask)
 workflow.add_edge("subtask_executor", "planner")
 
-# Existing edges (unchanged)
+# Existing edges
 workflow.add_edge("planner", "searcher")
 workflow.add_edge("planner", "rag_retriever")
 workflow.add_edge("searcher", "analyzer")
 workflow.add_edge("rag_retriever", "analyzer")
-workflow.add_edge("analyzer", "evaluator")
+
+# After analyzer: Route to appropriate evaluator based on mode (Phase 2 enhancement)
+def analyzer_router(state):
+    """Route to depth_evaluator for hierarchical mode, regular evaluator for simple mode"""
+    execution_mode = state.get("execution_mode", "simple")
+    if execution_mode == "hierarchical":
+        print("---ANALYZER ROUTER: Using depth_evaluator for hierarchical mode---")
+        return "depth_evaluator"
+    else:
+        print("---ANALYZER ROUTER: Using regular evaluator for simple mode---")
+        return "evaluator"
+
+workflow.add_conditional_edges(
+    "analyzer",
+    analyzer_router,
+    {
+        "evaluator": "evaluator",
+        "depth_evaluator": "depth_evaluator"
+    }
+)
+
+# After depth_evaluator: Always save result (only used in hierarchical mode)
+workflow.add_edge("depth_evaluator", "save_result")
 
 # After evaluator: Route based on mode
 workflow.add_conditional_edges(

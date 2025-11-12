@@ -30,7 +30,10 @@ def main():
         with SqliteSaver.from_conn_string(":memory:") as memory:
             app = workflow.compile(checkpointer=memory)
             thread_id = args.thread_id if args.thread_id else str(uuid.uuid4())
-            config = {"configurable": {"thread_id": thread_id}}
+            config = {
+                "configurable": {"thread_id": thread_id},
+                "recursion_limit": 100  # Increased for hierarchical mode (default: 25)
+            }
 
             # Setup logger if enabled
             logger = None if args.no_log else setup_execution_logger(args.query, thread_id)

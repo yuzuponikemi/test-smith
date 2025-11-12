@@ -30,9 +30,19 @@ class SubTask(BaseModel):
     Represents a single subtask in hierarchical decomposition.
 
     Used in Phase 1 (v2.0-alpha) for basic task decomposition.
+    Enhanced in Phase 2 (v2.0-beta) with depth tracking for recursive drill-down.
     """
     subtask_id: str = Field(
-        description="Unique identifier for this subtask (e.g., 'task_1', 'task_2')"
+        description="Unique identifier for this subtask (e.g., 'task_1', 'task_1.1', 'task_2.3.1')"
+    )
+    parent_id: Optional[str] = Field(
+        default=None,
+        description="ID of parent subtask (None for root-level tasks, e.g., 'task_1' for 'task_1.1')"
+    )
+    depth: int = Field(
+        default=0,
+        description="Hierarchical depth level: 0 = root, 1 = first drill-down, 2 = second drill-down, etc.",
+        ge=0
     )
     description: str = Field(
         description="Clear description of what this subtask should accomplish"
@@ -77,4 +87,33 @@ class MasterPlan(BaseModel):
     )
     overall_strategy: str = Field(
         description="High-level strategy for addressing the user's query"
+    )
+
+# === Hierarchical Task Decomposition Schemas (Phase 2) ===
+
+class DepthEvaluation(BaseModel):
+    """
+    Evaluation of subtask result depth and quality.
+
+    Used in Phase 2 (v2.0-beta) to determine if a subtask needs deeper exploration
+    through drill-down into child subtasks.
+    """
+    is_sufficient: bool = Field(
+        description="Whether the subtask has been explored sufficiently for its importance level"
+    )
+    depth_quality: Literal["superficial", "adequate", "deep"] = Field(
+        description="Assessment of information depth: "
+                    "'superficial' = general statements only, lacks detail; "
+                    "'adequate' = specific facts with context; "
+                    "'deep' = rich detail, multiple perspectives, well-sourced"
+    )
+    drill_down_needed: bool = Field(
+        description="Whether this subtask should spawn child subtasks for deeper exploration"
+    )
+    drill_down_areas: List[str] = Field(
+        default_factory=list,
+        description="Specific areas or aspects that need deeper investigation (for child subtasks)"
+    )
+    reasoning: str = Field(
+        description="Detailed explanation of the depth assessment and drill-down decision"
     )
