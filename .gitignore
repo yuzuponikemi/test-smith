@@ -213,4 +213,10 @@ chroma_db_backup_*/
 # Ingestion logs
 ingestion_*.log
 
+# Execution logs and reports (keep directories, ignore contents)
+logs/*
+!logs/.gitkeep
+reports/*
+!reports/.gitkeep
+
 .DS_Store
