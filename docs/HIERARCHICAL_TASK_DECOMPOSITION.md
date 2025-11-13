@@ -1,6 +1,6 @@
 # Hierarchical Task Decomposition - Design Document
 
-**Status:** ✅ Phase 2 (v2.0-beta) COMPLETE - Depth evaluation and drill-down capability added
+**Status:** ✅ Phase 3 (v2.0) COMPLETE - Full recursive drill-down execution working
 **Target:** DeepResearch-style deep-dive analysis with recursive task decomposition
 **Last Updated:** 2025-11-12
 
@@ -490,9 +490,9 @@ Adaptive strategy that switches between breadth and depth based on:
 - ⚠️ No recursive execution yet (will be added in Phase 3)
 - ⚠️ max_depth hardcoded to 2 in master_planner_node.py:59
 
-**Next Steps:** Proceed to Phase 3 (Full Recursion with drill-down execution)
+**Next Steps:** ~~Proceed to Phase 3 (Full Recursion with drill-down execution)~~ ✅ **Phase 3 Complete!**
 
-### Phase 3: Full Recursion (v2.0) ✅ STATIC MASTER PLAN
+### Phase 3: Full Recursion (v2.0) ✅ COMPLETE
 
 **Goal:** Enable multi-level hierarchical exploration with static planning
 
@@ -514,6 +514,48 @@ Adaptive strategy that switches between breadth and depth based on:
 - ✅ Hierarchical deep-dive research capability
 - ✅ "与えられたテーマを徹底的に調べる" システム完成
 - ✅ Value proposition validated
+
+**✅ COMPLETION STATUS (2025-11-12):**
+
+**Implemented Components:**
+- ✅ Drill-Down Generator node (`src/nodes/drill_down_generator.py`)
+  - Creates child SubTasks from drill_down_areas
+  - Inserts children into master_plan.subtasks dynamically
+  - Respects max_depth limit
+- ✅ Updated graph routing (`src/graph.py`):
+  - depth_evaluator → drill_down_generator → save_result
+- ✅ Enhanced subtask_executor with depth logging
+  - Shows parent-child relationships
+  - Displays depth level for each subtask
+- ✅ Linear execution naturally handles hierarchy
+  - Children inserted after parent
+  - Execute in order: parent → children → next parent
+
+**Test Results:**
+- ✅ Complex query "Compare Python and Ruby programming languages"
+  - Generated 5 root subtasks (depth 0)
+  - task_1 triggered drill-down: created 2 child subtasks (depth 1)
+  - Total subtasks: 5 → 7
+  - Children executed before next parent
+  - Proper parent tracking: "Parent: task_1 (Depth: 1)"
+  - Max depth limit respected
+
+**Key Features:**
+- ✓ Automatic drill-down when:
+  - Importance ≥ 0.7
+  - Depth quality = "superficial"
+  - Current depth < max_depth
+- ✓ Dynamic subtask insertion
+- ✓ Hierarchical execution
+- ✓ Depth tracking and logging
+- ✓ Max depth enforcement
+
+**Known Limitations:**
+- ⚠️ Hierarchical synthesis not yet implemented (children results merged with parent, not synthesized hierarchically)
+- ⚠️ No dependency-aware execution optimization (executes by index)
+- ⚠️ max_depth still hardcoded to 2 in master_planner_node.py:59
+
+**Next Steps:** Proceed to Phase 4 (Dynamic Replanning) for adaptive master plan evolution
 
 ---
 

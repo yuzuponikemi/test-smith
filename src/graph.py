@@ -19,6 +19,9 @@ from src.nodes.subtask_result_aggregator import save_subtask_result
 # New hierarchical nodes (Phase 2)
 from src.nodes.depth_evaluator_node import depth_evaluator
 
+# New hierarchical nodes (Phase 3)
+from src.nodes.drill_down_generator import drill_down_generator
+
 # Define the state
 class AgentState(TypedDict):
     # Original query
@@ -95,6 +98,9 @@ workflow.add_node("save_result", save_subtask_result)
 # Register new hierarchical nodes (Phase 2)
 workflow.add_node("depth_evaluator", depth_evaluator)
 
+# Register new hierarchical nodes (Phase 3)
+workflow.add_node("drill_down_generator", drill_down_generator)
+
 # Entry point: Master Planner (Phase 1 change)
 workflow.set_entry_point("master_planner")
 
@@ -138,8 +144,9 @@ workflow.add_conditional_edges(
     }
 )
 
-# After depth_evaluator: Always save result (only used in hierarchical mode)
-workflow.add_edge("depth_evaluator", "save_result")
+# After depth_evaluator: Check for drill-down, then save result (Phase 3)
+workflow.add_edge("depth_evaluator", "drill_down_generator")
+workflow.add_edge("drill_down_generator", "save_result")
 
 # After evaluator: Route based on mode
 workflow.add_conditional_edges(

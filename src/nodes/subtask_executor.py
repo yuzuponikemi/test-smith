@@ -20,8 +20,17 @@ def subtask_executor(state):
 
     current_subtask = subtasks[current_index]
 
+    # Phase 3: Show depth and parent-child relationships
+    depth = current_subtask.get("depth", 0)
+    parent_id = current_subtask.get("parent_id", None)
+    indent = "  " + "  " * depth  # Indent based on depth
+
     print(f"\n  ━━━ Subtask {current_index + 1}/{len(subtasks)} ━━━")
     print(f"  ID: {current_subtask['subtask_id']}")
+    if parent_id:
+        print(f"  Parent: {parent_id} (Depth: {depth})")
+    else:
+        print(f"  Depth: {depth} (Root)")
     print(f"  Description: {current_subtask['description']}")
     print(f"  Focus: {current_subtask['focus_area']}")
     print(f"  Priority: {current_subtask['priority']}")
