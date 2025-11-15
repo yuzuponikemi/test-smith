@@ -1,3 +1,5 @@
+from src.utils.recursion_budget import calculate_recursion_budget, log_budget_status, increment_execution_count
+
 def drill_down_generator(state):
     """
     Drill-Down Generator - Creates child subtasks when deeper exploration is needed
@@ -8,15 +10,33 @@ def drill_down_generator(state):
     - Inserts children into master_plan.subtasks for execution
     - Respects max_depth limit
 
+    Phase 4.1 (Budget-Aware) enhancement:
+    - Checks recursion budget before creating child subtasks
+    - Limits number of children based on remaining budget
+    - Disables drill-down if budget is critical
+
     Returns updated master_plan with child subtasks added.
     """
     print("---DRILL-DOWN GENERATOR---")
+
+    # Track execution
+    state.update(increment_execution_count(state))
 
     # Get current state
     depth_evaluation = state.get("depth_evaluation", {})
     current_subtask_id = state.get("current_subtask_id", "")
     master_plan = state.get("master_plan", {})
     max_depth = state.get("max_depth", 2)
+
+    # Check recursion budget FIRST (Phase 4.1)
+    budget = calculate_recursion_budget(state)
+    log_budget_status(budget, context="Drill-Down Decision")
+
+    if not budget["recommendations"]["allow_drill_down"]:
+        print(f"  🚫 DRILL-DOWN DISABLED: Recursion budget {budget['status']}")
+        print(f"     Current: {budget['current_count']}/{budget['limit']}")
+        print(f"     Skipping drill-down to conserve budget for remaining subtasks")
+        return {}
 
     # Check if drill-down is needed
     drill_down_needed = depth_evaluation.get("drill_down_needed", False)
@@ -49,6 +69,15 @@ def drill_down_generator(state):
     if not drill_down_areas:
         print("  ⚠ Warning: drill_down_needed but no drill_down_areas provided")
         return {}
+
+    # Limit number of drill-down areas based on budget (Phase 4.1)
+    max_children = min(len(drill_down_areas), 3)  # Never more than 3 regardless
+    if budget["status"] in ["warning", "caution"]:
+        # Further limit based on budget status
+        max_children = min(max_children, 2 if budget["status"] == "caution" else 1)
+        if len(drill_down_areas) > max_children:
+            print(f"  ⚠️  Budget constraint: Limiting drill-down from {len(drill_down_areas)} to {max_children} areas")
+            drill_down_areas = drill_down_areas[:max_children]
 
     print(f"  Creating {len(drill_down_areas)} child subtasks for {current_subtask_id}")
     print(f"  Parent depth: {current_depth} → Child depth: {current_depth + 1}")

@@ -22,6 +22,9 @@ from src.nodes.depth_evaluator_node import depth_evaluator
 # New hierarchical nodes (Phase 3)
 from src.nodes.drill_down_generator import drill_down_generator
 
+# New hierarchical nodes (Phase 4 - Dynamic Replanning)
+from src.nodes.plan_revisor_node import plan_revisor
+
 # Define the state
 class AgentState(TypedDict):
     # Original query
@@ -38,6 +41,18 @@ class AgentState(TypedDict):
     max_depth: int  # Maximum recursion depth (default: 2 for Phase 2-beta)
     depth_evaluation: dict  # Current subtask's DepthEvaluation (as dict)
     subtask_evaluations: dict  # All depth evaluations: subtask_id → DepthEvaluation dict
+
+    # === Hierarchical Mode Fields (Phase 4 - Dynamic Replanning) ===
+    revision_count: int  # Number of plan revisions made during this execution
+    plan_revisions: list  # History of all plan revisions (list of PlanRevision dicts)
+    max_revisions: int  # Maximum allowed plan revisions (default: 3)
+    max_total_subtasks: int  # Maximum total subtasks allowed (default: 20)
+    revision_triggers: list  # List of triggers that caused revisions (for logging)
+
+    # === Recursion Budget Tracking (Phase 4.1 - Budget-Aware Control) ===
+    node_execution_count: int  # Number of node executions (tracks recursion usage)
+    recursion_limit: int  # Maximum recursion limit from config (default: 150)
+    budget_warnings: list  # Warnings when budget is running low
 
     # === Existing Fields (used per-subtask in hierarchical mode) ===
     web_queries: list[str]  # Queries for web search
@@ -101,6 +116,9 @@ workflow.add_node("depth_evaluator", depth_evaluator)
 # Register new hierarchical nodes (Phase 3)
 workflow.add_node("drill_down_generator", drill_down_generator)
 
+# Register new hierarchical nodes (Phase 4)
+workflow.add_node("plan_revisor", plan_revisor)
+
 # Entry point: Master Planner (Phase 1 change)
 workflow.set_entry_point("master_planner")
 
@@ -144,9 +162,10 @@ workflow.add_conditional_edges(
     }
 )
 
-# After depth_evaluator: Check for drill-down, then save result (Phase 3)
+# After depth_evaluator: Check for drill-down, then revise plan, then save result (Phase 3 + Phase 4)
 workflow.add_edge("depth_evaluator", "drill_down_generator")
-workflow.add_edge("drill_down_generator", "save_result")
+workflow.add_edge("drill_down_generator", "plan_revisor")  # Phase 4: Plan revision after drill-down
+workflow.add_edge("plan_revisor", "save_result")
 
 # After evaluator: Route based on mode
 workflow.add_conditional_edges(

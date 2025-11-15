@@ -32,7 +32,7 @@ def main():
             thread_id = args.thread_id if args.thread_id else str(uuid.uuid4())
             config = {
                 "configurable": {"thread_id": thread_id},
-                "recursion_limit": 100  # Increased for hierarchical mode (default: 25)
+                "recursion_limit": 150  # Increased for Phase 4 dynamic replanning (default: 25, Phase 1-3: 100)
             }
 
             # Setup logger if enabled

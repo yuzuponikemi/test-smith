@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Test-Smith is a **LangGraph-based multi-agent research assistant** that autonomously conducts deep research and generates comprehensive reports. It uses a "Plan-and-Execute" strategy with specialized agents collaborating through a state-based workflow.
+Test-Smith is a **LangGraph-based multi-agent research assistant** that autonomously conducts deep research and generates comprehensive reports. It uses an advanced "Hierarchical Plan-and-Execute" strategy with **dynamic replanning** capabilities, featuring specialized agents that collaborate through a state-based workflow.
+
+**Version:** v2.1 (Hierarchical Task Decomposition with Dynamic Replanning - Phase 4 Complete)
 
 **Key Technologies:**
 - LangGraph 0.6.11 (orchestration)
@@ -18,20 +20,37 @@ Test-Smith is a **LangGraph-based multi-agent research assistant** that autonomo
 
 ### Multi-Agent Workflow
 
-The system executes a **6-node graph** with conditional routing and iterative loops:
+The system supports **two execution modes**:
+
+#### Simple Mode (v1.0 - Single-Pass Research)
+For straightforward queries, uses a **6-node graph** with conditional routing:
 
 1. **Strategic Planner** → Intelligently allocates queries between RAG and web search
-   - Checks knowledge base contents and availability
-   - Allocates domain-specific queries to RAG (0-5 queries)
-   - Allocates current/external queries to web search (0-5 queries)
-   - Provides reasoning for allocation strategy
 2. **Searcher** (Tavily) + **RAG Retriever** (ChromaDB) → Execute in parallel with DIFFERENT query sets
 3. **Analyzer** → Merges and summarizes results
 4. **Evaluator** → Assesses information sufficiency
 5. **Router** → Decides: sufficient → synthesize, insufficient → refine (max 2 iterations)
 6. **Synthesizer** → Generates final comprehensive report
 
-**Key Innovation:** Strategic query allocation saves API calls and improves relevance by targeting queries to the right information source.
+#### Hierarchical Mode (v2.1 - Deep Research with Dynamic Replanning) ⭐ NEW
+For complex queries, uses an **adaptive hierarchical workflow**:
+
+1. **Master Planner** → Detects complexity and decomposes into subtasks (Phase 1)
+2. **For each subtask:**
+   - Strategic Planner → Allocates queries for this specific subtask
+   - Searcher + RAG Retriever → Execute in parallel
+   - Analyzer → Processes results
+   - **Depth Evaluator** → Assesses depth quality (Phase 2)
+   - **Drill-Down Generator** → Creates child subtasks if needed (Phase 3)
+   - **Plan Revisor** → Adapts master plan based on discoveries ⭐ (Phase 4)
+3. **Hierarchical Synthesizer** → Synthesizes all subtask results into comprehensive report
+
+**Key Innovations:**
+- **Dynamic Replanning (Phase 4):** System adapts master plan mid-execution based on important discoveries
+- **Hierarchical Decomposition:** Complex queries broken into manageable subtasks with recursive drill-down
+- **Strategic Query Allocation:** Targets queries to right information source (RAG vs web)
+- **Depth-Aware Exploration:** Automatically adjusts research depth based on importance
+- **Safety Controls:** Budget limits prevent runaway expansion (max 3 revisions, 20 subtasks)
 
 **Key Pattern:** Uses `Annotated[list[str], operator.add]` for cumulative result accumulation across iterations.
 

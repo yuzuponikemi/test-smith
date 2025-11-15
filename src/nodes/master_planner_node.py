@@ -57,7 +57,17 @@ def master_planner(state):
             "subtask_results": {},
             # Phase 2 fields
             "max_depth": 2,  # Maximum recursion depth for Phase 2-beta
-            "subtask_evaluations": {}
+            "subtask_evaluations": {},
+            # Phase 4 fields (Dynamic Replanning)
+            "revision_count": 0,
+            "plan_revisions": [],
+            "max_revisions": 3,  # Maximum allowed plan revisions
+            "max_total_subtasks": 20,  # Maximum total subtasks (including added ones)
+            "revision_triggers": [],
+            # Phase 4.1 fields (Budget-Aware Control)
+            "node_execution_count": 0,  # Track recursion usage
+            "recursion_limit": 150,  # Default limit (should match config)
+            "budget_warnings": []
         }
 
     except Exception as e:

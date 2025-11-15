@@ -117,3 +117,43 @@ class DepthEvaluation(BaseModel):
     reasoning: str = Field(
         description="Detailed explanation of the depth assessment and drill-down decision"
     )
+
+# === Hierarchical Task Decomposition Schemas (Phase 4) ===
+
+class PlanRevision(BaseModel):
+    """
+    Revision decision for Master Plan based on subtask execution findings.
+
+    Used in Phase 4 (v2.1) to enable adaptive research that responds to discoveries
+    during execution. Analyzes subtask results and determines if the Master Plan
+    should be updated to add new subtasks, adjust priorities, or change scope.
+    """
+    should_revise: bool = Field(
+        description="Whether the Master Plan should be revised based on current findings"
+    )
+    revision_reasoning: str = Field(
+        description="Detailed explanation of why revision is or isn't needed"
+    )
+    trigger_type: Literal["new_topic", "scope_adjustment", "contradiction", "importance_shift", "none"] = Field(
+        description="Type of trigger for revision: "
+                    "'new_topic' = important related topic discovered not in original plan; "
+                    "'scope_adjustment' = current scope too narrow/broad; "
+                    "'contradiction' = conflicting information needs resolution; "
+                    "'importance_shift' = unexpected importance of certain aspects; "
+                    "'none' = no revision needed"
+    )
+    new_subtasks: List[SubTask] = Field(
+        default_factory=list,
+        description="New subtasks to add to the Master Plan (if revision needed)"
+    )
+    removed_subtasks: List[str] = Field(
+        default_factory=list,
+        description="Subtask IDs to skip/remove from execution (if revision needed)"
+    )
+    priority_changes: dict = Field(
+        default_factory=dict,
+        description="Priority changes for existing subtasks: subtask_id → new_priority (if revision needed)"
+    )
+    estimated_impact: str = Field(
+        description="How this revision will improve the final report quality"
+    )
