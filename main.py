@@ -1,6 +1,6 @@
 import argparse
 from dotenv import load_dotenv
-from src.graph import workflow
+from src.graph import graph  # Import uncompiled StateGraph
 from langgraph.checkpoint.sqlite import SqliteSaver
 from src.utils.logging_utils import setup_execution_logger, save_report, get_recent_reports, get_recent_logs
 import uuid
@@ -28,7 +28,7 @@ def main():
 
     if args.command == "run":
         with SqliteSaver.from_conn_string(":memory:") as memory:
-            app = workflow.compile(checkpointer=memory)
+            app = graph.compile(checkpointer=memory)
             thread_id = args.thread_id if args.thread_id else str(uuid.uuid4())
             config = {
                 "configurable": {"thread_id": thread_id},

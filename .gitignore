@@ -218,5 +218,18 @@ logs/*
 !logs/.gitkeep
 reports/*
 !reports/.gitkeep
+visualizations/*
+!visualizations/.gitkeep
 
 .DS_Store
+
+# LangGraph Studio
+.venv-studio/
+.langgraph_api/
+
+# Docker
+docker-compose.override.yml
+postgres_data/
+*.pid
+*.seed
+*.pid.lock

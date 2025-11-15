@@ -1,6 +1,20 @@
 from langgraph.graph import StateGraph, END
 from typing import TypedDict, Annotated
 import operator
+import sys
+import builtins
+
+# Override print for Studio compatibility (prevents BrokenPipeError)
+def _safe_print(*args, **kwargs):
+    """Print function that doesn't raise BrokenPipeError in Studio environments"""
+    try:
+        builtins.__dict__['_original_print'](*args, **kwargs)
+        sys.stdout.flush()
+    except (BrokenPipeError, OSError):
+        pass  # Silently ignore broken pipe errors
+
+builtins.__dict__['_original_print'] = print
+builtins.print = _safe_print
 
 # Existing nodes
 from src.nodes.planner_node import planner
@@ -195,7 +209,38 @@ workflow.add_conditional_edges(
 
 workflow.add_edge("synthesizer", END)
 
+# Store reference to the StateGraph for main.py (which will compile with SQLite checkpointer)
+graph = workflow
+
 # Compile the workflow for LangGraph Studio
 # Note: LangGraph Studio will provide its own checkpointer (PostgreSQL)
 # so we don't include one here
 workflow = workflow.compile()
+
+# Save graph visualization
+try:
+    from pathlib import Path
+
+    # Create visualizations directory if it doesn't exist
+    viz_dir = Path(__file__).parent.parent / "visualizations"
+    viz_dir.mkdir(exist_ok=True)
+
+    # Save Mermaid diagram (text format that can be rendered)
+    mermaid_path = viz_dir / "graph_structure.mmd"
+    mermaid_diagram = workflow.get_graph().draw_mermaid()
+    with open(mermaid_path, "w") as f:
+        f.write(mermaid_diagram)
+    print(f"Graph visualization saved to: {mermaid_path}")
+
+    # Try to save PNG if dependencies are available
+    try:
+        png_data = workflow.get_graph().draw_mermaid_png()
+        png_path = viz_dir / "graph_structure.png"
+        with open(png_path, "wb") as f:
+            f.write(png_data)
+        print(f"Graph PNG saved to: {png_path}")
+    except Exception as e:
+        print(f"Note: PNG generation skipped (install pygraphviz for PNG support): {e}")
+
+except Exception as e:
+    print(f"Warning: Could not save graph visualization: {e}")
