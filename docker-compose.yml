@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  langgraph-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.langgraph
+    platform: linux/amd64
+    ports:
+      - "2024:8000"
+    environment:
+      - LANGCHAIN_TRACING_V2=${LANGCHAIN_TRACING_V2}
+      - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY}
+      - LANGCHAIN_PROJECT=${LANGCHAIN_PROJECT}
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
+      - DATABASE_URI=postgres://postgres:postgres@postgres:5432/postgres
+      - REDIS_URI=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+
+volumes:
+  postgres_data:

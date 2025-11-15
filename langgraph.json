@@ -1,0 +1,7 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "test_smith": "./src/graph.py:workflow"
+  },
+  "env": ".env"
+}

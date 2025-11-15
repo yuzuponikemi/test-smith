@@ -194,3 +194,8 @@ workflow.add_conditional_edges(
 )
 
 workflow.add_edge("synthesizer", END)
+
+# Compile the workflow for LangGraph Studio
+# Note: LangGraph Studio will provide its own checkpointer (PostgreSQL)
+# so we don't include one here
+workflow = workflow.compile()

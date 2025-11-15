@@ -1,0 +1,19 @@
+# Dockerfile for LangGraph Studio
+FROM langchain/langgraph-api:3.11
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first (for better caching)
+COPY requirements.txt /app/
+
+# Install Python dependencies
+# Note: Some version conflicts with langgraph-api are expected but non-breaking
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir langchain-chroma
+
+# Copy application code
+COPY . /app/
+
+# The ENTRYPOINT and CMD are inherited from the base image
+# and will use langgraph.json for configuration
