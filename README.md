@@ -9,7 +9,7 @@ Test-Smith implements a "Plan-and-Execute" strategy with specialized AI agents c
 - **Multi-Agent Architecture**: Planner, Searcher, RAG Retriever, Analyzer, Evaluator, and Synthesizer
 - **Intelligent Knowledge Base**: ChromaDB vector store with advanced preprocessing
 - **Quality-First Approach**: Comprehensive document quality analysis and metrics
-- **Local LLMs**: Powered by Ollama (llama3, command-r, nomic-embed-text)
+- **Flexible LLM Support**: Google Gemini API (default) or local Ollama models
 - **Observability**: Full tracing via LangSmith
 
 ## Key Features
@@ -63,13 +63,22 @@ The knowledge base system includes a sophisticated preprocessing pipeline:
 ### Prerequisites
 
 1. **Python 3.8+**
-2. **Ollama** - Install from [ollama.ai](https://ollama.ai/)
-3. **Required Models:**
-   ```bash
-   ollama pull llama3
-   ollama pull command-r
-   ollama pull nomic-embed-text
-   ```
+2. **LLM Provider** - Choose one:
+   - **Google Gemini API** (Recommended, default) - Free tier available at [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - **Ollama** (Local models) - Install from [ollama.ai](https://ollama.ai/)
+
+**If using Ollama (local models):**
+```bash
+ollama pull llama3
+ollama pull command-r
+ollama pull nomic-embed-text
+```
+
+**If using Gemini (cloud API):**
+```bash
+# Just get your API key from Google AI Studio
+# No local model installation needed!
+```
 
 ### Installation
 
@@ -84,21 +93,128 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
+
+# For CI/testing only (lightweight, no ML packages):
+# pip install -r requirements-ci.txt
 ```
+
+**Note on Requirements Files:**
+- `requirements.txt` - Full dependencies including document preprocessing (vision, OCR, ML models)
+- `requirements-ci.txt` - Lightweight dependencies for CI/testing (graph compilation and execution only)
 
 ### Configuration
 
 Create a `.env` file in the root directory:
 
 ```bash
-# LangSmith (for observability)
+# Model Provider (choose "gemini" or "ollama")
+MODEL_PROVIDER="gemini"  # Default: uses Google Gemini API
+
+# Google Gemini API Key (required when MODEL_PROVIDER=gemini)
+# Get your API key from: https://makersuite.google.com/app/apikey
+GOOGLE_API_KEY="your-google-api-key"
+
+# Tavily (for web search - required)
+TAVILY_API_KEY="your-tavily-api-key"
+
+# LangSmith (optional - for observability)
 LANGCHAIN_TRACING_V2="true"
 LANGCHAIN_API_KEY="your-langsmith-api-key"
 LANGCHAIN_PROJECT="deep-research-v1-proto"
-
-# Tavily (for web search)
-TAVILY_API_KEY="your-tavily-api-key"
 ```
+
+**Using Google Gemini (Default):**
+1. Get a free API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Set `MODEL_PROVIDER=gemini` in your `.env` file
+3. Add your `GOOGLE_API_KEY`
+4. Run: `pip install langchain-google-genai`
+
+**Using Local Ollama Models:**
+1. Install [Ollama](https://ollama.ai/)
+2. Pull models: `ollama pull llama3 && ollama pull command-r`
+3. Set `MODEL_PROVIDER=ollama` in your `.env` file
+
+### GitHub Actions Setup
+
+This repository includes automated testing with GitHub Actions. To set up API keys for CI/CD:
+
+#### Step 1: Navigate to Repository Settings
+
+1. Go to your GitHub repository
+2. Click on **Settings** tab
+3. In the left sidebar, click on **Secrets and variables** → **Actions**
+
+#### Step 2: Add Repository Secrets
+
+Click **New repository secret** and add the following secrets:
+
+**Required Secrets:**
+
+| Secret Name | Description | Where to Get |
+|------------|-------------|--------------|
+| `GOOGLE_API_KEY` | Google Gemini API key | [Google AI Studio](https://makersuite.google.com/app/apikey) |
+| `TAVILY_API_KEY` | Tavily web search API key | [Tavily Dashboard](https://tavily.com/) |
+
+**Optional Secrets:**
+
+| Secret Name | Description | Where to Get |
+|------------|-------------|--------------|
+| `LANGCHAIN_API_KEY` | LangSmith observability key | [LangSmith](https://smith.langchain.com/) |
+
+#### Step 3: Add Each Secret
+
+For each secret:
+1. Click **New repository secret**
+2. Enter the **Name** (e.g., `GOOGLE_API_KEY`)
+3. Paste the **Value** (your actual API key)
+4. Click **Add secret**
+
+#### Step 4: Verify Workflow
+
+1. Push your code or create a pull request
+2. Go to the **Actions** tab in your repository
+3. You should see the "Test Graphs with Gemini" workflow running
+4. Click on the workflow to view detailed logs
+
+#### Manual Workflow Trigger
+
+You can manually trigger the workflow with custom parameters:
+
+1. Go to your GitHub repository
+2. Click on the **Actions** tab
+3. Select **"Test Graphs with Gemini"** from the left sidebar
+4. Click **"Run workflow"** button (top right)
+5. Configure the test parameters:
+
+| Parameter | Description | Default | Options |
+|-----------|-------------|---------|---------|
+| **graph_type** | Which graph workflow to test | `quick_research` | quick_research, deep_research, fact_check, comparative |
+| **test_query** | Custom test query | "What is Python programming language?" | Any string |
+| **run_full_suite** | Run all graph compilation tests | `true` | true, false |
+| **python_version** | Python version to test with | `3.11` | 3.10, 3.11, 3.12 |
+
+6. Click **"Run workflow"** to start the test
+
+**Example Use Cases:**
+- **Quick test**: Set `run_full_suite=false`, `graph_type=quick_research`, custom query
+- **Test specific graph**: Choose `graph_type=comparative`, provide comparison query
+- **Test Python compatibility**: Change `python_version` to test different Python versions
+- **Full validation**: Keep defaults with `run_full_suite=true`
+
+**Workflow Features:**
+- ✅ Tests graph compilation for all workflow types
+- ✅ Verifies Gemini model initialization
+- ✅ Runs customizable test queries with any graph workflow
+- ✅ Validates environment configuration
+- ✅ Uploads test output as artifacts
+- ⚡ Uses lightweight `requirements-ci.txt` for faster CI builds (excludes heavy ML packages)
+- 🎮 Manual trigger with customizable parameters (graph type, query, Python version)
+
+**Troubleshooting GitHub Actions:**
+- If workflow fails with "GOOGLE_API_KEY not set", verify the secret is added correctly
+- Secret names are case-sensitive and must match exactly
+- Secrets are encrypted and cannot be viewed after creation
+- Update secrets by creating a new one with the same name
 
 ## Usage
 
@@ -291,14 +407,40 @@ cat ingestion_preprocessed_*.log
 
 ### Changing LLMs
 
-Edit `src/models.py`:
+**Switch Between Gemini and Ollama:**
+
+Simply change the `MODEL_PROVIDER` in your `.env` file:
+
+```bash
+# Use Google Gemini (default)
+MODEL_PROVIDER=gemini
+
+# Or use local Ollama models
+MODEL_PROVIDER=ollama
+```
+
+**Customize Gemini Models:**
+
+Edit `src/models.py` to change which Gemini model is used:
+
+```python
+# Default Gemini models
+DEFAULT_GEMINI_MODEL = "gemini-1.5-flash"  # Fast and efficient
+ADVANCED_GEMINI_MODEL = "gemini-1.5-pro"   # For complex tasks
+
+# Or use gemini-2.0-flash-exp for latest experimental features
+DEFAULT_GEMINI_MODEL = "gemini-2.0-flash-exp"
+```
+
+**Customize Temperature per Agent:**
 
 ```python
 def get_planner_model():
-    return ChatOllama(model="llama3")  # Change model here
-
-def get_evaluation_model():
-    return ChatOllama(model="command-r")
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="llama3",
+        temperature=0.7  # Adjust this value (0.0-1.0)
+    )
 ```
 
 ### Modifying Agents

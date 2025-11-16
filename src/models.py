@@ -1,23 +1,98 @@
+import os
 from langchain_ollama.chat_models import ChatOllama
+from langchain_google_genai import ChatGoogleGenerativeAI
+
+# Configuration
+MODEL_PROVIDER = os.getenv("MODEL_PROVIDER", "gemini")  # "gemini" or "ollama"
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+# Default Gemini models
+DEFAULT_GEMINI_MODEL = "gemini-1.5-flash"  # Fast and efficient
+ADVANCED_GEMINI_MODEL = "gemini-1.5-pro"   # For complex tasks (optional)
+
+
+def _get_model(gemini_model: str = DEFAULT_GEMINI_MODEL, ollama_model: str = "llama3", temperature: float = 0.7):
+    """
+    Factory function to get the appropriate model based on MODEL_PROVIDER.
+
+    Args:
+        gemini_model: Gemini model to use (default: gemini-1.5-flash)
+        ollama_model: Ollama model to use as fallback
+        temperature: Model temperature (0.0-1.0)
+
+    Returns:
+        Configured chat model
+    """
+    if MODEL_PROVIDER == "gemini":
+        if not GOOGLE_API_KEY:
+            raise ValueError(
+                "GOOGLE_API_KEY environment variable is required when MODEL_PROVIDER=gemini. "
+                "Please set it in your .env file or environment."
+            )
+        return ChatGoogleGenerativeAI(
+            model=gemini_model,
+            google_api_key=GOOGLE_API_KEY,
+            temperature=temperature,
+            convert_system_message_to_human=True  # Gemini compatibility
+        )
+    elif MODEL_PROVIDER == "ollama":
+        return ChatOllama(model=ollama_model, temperature=temperature)
+    else:
+        raise ValueError(f"Unknown MODEL_PROVIDER: {MODEL_PROVIDER}. Use 'gemini' or 'ollama'")
+
 
 def get_planner_model():
-    return ChatOllama(model="llama3")
+    """Strategic planner for query allocation (RAG vs Web)"""
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="llama3",
+        temperature=0.7
+    )
+
 
 def get_master_planner_model():
     """
     Model for Master Planner (hierarchical decomposition)
-    Uses command-r for better structured output generation
+    Uses more advanced model for better structured output generation
     """
-    return ChatOllama(model="command-r")
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,  # Flash is fast enough for planning
+        ollama_model="command-r",
+        temperature=0.7
+    )
+
 
 def get_reflection_model():
-    return ChatOllama(model="llama3")
+    """Reflection and self-evaluation"""
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="llama3",
+        temperature=0.7
+    )
+
 
 def get_evaluation_model():
-    return ChatOllama(model="command-r")
+    """Quality and sufficiency evaluation"""
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="command-r",
+        temperature=0.5  # Lower temperature for more consistent evaluation
+    )
+
 
 def get_analyzer_model():
-    return ChatOllama(model="llama3")
+    """Data analysis and summarization"""
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="llama3",
+        temperature=0.7
+    )
+
 
 def get_synthesizer_model():
-    return ChatOllama(model="llama3")
+    """Final report synthesis"""
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="llama3",
+        temperature=0.8  # Slightly higher for more creative synthesis
+    )
