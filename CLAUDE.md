@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Test-Smith is a **LangGraph-based multi-agent research assistant** that autonomously conducts deep research and generates comprehensive reports. It uses an advanced "Hierarchical Plan-and-Execute" strategy with **dynamic replanning** capabilities, featuring specialized agents that collaborate through a state-based workflow.
 
-**Version:** v2.1 (Hierarchical Task Decomposition with Dynamic Replanning - Phase 4 Complete)
+**Version:** v2.1 (Multi-Graph Architecture with 4 Specialized Workflows)
 
 **Key Technologies:**
 - LangGraph 0.6.11 (orchestration)
@@ -15,6 +15,62 @@ Test-Smith is a **LangGraph-based multi-agent research assistant** that autonomo
 - ChromaDB 1.3.4 (vector database for RAG)
 - Tavily API (web search)
 - LangSmith (observability/tracing)
+
+## Multi-Graph Architecture ⭐ NEW
+
+Test-Smith now supports **multiple graph workflows** that can be selected based on your research needs. All graphs reuse the same nodes and prompts, making the system modular and extensible.
+
+### Available Graphs
+
+1. **deep_research** (default) - Hierarchical multi-agent research with dynamic replanning
+   - Best for: Complex multi-faceted questions, deep exploration
+   - Features: Task decomposition, recursive drill-down, adaptive planning
+   - Complexity: High | Avg time: 2-5 minutes
+
+2. **quick_research** - Fast single-pass research
+   - Best for: Simple questions, quick fact lookups, time-sensitive needs
+   - Features: Single-pass execution, max 2 refinement iterations
+   - Complexity: Low | Avg time: 30-60 seconds
+
+3. **fact_check** - Claim verification workflow
+   - Best for: Verifying factual claims, checking accuracy, cross-referencing
+   - Features: Evidence categorization, confidence scoring, citation tracking
+   - Complexity: Medium | Avg time: 30-45 seconds
+
+4. **comparative** - Side-by-side analysis
+   - Best for: Comparing technologies/tools, trade-off analysis, decision support
+   - Features: Comparison matrix, pros/cons, use case recommendations
+   - Complexity: Medium | Avg time: 45-90 seconds
+
+### Graph Selection
+
+```bash
+# List all available graphs with descriptions
+python main.py graphs
+
+# List with detailed information
+python main.py graphs --detailed
+
+# Run with specific graph
+python main.py run "Your query" --graph <graph_name>
+
+# Default to deep_research (backward compatible)
+python main.py run "Your query"
+```
+
+### Creating Custom Graphs
+
+The modular architecture makes it easy to create new graph workflows:
+
+1. Create a new file in `src/graphs/` (e.g., `my_workflow_graph.py`)
+2. Extend `BaseGraphBuilder` and implement:
+   - `get_state_class()` - Define your state schema
+   - `build()` - Build and compile your workflow
+   - `get_metadata()` - Describe your graph
+3. Register in `src/graphs/__init__.py`
+4. Reuse existing nodes from `src/nodes/` and prompts from `src/prompts/`
+
+See `src/graphs/quick_research_graph.py` for a simple example.
 
 ## Architecture
 
@@ -155,28 +211,46 @@ cat ingestion_diagnostic_*.log
 
 ```
 src/
-├── graph.py              # Core workflow definition (START HERE)
-├── models.py             # Model factory functions
-├── schemas.py            # Pydantic data schemas
-├── nodes/                # Processing nodes (6 agents)
+├── graphs/                      # ⭐ NEW: Multiple graph workflows
+│   ├── __init__.py             # Graph registry system
+│   ├── base_graph.py           # Base classes for building graphs
+│   ├── deep_research_graph.py  # Hierarchical research workflow
+│   ├── quick_research_graph.py # Fast single-pass workflow
+│   ├── fact_check_graph.py     # Claim verification workflow
+│   └── comparative_graph.py    # Side-by-side comparison workflow
+├── graph.py                     # Legacy compatibility (deprecated)
+├── models.py                    # Model factory functions (reusable)
+├── schemas.py                   # Pydantic data schemas (reusable)
+├── nodes/                       # Processing nodes (reusable across graphs)
 │   ├── planner_node.py
 │   ├── searcher_node.py
 │   ├── rag_retriever_node.py
 │   ├── analyzer_node.py
 │   ├── evaluator_node.py
-│   └── synthesizer_node.py
-├── prompts/              # LangChain prompt templates
+│   ├── synthesizer_node.py
+│   ├── master_planner_node.py
+│   ├── depth_evaluator_node.py
+│   ├── drill_down_generator.py
+│   └── plan_revisor_node.py
+├── prompts/                     # LangChain prompt templates (reusable)
 │   ├── planner_prompt.py
 │   ├── analyzer_prompt.py
 │   ├── evaluator_prompt.py
-│   └── synthesizer_prompt.py
-└── preprocessor/         # Document preprocessing system
+│   ├── synthesizer_prompt.py
+│   └── master_planner_prompt.py
+└── preprocessor/                # Document preprocessing system
     ├── __init__.py
     ├── document_analyzer.py    # Quality analysis & scoring
     ├── chunking_strategy.py    # Smart chunking selection
     ├── content_cleaner.py      # Deduplication & cleaning
     └── quality_metrics.py      # Validation & metrics
 ```
+
+**Key Design Principles:**
+- **Modular:** Nodes and prompts are reusable across all graphs
+- **Extensible:** Easy to add new graph workflows
+- **Backward Compatible:** Old code importing from `src.graph` still works
+- **Registry-Based:** Graphs auto-register and are discoverable via `list_graphs()`
 
 ### Customization Points
 
@@ -191,19 +265,41 @@ def get_evaluation_model():
 ```
 
 **Modify Prompts:**
-Edit templates in `src/prompts/` - uses LangChain PromptTemplate with variable injection.
+Edit templates in `src/prompts/` - uses LangChain PromptTemplate with variable injection. Changes apply to all graphs using that node.
 
-**Adjust Workflow:**
-Edit `src/graph.py`:
+**Create New Graph Workflow:**
+1. Create `src/graphs/my_workflow_graph.py`
+2. Extend `BaseGraphBuilder` class:
+   ```python
+   from src.graphs.base_graph import BaseGraphBuilder
+
+   class MyWorkflowGraphBuilder(BaseGraphBuilder):
+       def get_state_class(self) -> type:
+           return MyWorkflowState  # Define your state schema
+
+       def build(self) -> StateGraph:
+           workflow = StateGraph(MyWorkflowState)
+           # Add nodes, edges, conditional routing...
+           return workflow.compile()
+
+       def get_metadata(self) -> dict:
+           return {"name": "My Workflow", "description": "..."}
+   ```
+3. Register in `src/graphs/__init__.py` (add to `_auto_register_graphs()`)
+4. Reuse existing nodes from `src/nodes/` or create new ones
+
+**Modify Existing Graph:**
+Edit the specific graph file (e.g., `src/graphs/quick_research_graph.py`):
 - Add/remove nodes
-- Change routing logic (see `router()` function)
-- Modify loop limits (currently max 2 iterations)
+- Change routing logic
+- Modify loop limits
+- Adjust state schema
 
 **Add New Node:**
-1. Create `src/nodes/my_node.py` with function signature: `def my_node(state: AgentState) -> dict`
-2. Create `src/prompts/my_prompt.py`
-3. Add model function to `src/models.py`
-4. Register in `src/graph.py` workflow
+1. Create `src/nodes/my_node.py` with function signature: `def my_node(state: dict) -> dict`
+2. Create `src/prompts/my_prompt.py` if needed
+3. Add model function to `src/models.py` if needed
+4. Use in any graph by importing and registering the node
 
 **Tune Preprocessing:**
 Edit parameters in `ingest_with_preprocessor.py`:
