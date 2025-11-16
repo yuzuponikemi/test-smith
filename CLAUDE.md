@@ -11,7 +11,9 @@ Test-Smith is a **LangGraph-based multi-agent research assistant** that autonomo
 **Key Technologies:**
 - LangGraph 0.6.11 (orchestration)
 - LangChain 0.3.27 (LLM framework)
-- Ollama (local LLMs: llama3, command-r, nomic-embed-text)
+- **Dual Model Support:**
+  - **Ollama** (local LLMs: llama3, command-r, nomic-embed-text) - Default
+  - **Claude/Anthropic** (cloud: Sonnet 4.5, Sonnet 3.5, Haiku 3.5) - Optional
 - ChromaDB 1.3.4 (vector database for RAG)
 - Tavily API (web search)
 - LangSmith (observability/tracing)
@@ -254,14 +256,54 @@ src/
 
 ### Customization Points
 
-**Change LLMs:**
-Edit `src/models.py` - each agent has a dedicated model function:
+**Switch Between Ollama and Claude Models:**
+Test-Smith supports **dual model providers** for maximum flexibility:
+
+1. **Ollama (Default)** - Local LLMs, no API costs, runs offline
+2. **Claude/Anthropic** - Cloud-based, superior quality, requires API key
+
+**To use Claude models:**
+1. Set `USE_CLAUDE=true` in `.env` file
+2. Add your Anthropic API key: `ANTHROPIC_API_KEY=your-key-here`
+3. Run normally - no code changes needed!
+
+The system automatically uses:
+- **Planner:** Claude Haiku 3.5 (fast query planning)
+- **Master Planner:** Claude Sonnet 4.5 (hierarchical decomposition)
+- **Reflection:** Claude Haiku 3.5 (self-evaluation)
+- **Evaluator:** Claude Sonnet 3.5 (depth assessment)
+- **Analyzer:** Claude Sonnet 4.5 (result processing)
+- **Synthesizer:** Claude Sonnet 4.5 (final report generation)
+
+**Model Detectability:**
+All Claude models include enhanced tracing metadata:
+```python
+model_kwargs={
+    "extra_headers": {
+        "anthropic-source": "test-smith-research-agent",
+        "anthropic-version": "2025-01-15"
+    }
+}
+```
+This ensures proper attribution in LangSmith traces and Anthropic usage dashboards.
+
+**Check Active Models:**
+```python
+from src.models import get_active_models
+print(get_active_models())  # Shows current provider and model versions
+```
+
+**Fine-tune Individual Models:**
+Edit `src/models.py` - each agent has a dedicated model function with configurable parameters:
 ```python
 def get_planner_model():
+    if USE_CLAUDE:
+        return _get_claude_model(
+            model=CLAUDE_HAIKU,
+            temperature=0.0,
+            max_tokens=2048
+        )
     return ChatOllama(model="llama3")
-
-def get_evaluation_model():
-    return ChatOllama(model="command-r")
 ```
 
 **Modify Prompts:**
@@ -440,15 +482,28 @@ LANGCHAIN_PROJECT="deep-research-v1-proto"
 
 ## Configuration Files
 
-**.env** (required for LangSmith + Tavily):
+**.env** (required for LangSmith + Tavily, optional for Claude):
 ```bash
+# LangSmith Tracing
 LANGCHAIN_TRACING_V2="true"
 LANGCHAIN_API_KEY="<langsmith-key>"
 LANGCHAIN_PROJECT="deep-research-v1-proto"
+
+# Tavily Web Search
 TAVILY_API_KEY="<tavily-key>"
+
+# Claude/Anthropic (optional - uncomment to use Claude models)
+USE_CLAUDE="false"  # Set to "true" to enable Claude models
+ANTHROPIC_API_KEY="<your-anthropic-api-key>"
 ```
 
-**Note:** `.env` is checked into git with actual keys (not best practice for production).
+**Model Provider Selection:**
+- **Default (USE_CLAUDE=false):** Uses local Ollama models (llama3, command-r)
+- **Cloud (USE_CLAUDE=true):** Uses Anthropic's Claude models (Sonnet 4.5, Sonnet 3.5, Haiku 3.5)
+  - Requires Anthropic API key from https://console.anthropic.com/settings/keys
+  - Works with Claude Pro plan and API access
+
+**Note:** `.env` is now included with placeholders. Add your actual API keys before running.
 
 ## Known Issues & Limitations
 

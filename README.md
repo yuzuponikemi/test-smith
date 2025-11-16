@@ -9,8 +9,10 @@ Test-Smith implements a "Plan-and-Execute" strategy with specialized AI agents c
 - **Multi-Agent Architecture**: Planner, Searcher, RAG Retriever, Analyzer, Evaluator, and Synthesizer
 - **Intelligent Knowledge Base**: ChromaDB vector store with advanced preprocessing
 - **Quality-First Approach**: Comprehensive document quality analysis and metrics
-- **Local LLMs**: Powered by Ollama (llama3, command-r, nomic-embed-text)
-- **Observability**: Full tracing via LangSmith
+- **Dual Model Support**:
+  - **Ollama** (local LLMs: llama3, command-r, nomic-embed-text) - Default
+  - **Claude/Anthropic** (cloud: Sonnet 4.5, Sonnet 3.5, Haiku 3.5) - Optional
+- **Observability**: Full tracing via LangSmith with enhanced detectability
 
 ## Key Features
 

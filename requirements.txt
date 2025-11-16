@@ -1,4 +1,5 @@
 accelerate==1.10.1
+anthropic==0.73.0
 aiofiles==25.1.0
 aiohappyeyeballs==2.6.1
 aiohttp==3.13.2
@@ -71,8 +72,9 @@ jsonschema-specifications==2025.9.1
 kiwisolver==1.4.7
 kubernetes==34.1.0
 langchain==0.3.27
+langchain-anthropic==1.0.4
 langchain-community==0.3.31
-langchain-core==0.3.79
+langchain-core==1.0.5
 langchain-ollama==0.3.10
 langchain-text-splitters==0.3.11
 langdetect==1.0.9
