@@ -176,13 +176,39 @@ For each secret:
 3. You should see the "Test Graphs with Gemini" workflow running
 4. Click on the workflow to view detailed logs
 
+#### Manual Workflow Trigger
+
+You can manually trigger the workflow with custom parameters:
+
+1. Go to your GitHub repository
+2. Click on the **Actions** tab
+3. Select **"Test Graphs with Gemini"** from the left sidebar
+4. Click **"Run workflow"** button (top right)
+5. Configure the test parameters:
+
+| Parameter | Description | Default | Options |
+|-----------|-------------|---------|---------|
+| **graph_type** | Which graph workflow to test | `quick_research` | quick_research, deep_research, fact_check, comparative |
+| **test_query** | Custom test query | "What is Python programming language?" | Any string |
+| **run_full_suite** | Run all graph compilation tests | `true` | true, false |
+| **python_version** | Python version to test with | `3.11` | 3.10, 3.11, 3.12 |
+
+6. Click **"Run workflow"** to start the test
+
+**Example Use Cases:**
+- **Quick test**: Set `run_full_suite=false`, `graph_type=quick_research`, custom query
+- **Test specific graph**: Choose `graph_type=comparative`, provide comparison query
+- **Test Python compatibility**: Change `python_version` to test different Python versions
+- **Full validation**: Keep defaults with `run_full_suite=true`
+
 **Workflow Features:**
 - ✅ Tests graph compilation for all workflow types
 - ✅ Verifies Gemini model initialization
-- ✅ Runs simple test query with quick_research graph
+- ✅ Runs customizable test queries with any graph workflow
 - ✅ Validates environment configuration
 - ✅ Uploads test output as artifacts
 - ⚡ Uses lightweight `requirements-ci.txt` for faster CI builds (excludes heavy ML packages)
+- 🎮 Manual trigger with customizable parameters (graph type, query, Python version)
 
 **Troubleshooting GitHub Actions:**
 - If workflow fails with "GOOGLE_API_KEY not set", verify the secret is added correctly

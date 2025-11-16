@@ -6,6 +6,36 @@ on:
   pull_request:
     branches: [ main, develop ]
   workflow_dispatch:  # Allow manual trigger
+    inputs:
+      graph_type:
+        description: 'Graph workflow to test'
+        required: false
+        default: 'quick_research'
+        type: choice
+        options:
+          - quick_research
+          - deep_research
+          - fact_check
+          - comparative
+      test_query:
+        description: 'Custom test query (optional)'
+        required: false
+        default: 'What is Python programming language?'
+        type: string
+      run_full_suite:
+        description: 'Run full test suite (all graphs)'
+        required: false
+        default: true
+        type: boolean
+      python_version:
+        description: 'Python version to test'
+        required: false
+        default: '3.11'
+        type: choice
+        options:
+          - '3.11'
+          - '3.10'
+          - '3.12'
 
 jobs:
   test-graph-compilation:
@@ -19,7 +49,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ github.event.inputs.python_version || '3.11' }}
           cache: 'pip'
 
       - name: Install system dependencies
@@ -67,6 +97,7 @@ jobs:
           "
 
       - name: Test graph imports and compilation
+        if: ${{ github.event.inputs.run_full_suite != 'false' }}
         run: |
           echo "Testing graph imports and compilation..."
           python -c "
@@ -117,16 +148,20 @@ jobs:
           print('✓ All models initialized with Gemini successfully')
           "
 
-      - name: Run simple test query (quick_research graph)
+      - name: Run simple test query
         run: |
-          echo "Running simple test query with quick_research graph..."
-          python main.py run "What is Python programming language?" --graph quick_research > test_output.txt 2>&1 || true
+          GRAPH_TYPE="${{ github.event.inputs.graph_type || 'quick_research' }}"
+          TEST_QUERY="${{ github.event.inputs.test_query || 'What is Python programming language?' }}"
+
+          echo "Running test query with $GRAPH_TYPE graph..."
+          echo "Query: $TEST_QUERY"
+          python main.py run "$TEST_QUERY" --graph "$GRAPH_TYPE" > test_output.txt 2>&1 || true
 
           echo "Test output:"
           cat test_output.txt
 
           # Check if output contains expected elements (report should be generated)
-          if grep -q "report" test_output.txt || grep -q "Python" test_output.txt; then
+          if grep -q "report" test_output.txt || [ -s test_output.txt ]; then
             echo "✓ Test query executed successfully"
           else
             echo "⚠ Test query completed but output may be incomplete"
@@ -178,7 +213,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ github.event.inputs.python_version || '3.11' }}
           cache: 'pip'
 
       - name: Install system dependencies
