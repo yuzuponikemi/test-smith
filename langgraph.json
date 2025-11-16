@@ -3,5 +3,12 @@
   "graphs": {
     "test_smith": "./src/graph.py:workflow"
   },
-  "env": ".env"
+  "env": ".env",
+  "config_schemas": {
+    "recursion_limit": {
+      "type": "integer",
+      "default": 150,
+      "description": "Maximum recursion depth for graph execution"
+    }
+  }
 }
