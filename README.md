@@ -93,7 +93,14 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
+
+# For CI/testing only (lightweight, no ML packages):
+# pip install -r requirements-ci.txt
 ```
+
+**Note on Requirements Files:**
+- `requirements.txt` - Full dependencies including document preprocessing (vision, OCR, ML models)
+- `requirements-ci.txt` - Lightweight dependencies for CI/testing (graph compilation and execution only)
 
 ### Configuration
 
@@ -175,6 +182,7 @@ For each secret:
 - ✅ Runs simple test query with quick_research graph
 - ✅ Validates environment configuration
 - ✅ Uploads test output as artifacts
+- ⚡ Uses lightweight `requirements-ci.txt` for faster CI builds (excludes heavy ML packages)
 
 **Troubleshooting GitHub Actions:**
 - If workflow fails with "GOOGLE_API_KEY not set", verify the secret is added correctly
