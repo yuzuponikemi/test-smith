@@ -9,6 +9,7 @@ langchain-core==0.3.79
 langchain-google-genai==2.0.8
 langchain-ollama==0.3.10
 langchain-text-splitters==0.3.11
+langchain-chroma==0.1.4
 langgraph==0.6.11
 langgraph-checkpoint==2.1.2
 langgraph-checkpoint-sqlite==2.0.11
