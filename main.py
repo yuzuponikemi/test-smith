@@ -1,19 +1,61 @@
 import argparse
 from dotenv import load_dotenv
-from src.graph import graph  # Import uncompiled StateGraph
 from langgraph.checkpoint.sqlite import SqliteSaver
 from src.utils.logging_utils import setup_execution_logger, save_report, get_recent_reports, get_recent_logs
 import uuid
 
+# Import new graph registry system
+from src.graphs import get_graph, list_graphs, get_default_graph
+
+# Keep backward compatibility - import old graph
+try:
+    from src.graph import graph as legacy_graph
+except ImportError:
+    legacy_graph = None
+
 def main():
     load_dotenv()
-    parser = argparse.ArgumentParser(description="Test-Smith v2.0-alpha - Hierarchical Research Agent")
-    parser.add_argument("--version", action="version", version="%(prog)s 2.0-alpha")
+    parser = argparse.ArgumentParser(
+        description="Test-Smith v2.1 - Multi-Graph Research Agent System",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # List available graph workflows
+  python main.py graphs
+
+  # Run with default graph (deep_research)
+  python main.py run "What is quantum computing?"
+
+  # Run with specific graph
+  python main.py run "Compare Python vs Go" --graph comparative
+  python main.py run "Is the sky blue?" --graph fact_check
+  python main.py run "Quick overview of Docker" --graph quick_research
+        """
+    )
+    parser.add_argument("--version", action="version", version="%(prog)s 2.1")
     subparsers = parser.add_subparsers(dest="command")
+
+    # Graphs command - list available workflows
+    graphs_parser = subparsers.add_parser(
+        "graphs",
+        help="List all available graph workflows",
+        description="Display all registered graph workflows with their descriptions and use cases"
+    )
+    graphs_parser.add_argument(
+        "--detailed",
+        action="store_true",
+        help="Show detailed information including features and performance metrics"
+    )
 
     # Run command
     run_parser = subparsers.add_parser("run", help="Run the LangGraph agent")
     run_parser.add_argument("query", type=str, help="The query to send to the agent")
+    run_parser.add_argument(
+        "--graph",
+        type=str,
+        default=None,
+        help=f"Graph workflow to use (default: {get_default_graph()}). Use 'python main.py graphs' to see available options."
+    )
     run_parser.add_argument("--thread-id", type=str, help="The thread ID to use for the conversation")
     run_parser.add_argument("--no-log", action="store_true", help="Disable file logging (console only)")
     run_parser.add_argument("--no-report", action="store_true", help="Don't save final report to file")
@@ -26,9 +68,60 @@ def main():
 
     args = parser.parse_args()
 
-    if args.command == "run":
+    if args.command == "graphs":
+        # Display available graph workflows
+        graphs = list_graphs()
+        print("\n" + "="*80)
+        print("AVAILABLE GRAPH WORKFLOWS")
+        print("="*80 + "\n")
+
+        for graph_name, metadata in graphs.items():
+            print(f"📊 {graph_name}")
+            print(f"   {metadata.get('description', 'No description')}")
+            print(f"   Version: {metadata.get('version', 'N/A')}")
+            print(f"   Complexity: {metadata.get('complexity', 'N/A')}")
+
+            if args.detailed:
+                print(f"\n   Use Cases:")
+                for use_case in metadata.get('use_cases', []):
+                    print(f"   • {use_case}")
+
+                if 'features' in metadata:
+                    print(f"\n   Features:")
+                    for feature in metadata['features']:
+                        print(f"   • {feature}")
+
+                if 'performance' in metadata:
+                    perf = metadata['performance']
+                    print(f"\n   Performance:")
+                    for key, value in perf.items():
+                        print(f"   • {key}: {value}")
+
+            print()
+
+        print("="*80)
+        print(f"\nDefault graph: {get_default_graph()}")
+        print("\nUsage: python main.py run \"your query\" --graph <graph_name>")
+        print("="*80 + "\n")
+
+    elif args.command == "run":
+        # Select graph workflow
+        graph_name = args.graph if args.graph else get_default_graph()
+
+        try:
+            builder = get_graph(graph_name)
+            print(f"[System] Using graph workflow: {graph_name}")
+            print(f"[System] Description: {builder.get_metadata().get('description', 'N/A')}\n")
+        except KeyError as e:
+            print(f"Error: {e}")
+            print(f"\nAvailable graphs: {', '.join(list_graphs().keys())}")
+            print("Use 'python main.py graphs' for detailed information")
+            return
+
         with SqliteSaver.from_conn_string(":memory:") as memory:
-            app = graph.compile(checkpointer=memory)
+            # Get uncompiled graph and compile with checkpointer
+            uncompiled_graph = builder.get_uncompiled_graph()
+            app = uncompiled_graph.compile(checkpointer=memory)
             thread_id = args.thread_id if args.thread_id else str(uuid.uuid4())
             config = {
                 "configurable": {"thread_id": thread_id},
