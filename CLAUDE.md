@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Test-Smith is a **LangGraph-based multi-agent research assistant** that autonomously conducts deep research and generates comprehensive reports. It uses an advanced "Hierarchical Plan-and-Execute" strategy with **dynamic replanning** capabilities, featuring specialized agents that collaborate through a state-based workflow.
 
-**Version:** v2.1 (Multi-Graph Architecture with 4 Specialized Workflows)
+**Version:** v2.2 (Multi-Graph Architecture with 5 Specialized Workflows)
 
 **Key Technologies:**
 - LangGraph 0.6.11 (orchestration)
@@ -41,6 +41,11 @@ Test-Smith now supports **multiple graph workflows** that can be selected based 
    - Best for: Comparing technologies/tools, trade-off analysis, decision support
    - Features: Comparison matrix, pros/cons, use case recommendations
    - Complexity: Medium | Avg time: 45-90 seconds
+
+5. **causal_inference** ⭐ NEW - Root cause analysis and causal reasoning
+   - Best for: Troubleshooting issues, incident investigation, understanding causality
+   - Features: Hypothesis generation, evidence validation, causal graph, probability ranking
+   - Complexity: Medium | Avg time: 60-90 seconds
 
 ### Graph Selection
 
@@ -110,6 +115,46 @@ For complex queries, uses an **adaptive hierarchical workflow**:
 
 **Key Pattern:** Uses `Annotated[list[str], operator.add]` for cumulative result accumulation across iterations.
 
+#### Causal Inference Mode (v2.2 - Root Cause Analysis) ⭐ NEW
+For troubleshooting and investigation queries, uses a **9-node specialized workflow**:
+
+1. **Issue Analyzer** → Extracts symptoms, context, and scope from problem statement
+2. **Brainstormer** → Generates diverse root cause hypotheses (5-8 hypotheses)
+3. **Evidence Planner** → Plans strategic queries for evidence gathering (RAG + Web)
+4. **Searcher + RAG Retriever** → Gather evidence in parallel
+5. **Causal Checker** → Validates causal relationships using rigorous criteria
+6. **Hypothesis Validator** → Ranks hypotheses by likelihood with confidence levels
+7. **Router** → Decides if more evidence needed (max 2 iterations)
+8. **Causal Graph Builder** → Creates visualization-ready graph structure
+9. **Root Cause Synthesizer** → Generates comprehensive RCA report
+
+**Key Features:**
+- **Systematic Hypothesis Generation:** Uses divergent thinking (5 Whys, Fishbone, Analogical)
+- **Rigorous Causal Validation:** Temporal precedence, covariation, mechanism plausibility
+- **Evidence-Based Ranking:** Probability scores (0.0-1.0) with confidence levels (high/medium/low)
+- **Causal Graph Visualization:** Structured data for nodes (hypotheses/symptoms) and edges (relationships)
+- **Comprehensive RCA Reports:** Executive summary, ranked hypotheses, recommendations, confidence assessment
+
+**Use Cases:**
+- Technical troubleshooting and debugging
+- Incident investigation and post-mortems
+- System failure analysis
+- Understanding why something happened
+- Hypothesis-driven investigation
+
+**Causal Graph Visualization:**
+The workflow generates a structured graph representation (nodes + edges) that can be visualized:
+```bash
+# Extract graph data from workflow output and save to JSON
+# Then visualize using the included script
+python visualize_causal_graph.py causal_graph.json
+
+# Opens an interactive HTML visualization showing:
+# - Hypothesis nodes (color-coded by likelihood)
+# - Symptom nodes
+# - Causal relationships (edges with strength indicators)
+```
+
 ### State Management
 
 ```python
@@ -155,6 +200,9 @@ python main.py run "YOUR_QUERY_HERE"
 
 # Continue conversation with thread ID
 python main.py run "Follow-up question" --thread-id abc-123
+
+# Use causal inference graph for troubleshooting
+python main.py run "Why is my application experiencing high latency?" --graph causal_inference
 
 # Check version
 python main.py --version
@@ -211,13 +259,14 @@ cat ingestion_diagnostic_*.log
 
 ```
 src/
-├── graphs/                      # ⭐ NEW: Multiple graph workflows
+├── graphs/                      # ⭐ Multiple graph workflows
 │   ├── __init__.py             # Graph registry system
 │   ├── base_graph.py           # Base classes for building graphs
 │   ├── deep_research_graph.py  # Hierarchical research workflow
 │   ├── quick_research_graph.py # Fast single-pass workflow
 │   ├── fact_check_graph.py     # Claim verification workflow
-│   └── comparative_graph.py    # Side-by-side comparison workflow
+│   ├── comparative_graph.py    # Side-by-side comparison workflow
+│   └── causal_inference_graph.py # ⭐ NEW: Root cause analysis workflow
 ├── graph.py                     # Legacy compatibility (deprecated)
 ├── models.py                    # Model factory functions (reusable)
 ├── schemas.py                   # Pydantic data schemas (reusable)
@@ -231,13 +280,26 @@ src/
 │   ├── master_planner_node.py
 │   ├── depth_evaluator_node.py
 │   ├── drill_down_generator.py
-│   └── plan_revisor_node.py
+│   ├── plan_revisor_node.py
+│   ├── issue_analyzer_node.py          # ⭐ NEW: Causal inference nodes
+│   ├── brainstormer_node.py            # ⭐ NEW
+│   ├── evidence_planner_node.py        # ⭐ NEW
+│   ├── causal_checker_node.py          # ⭐ NEW
+│   ├── hypothesis_validator_node.py    # ⭐ NEW
+│   ├── causal_graph_builder_node.py    # ⭐ NEW
+│   └── root_cause_synthesizer_node.py  # ⭐ NEW
 ├── prompts/                     # LangChain prompt templates (reusable)
 │   ├── planner_prompt.py
 │   ├── analyzer_prompt.py
 │   ├── evaluator_prompt.py
 │   ├── synthesizer_prompt.py
-│   └── master_planner_prompt.py
+│   ├── master_planner_prompt.py
+│   ├── issue_analyzer_prompt.py         # ⭐ NEW: Causal inference prompts
+│   ├── brainstormer_prompt.py           # ⭐ NEW
+│   ├── evidence_planner_prompt.py       # ⭐ NEW
+│   ├── causal_checker_prompt.py         # ⭐ NEW
+│   ├── hypothesis_validator_prompt.py   # ⭐ NEW
+│   └── root_cause_synthesizer_prompt.py # ⭐ NEW
 └── preprocessor/                # Document preprocessing system
     ├── __init__.py
     ├── document_analyzer.py    # Quality analysis & scoring

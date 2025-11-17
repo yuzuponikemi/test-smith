@@ -157,3 +157,143 @@ class PlanRevision(BaseModel):
     estimated_impact: str = Field(
         description="How this revision will improve the final report quality"
     )
+
+# === Causal Inference Schemas ===
+
+class IssueAnalysis(BaseModel):
+    """
+    Analysis of the problem statement extracting key symptoms and context.
+
+    Used to decompose an issue into observable effects and background information
+    before generating causal hypotheses.
+    """
+    issue_summary: str = Field(
+        description="Concise summary of the problem/issue being analyzed"
+    )
+    symptoms: List[str] = Field(
+        description="Observable symptoms, effects, or manifestations of the issue"
+    )
+    context: str = Field(
+        description="Relevant background context, constraints, and environment details"
+    )
+    scope: str = Field(
+        description="Scope of the issue: system/component affected, timeframe, conditions"
+    )
+
+class RootCauseHypothesis(BaseModel):
+    """
+    A potential root cause hypothesis for the observed issue.
+
+    Generated during brainstorming phase before evidence gathering.
+    """
+    hypothesis_id: str = Field(
+        description="Unique identifier for this hypothesis (e.g., 'H1', 'H2', 'H3')"
+    )
+    description: str = Field(
+        description="Clear description of the hypothesized root cause"
+    )
+    mechanism: str = Field(
+        description="How this cause could produce the observed symptoms (causal mechanism)"
+    )
+    category: Literal["technical", "process", "human", "environmental", "design", "external"] = Field(
+        description="Category of root cause for organization"
+    )
+    initial_plausibility: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Initial plausibility score (0.0-1.0) before evidence gathering"
+    )
+
+class HypothesisList(BaseModel):
+    """List of root cause hypotheses generated during brainstorming."""
+    hypotheses: List[RootCauseHypothesis] = Field(
+        description="All generated root cause hypotheses"
+    )
+    brainstorming_approach: str = Field(
+        description="Explanation of the brainstorming methodology used"
+    )
+
+class CausalRelationship(BaseModel):
+    """
+    A validated causal relationship between a hypothesis and observed symptoms.
+
+    Created after evidence gathering to assess causal links.
+    """
+    hypothesis_id: str = Field(
+        description="ID of the hypothesis being evaluated"
+    )
+    relationship_type: Literal["direct_cause", "contributing_factor", "correlated", "unlikely", "refuted"] = Field(
+        description="Type of causal relationship: "
+                    "'direct_cause' = strong evidence of causation; "
+                    "'contributing_factor' = partial causation; "
+                    "'correlated' = association without clear causation; "
+                    "'unlikely' = weak or contradictory evidence; "
+                    "'refuted' = evidence disproves this cause"
+    )
+    supporting_evidence: List[str] = Field(
+        description="Evidence supporting this causal relationship"
+    )
+    contradicting_evidence: List[str] = Field(
+        default_factory=list,
+        description="Evidence contradicting this causal relationship"
+    )
+    causal_strength: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Strength of causal link based on evidence (0.0-1.0)"
+    )
+    reasoning: str = Field(
+        description="Detailed reasoning for this causal assessment"
+    )
+
+class CausalAnalysis(BaseModel):
+    """Complete causal analysis with all validated relationships."""
+    relationships: List[CausalRelationship] = Field(
+        description="All evaluated causal relationships"
+    )
+    analysis_approach: str = Field(
+        description="Methodology used for causal validation"
+    )
+
+class RankedHypothesis(BaseModel):
+    """
+    A root cause hypothesis with final probability ranking.
+
+    Generated after all evidence is gathered and analyzed.
+    """
+    hypothesis_id: str = Field(
+        description="ID of the hypothesis"
+    )
+    description: str = Field(
+        description="Description of the root cause"
+    )
+    likelihood: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Final likelihood/probability (0.0-1.0) based on all evidence"
+    )
+    confidence: Literal["high", "medium", "low"] = Field(
+        description="Confidence level in this assessment based on evidence quality"
+    )
+    supporting_factors: List[str] = Field(
+        description="Key factors supporting this root cause"
+    )
+    mitigating_factors: List[str] = Field(
+        default_factory=list,
+        description="Factors reducing likelihood or providing alternative explanations"
+    )
+    recommendation: str = Field(
+        description="Recommended action or investigation steps for this hypothesis"
+    )
+
+class HypothesisRanking(BaseModel):
+    """Ranked list of root cause hypotheses with probabilities."""
+    ranked_hypotheses: List[RankedHypothesis] = Field(
+        description="Hypotheses ranked by likelihood (highest first)"
+    )
+    ranking_methodology: str = Field(
+        description="Explanation of ranking methodology and criteria"
+    )
+    overall_assessment: str = Field(
+        description="Overall assessment of root cause certainty"
+    )
