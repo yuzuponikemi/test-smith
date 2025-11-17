@@ -2,6 +2,7 @@ import argparse
 from dotenv import load_dotenv
 from langgraph.checkpoint.sqlite import SqliteSaver
 from src.utils.logging_utils import setup_execution_logger, save_report, get_recent_reports, get_recent_logs
+from src.utils.langfuse_config import get_langfuse_callback_handler, flush_langfuse, is_langfuse_enabled
 import uuid
 
 # Import new graph registry system
@@ -123,10 +124,24 @@ Examples:
             uncompiled_graph = builder.get_uncompiled_graph()
             app = uncompiled_graph.compile(checkpointer=memory)
             thread_id = args.thread_id if args.thread_id else str(uuid.uuid4())
+
+            # Initialize Langfuse callback handler if enabled
+            langfuse_handler = get_langfuse_callback_handler(
+                session_id=thread_id,
+                metadata={
+                    "graph": graph_name,
+                    "query": args.query
+                }
+            )
+
+            # Build config with optional Langfuse callbacks
             config = {
                 "configurable": {"thread_id": thread_id},
                 "recursion_limit": 150  # Increased for Phase 4 dynamic replanning (default: 25, Phase 1-3: 100)
             }
+
+            if langfuse_handler:
+                config["callbacks"] = [langfuse_handler]
 
             # Setup logger if enabled
             logger = None if args.no_log else setup_execution_logger(args.query, thread_id)
@@ -135,8 +150,11 @@ Examples:
                 logger.log(f"Starting Test-Smith execution", "INFO")
                 logger.log(f"Query: {args.query}")
                 logger.log(f"Thread ID: {thread_id}")
+                logger.log(f"Langfuse tracing: {'ENABLED' if langfuse_handler else 'DISABLED'}")
             else:
                 print("Running the LangGraph agent...")
+                if langfuse_handler:
+                    print(f"[Langfuse] Tracing enabled - session: {thread_id}")
 
             # Track state for report saving
             final_state = {}
@@ -199,9 +217,20 @@ Examples:
                 if logger:
                     logger.finalize(final_state.get("report", ""))
 
+                # Flush Langfuse traces
+                if langfuse_handler:
+                    if logger:
+                        logger.log("Flushing Langfuse traces...")
+                    else:
+                        print("[Langfuse] Flushing traces...")
+                    flush_langfuse()
+
             except Exception as e:
                 if logger:
                     logger.log_error(e, "main execution loop")
+                # Flush Langfuse traces even on error
+                if langfuse_handler:
+                    flush_langfuse()
                 raise
 
     elif args.command == "list":

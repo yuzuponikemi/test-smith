@@ -15,6 +15,7 @@ Test-Smith is a **LangGraph-based multi-agent research assistant** that autonomo
 - ChromaDB 1.3.4 (vector database for RAG)
 - Tavily API (web search)
 - LangSmith (observability/tracing)
+- Langfuse (optional observability/analytics) ⭐ NEW
 
 ## Multi-Graph Architecture ⭐ NEW
 
@@ -409,6 +410,50 @@ LANGCHAIN_PROJECT="deep-research-v1-proto"
 2. Navigate to project "deep-research-v1-proto"
 3. Click on trace to see full execution graph with inputs/outputs per node
 
+### Langfuse Integration ⭐ NEW
+
+**Alternative observability platform with advanced analytics and cost tracking.**
+
+**Environment Variables:**
+```bash
+LANGFUSE_ENABLED="true"
+LANGFUSE_PUBLIC_KEY="<your-public-key>"
+LANGFUSE_SECRET_KEY="<your-secret-key>"
+LANGFUSE_HOST="https://cloud.langfuse.com"  # Optional, defaults to cloud
+```
+
+**Features:**
+- LLM call tracing with token usage and cost analytics
+- Session-based grouping (automatically uses thread_id)
+- Real-time monitoring dashboard
+- Advanced filtering and search
+- Cost tracking across different models
+- Export capabilities for analysis
+
+**Setup:**
+1. Sign up at https://cloud.langfuse.com (or self-host)
+2. Create a new project
+3. Copy your public and secret keys
+4. Set environment variables in `.env`
+5. Set `LANGFUSE_ENABLED=true`
+6. Run normally - traces will appear in Langfuse dashboard
+
+**Usage:**
+```bash
+# Enable Langfuse in .env
+LANGFUSE_ENABLED=true
+
+# Run normally
+python main.py run "Your query here"
+
+# View traces in Langfuse dashboard organized by session ID
+```
+
+**Comparison with LangSmith:**
+- **LangSmith:** Better integration with LangChain ecosystem, detailed graph visualization
+- **Langfuse:** Better cost analytics, more advanced filtering, self-hosting option
+- **Both can be enabled simultaneously** for comprehensive observability
+
 ### Embedding Quality Diagnostics
 
 **Section 2.2 in `chroma_explorer.ipynb`** provides comprehensive checks:
@@ -440,12 +485,21 @@ LANGCHAIN_PROJECT="deep-research-v1-proto"
 
 ## Configuration Files
 
-**.env** (required for LangSmith + Tavily):
+**.env** (required for Tavily, optional for LangSmith/Langfuse):
 ```bash
+# Required - Web Search
+TAVILY_API_KEY="<tavily-key>"
+
+# Optional - Observability with LangSmith
 LANGCHAIN_TRACING_V2="true"
 LANGCHAIN_API_KEY="<langsmith-key>"
 LANGCHAIN_PROJECT="deep-research-v1-proto"
-TAVILY_API_KEY="<tavily-key>"
+
+# Optional - Observability with Langfuse
+LANGFUSE_ENABLED="true"
+LANGFUSE_PUBLIC_KEY="<your-public-key>"
+LANGFUSE_SECRET_KEY="<your-secret-key>"
+LANGFUSE_HOST="https://cloud.langfuse.com"
 ```
 
 **Note:** `.env` is checked into git with actual keys (not best practice for production).

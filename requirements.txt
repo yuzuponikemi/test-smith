@@ -84,6 +84,7 @@ langgraph-checkpoint-sqlite==2.0.11
 langgraph-prebuilt==0.6.5
 langgraph-sdk==0.2.9
 langsmith==0.4.37
+langfuse==2.57.13
 lark==1.3.1
 lxml==6.0.2
 markdown-it-py==3.0.0
