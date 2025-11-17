@@ -1,9 +1,8 @@
 import os
 from langchain_ollama.chat_models import ChatOllama
-from langchain_google_genai import ChatGoogleGenerativeAI
 
 # Configuration
-MODEL_PROVIDER = os.getenv("MODEL_PROVIDER", "gemini")  # "gemini" or "ollama"
+MODEL_PROVIDER = os.getenv("MODEL_PROVIDER", "ollama")  # "gemini" or "ollama"
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Default Gemini models
@@ -24,6 +23,15 @@ def _get_model(gemini_model: str = DEFAULT_GEMINI_MODEL, ollama_model: str = "ll
         Configured chat model
     """
     if MODEL_PROVIDER == "gemini":
+        # Import only when needed to avoid dependency errors
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+        except ImportError:
+            raise ImportError(
+                "langchain_google_genai is required when MODEL_PROVIDER=gemini. "
+                "Install it with: pip install langchain-google-genai"
+            )
+
         if not GOOGLE_API_KEY:
             raise ValueError(
                 "GOOGLE_API_KEY environment variable is required when MODEL_PROVIDER=gemini. "
