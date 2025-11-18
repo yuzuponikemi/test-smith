@@ -49,7 +49,9 @@ class DocumentAnalyzer:
         '.cpp', '.c', '.h', '.hpp', '.cs', '.php', '.swift', '.kt', '.scala',
         '.vue', '.svelte', '.html', '.css', '.scss', '.sass', '.less',
         '.json', '.yaml', '.yml', '.toml', '.xml', '.sql', '.sh', '.bash',
-        '.dockerfile', '.makefile', '.cmake', '.gradle', '.pom'
+        '.dockerfile', '.makefile', '.cmake', '.gradle', '.pom',
+        # C#/Windows Forms specific
+        '.csproj', '.sln', '.resx', '.xaml', '.config', '.settings'
     }
     SUPPORTED_EXTENSIONS = TEXT_EXTENSIONS | PDF_EXTENSIONS | CODE_EXTENSIONS
 
@@ -78,6 +80,10 @@ class DocumentAnalyzer:
         '.xml': 'xml',
         '.sql': 'sql',
         '.sh': 'shell', '.bash': 'shell',
+        # C#/Windows Forms specific
+        '.csproj': 'csharp_project', '.sln': 'solution',
+        '.resx': 'resx', '.xaml': 'xaml',
+        '.config': 'xml_config', '.settings': 'xml_config',
     }
 
     def __init__(self):
@@ -158,8 +164,10 @@ class DocumentAnalyzer:
 
         elif structure_type == 'code':
             recommendations.append(f"Code file ({programming_language}) - use code-aware chunking")
-            if programming_language in ('python', 'javascript', 'typescript'):
+            if programming_language in ('python', 'javascript', 'typescript', 'csharp'):
                 recommendations.append("Consider splitting by function/class boundaries")
+            if programming_language == 'csharp':
+                recommendations.append("C# code will be split by namespace/class/method boundaries")
 
         # Ensure quality score is in [0, 1]
         quality_score = max(0.0, min(1.0, quality_score))
@@ -371,6 +379,38 @@ class DocumentAnalyzer:
             code_metadata['class_count'] = len(re.findall(r'^\s*(?:pub\s+)?struct\s+\w+', content, re.MULTILINE))
             code_metadata['import_count'] = len(re.findall(r'^\s*use\s+', content, re.MULTILINE))
             code_metadata['comment_lines'] = len(re.findall(r'^\s*(?://|/\*)', content, re.MULTILINE))
+
+        elif programming_language == 'csharp':
+            # C# specific analysis
+            code_metadata['function_count'] = len(re.findall(
+                r'(?:public|private|protected|internal|static|\s)+[\w\<\>\[\],\s]+\s+\w+\s*\([^\)]*\)\s*(?:\{|=>)',
+                content
+            ))
+            code_metadata['class_count'] = len(re.findall(
+                r'^\s*(?:public|private|protected|internal|static|abstract|sealed|partial)?\s*class\s+\w+',
+                content, re.MULTILINE
+            ))
+            code_metadata['import_count'] = len(re.findall(r'^\s*using\s+', content, re.MULTILINE))
+            code_metadata['comment_lines'] = len(re.findall(r'^\s*(?://|/\*|\*|///)', content, re.MULTILINE))
+            # C# specific: namespace, property, and interface counts
+            code_metadata['namespace_count'] = len(re.findall(r'^\s*namespace\s+', content, re.MULTILINE))
+            code_metadata['interface_count'] = len(re.findall(
+                r'^\s*(?:public|private|protected|internal)?\s*interface\s+\w+',
+                content, re.MULTILINE
+            ))
+            code_metadata['property_count'] = len(re.findall(
+                r'(?:public|private|protected|internal|static)\s+[\w\<\>\[\],\s]+\s+\w+\s*\{\s*(?:get|set)',
+                content
+            ))
+            # Windows Forms specific detection
+            code_metadata['is_winforms'] = bool(re.search(
+                r'(?:System\.Windows\.Forms|InitializeComponent|partial class.*Form)',
+                content
+            ))
+            code_metadata['is_designer_file'] = bool(re.search(
+                r'\.Designer\.cs|#region Windows Form Designer generated code',
+                content
+            ))
 
         return code_metadata
 

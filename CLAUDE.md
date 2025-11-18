@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Test-Smith is a **LangGraph-based multi-agent research assistant** that autonomously conducts deep research and generates comprehensive reports. It uses an advanced "Hierarchical Plan-and-Execute" strategy with **dynamic replanning** capabilities, featuring specialized agents that collaborate through a state-based workflow.
 
-**Version:** v2.2 (Multi-Graph Architecture with 5 Specialized Workflows)
+**Version:** v2.3 (Multi-Graph Architecture with 6 Specialized Workflows)
 
 **Key Technologies:**
 - LangGraph 0.6.11 (orchestration)
@@ -42,10 +42,15 @@ Test-Smith now supports **multiple graph workflows** that can be selected based 
    - Features: Comparison matrix, pros/cons, use case recommendations
    - Complexity: Medium | Avg time: 45-90 seconds
 
-5. **causal_inference** ⭐ NEW - Root cause analysis and causal reasoning
+5. **causal_inference** - Root cause analysis and causal reasoning
    - Best for: Troubleshooting issues, incident investigation, understanding causality
    - Features: Hypothesis generation, evidence validation, causal graph, probability ranking
    - Complexity: Medium | Avg time: 60-90 seconds
+
+6. **code_investigation** ⭐ NEW - Deep codebase analysis and investigation
+   - Best for: Understanding code structure, finding dependencies, tracing data flow
+   - Features: Dependency tracking, flow analysis, variable usage, architecture patterns
+   - Complexity: Medium | Avg time: 45-90 seconds
 
 ### Graph Selection
 
@@ -153,6 +158,42 @@ python scripts/visualization/visualize_causal_graph.py causal_graph.json
 # - Hypothesis nodes (color-coded by likelihood)
 # - Symptom nodes
 # - Causal relationships (edges with strength indicators)
+```
+
+#### Code Investigation Mode (v2.3 - Codebase Analysis) ⭐ NEW
+For codebase research and understanding, uses a **5-node specialized workflow**:
+
+1. **Code Query Analyzer** → Understands investigation scope and target elements
+2. **Code Retriever** → Retrieves relevant code via RAG search
+3. **Dependency Analyzer** → Tracks class/function dependencies (parallel)
+4. **Code Flow Tracker** → Analyzes data/control flow (parallel)
+5. **Code Investigation Synthesizer** → Generates comprehensive report
+
+**Key Features:**
+- **Intelligent Query Analysis:** Determines investigation type (dependency, flow, usage, architecture)
+- **Dependency Tracking:** Import analysis, class inheritance, composition, function calls
+- **Flow Analysis:** Data flow paths, control flow, variable usage
+- **Multi-Language Support:** Python, C#, JavaScript, TypeScript, Java, Go, Rust
+- **C# & Windows Forms Support:** Full support for .cs, .csproj, .sln, .resx, .xaml files
+
+**Use Cases:**
+- Understanding how a feature is implemented
+- Finding all usages of a function or class
+- Tracing dependencies between components
+- Analyzing data flow through the codebase
+- Architecture and design pattern analysis
+- Refactoring impact assessment
+
+**Usage:**
+```bash
+# Investigate code dependencies
+python main.py run "What classes depend on AuthService?" --graph code_investigation
+
+# Trace data flow
+python main.py run "How does user input flow through the validation system?" --graph code_investigation
+
+# Find function usages
+python main.py run "Where is the calculate_total function used?" --graph code_investigation
 ```
 
 ### State Management
@@ -291,7 +332,8 @@ src/
 │   ├── quick_research_graph.py # Fast single-pass workflow
 │   ├── fact_check_graph.py     # Claim verification workflow
 │   ├── comparative_graph.py    # Side-by-side comparison workflow
-│   └── causal_inference_graph.py # ⭐ NEW: Root cause analysis workflow
+│   ├── causal_inference_graph.py # Root cause analysis workflow
+│   └── code_investigation_graph.py # ⭐ NEW: Codebase analysis workflow
 ├── graph.py                     # Legacy compatibility (deprecated)
 ├── models.py                    # Model factory functions (reusable)
 ├── schemas.py                   # Pydantic data schemas (reusable)
@@ -306,25 +348,32 @@ src/
 │   ├── depth_evaluator_node.py
 │   ├── drill_down_generator.py
 │   ├── plan_revisor_node.py
-│   ├── issue_analyzer_node.py          # ⭐ NEW: Causal inference nodes
-│   ├── brainstormer_node.py            # ⭐ NEW
-│   ├── evidence_planner_node.py        # ⭐ NEW
-│   ├── causal_checker_node.py          # ⭐ NEW
-│   ├── hypothesis_validator_node.py    # ⭐ NEW
-│   ├── causal_graph_builder_node.py    # ⭐ NEW
-│   └── root_cause_synthesizer_node.py  # ⭐ NEW
+│   ├── issue_analyzer_node.py          # Causal inference nodes
+│   ├── brainstormer_node.py
+│   ├── evidence_planner_node.py
+│   ├── causal_checker_node.py
+│   ├── hypothesis_validator_node.py
+│   ├── causal_graph_builder_node.py
+│   ├── root_cause_synthesizer_node.py
+│   ├── code_assistant_node.py          # Code retrieval and analysis
+│   ├── code_query_analyzer_node.py     # ⭐ NEW: Code investigation nodes
+│   ├── dependency_analyzer_node.py     # ⭐ NEW
+│   ├── code_flow_tracker_node.py       # ⭐ NEW
+│   └── code_investigation_synthesizer_node.py # ⭐ NEW
 ├── prompts/                     # LangChain prompt templates (reusable)
 │   ├── planner_prompt.py
 │   ├── analyzer_prompt.py
 │   ├── evaluator_prompt.py
 │   ├── synthesizer_prompt.py
 │   ├── master_planner_prompt.py
-│   ├── issue_analyzer_prompt.py         # ⭐ NEW: Causal inference prompts
-│   ├── brainstormer_prompt.py           # ⭐ NEW
-│   ├── evidence_planner_prompt.py       # ⭐ NEW
-│   ├── causal_checker_prompt.py         # ⭐ NEW
-│   ├── hypothesis_validator_prompt.py   # ⭐ NEW
-│   └── root_cause_synthesizer_prompt.py # ⭐ NEW
+│   ├── issue_analyzer_prompt.py         # Causal inference prompts
+│   ├── brainstormer_prompt.py
+│   ├── evidence_planner_prompt.py
+│   ├── causal_checker_prompt.py
+│   ├── hypothesis_validator_prompt.py
+│   ├── root_cause_synthesizer_prompt.py
+│   ├── code_assistant_prompt.py         # Code assistant prompts
+│   └── code_investigation_prompts.py    # ⭐ NEW: Code investigation prompts
 └── preprocessor/                # Document preprocessing system
     ├── __init__.py
     ├── document_analyzer.py    # Quality analysis & scoring

@@ -168,6 +168,39 @@ class ChunkingStrategy:
             " ",
             ""
         ],
+        'csharp': [
+            "\n\nnamespace ",       # Namespace declarations
+            "\n\npublic class ",    # Public class definitions
+            "\n\ninternal class ",  # Internal class definitions
+            "\n\nprivate class ",   # Private class definitions
+            "\n\npublic partial class ",  # Partial classes (common in WinForms)
+            "\n\npublic interface ", # Interface definitions
+            "\n\npublic enum ",     # Enum definitions
+            "\n\npublic struct ",   # Struct definitions
+            "\n\npublic ",          # Public methods/properties
+            "\n\nprivate ",         # Private methods/properties
+            "\n\nprotected ",       # Protected methods/properties
+            "\n\ninternal ",        # Internal methods/properties
+            "\n\n#region ",         # Region markers (common in C#)
+            "\n\n#endregion",       # End region
+            "\n\n",                 # Double newlines
+            "\n",                   # Single newlines
+            " ",
+            ""
+        ],
+        'xaml': [
+            "\n\n<Window ",         # XAML Window elements
+            "\n\n<UserControl ",    # UserControl elements
+            "\n\n<Page ",           # Page elements
+            "\n\n<Grid ",           # Grid containers
+            "\n\n<StackPanel ",     # StackPanel containers
+            "\n\n<Button ",         # UI elements
+            "\n\n<TextBox ",
+            "\n\n<",                # Other elements
+            "\n",
+            " ",
+            ""
+        ],
         'default': [
             "\n\n",
             "\n",
