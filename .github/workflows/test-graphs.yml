@@ -1,8 +1,6 @@
 name: Test Graphs with Gemini
 
 on:
-  push:
-    branches: [ main, develop, claude/* ]
   pull_request:
     branches: [ main, develop ]
   workflow_dispatch:  # Allow manual trigger
@@ -200,44 +198,3 @@ jobs:
           name: test-output
           path: test_output.txt
           retention-days: 7
-
-  test-with-tavily-only:
-    name: Test without Gemini (Tavily Web Search Only)
-    runs-on: ubuntu-latest
-    if: github.event_name != 'push'  # Only run on PRs or manual trigger
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ github.event.inputs.python_version || '3.11' }}
-          cache: 'pip'
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y sqlite3 libsqlite3-dev
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          # Use lightweight CI requirements to avoid heavy ML packages
-          pip install -r requirements-ci.txt
-
-      - name: Test Tavily configuration
-        env:
-          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
-        run: |
-          echo "Testing Tavily API availability..."
-          python -c "
-          import os
-
-          tavily_key = os.getenv('TAVILY_API_KEY')
-          assert tavily_key, 'TAVILY_API_KEY not set'
-          assert len(tavily_key) > 10, 'TAVILY_API_KEY seems invalid'
-
-          print('✓ Tavily API key configured')
-          "
