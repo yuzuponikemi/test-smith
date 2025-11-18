@@ -5,6 +5,7 @@ Part of the Causal Inference Graph workflow for root cause analysis.
 """
 
 from src.models import get_hypothesis_validator_model
+from src.utils.logging_utils import print_node_header
 from src.prompts.hypothesis_validator_prompt import HYPOTHESIS_VALIDATOR_PROMPT
 from src.schemas import HypothesisRanking
 
@@ -19,7 +20,7 @@ def hypothesis_validator_node(state: dict) -> dict:
     Returns:
         Updated state with ranked_hypotheses
     """
-    print("---HYPOTHESIS VALIDATOR---")
+    print_node_header("HYPOTHESIS VALIDATOR")
 
     query = state.get("query", "")
     issue_summary = state.get("issue_summary", "")

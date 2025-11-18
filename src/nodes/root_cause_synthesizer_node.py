@@ -6,6 +6,7 @@ Part of the Causal Inference Graph workflow for root cause analysis.
 
 from src.models import get_root_cause_synthesizer_model
 from src.prompts.root_cause_synthesizer_prompt import ROOT_CAUSE_SYNTHESIZER_PROMPT
+from src.utils.logging_utils import print_node_header
 
 
 def root_cause_synthesizer_node(state: dict) -> dict:
@@ -18,7 +19,7 @@ def root_cause_synthesizer_node(state: dict) -> dict:
     Returns:
         Updated state with final report
     """
-    print("---ROOT CAUSE SYNTHESIZER---")
+    print_node_header("ROOT CAUSE SYNTHESIZER")
 
     query = state.get("query", "")
     issue_summary = state.get("issue_summary", "")

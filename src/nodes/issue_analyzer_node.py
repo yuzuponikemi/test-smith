@@ -5,6 +5,7 @@ Part of the Causal Inference Graph workflow for root cause analysis.
 """
 
 from src.models import get_issue_analyzer_model
+from src.utils.logging_utils import print_node_header
 from src.prompts.issue_analyzer_prompt import ISSUE_ANALYZER_PROMPT
 from src.schemas import IssueAnalysis
 
@@ -19,7 +20,7 @@ def issue_analyzer_node(state: dict) -> dict:
     Returns:
         Updated state with issue analysis fields
     """
-    print("---ISSUE ANALYZER---")
+    print_node_header("ISSUE ANALYZER")
 
     query = state.get("query", "")
     print(f"  Analyzing issue: {query[:100]}...")

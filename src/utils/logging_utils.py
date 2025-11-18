@@ -26,6 +26,43 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 
+def get_current_model_info() -> str:
+    """
+    Get information about currently configured LLM provider and model.
+
+    Returns:
+        String describing the current model (e.g., "gemini/gemini-2.5-flash" or "ollama/llama3+command-r")
+    """
+    from dotenv import load_dotenv
+    load_dotenv()
+
+    provider = os.getenv("MODEL_PROVIDER", "ollama")
+
+    if provider == "gemini":
+        from src.models import DEFAULT_GEMINI_MODEL
+        return f"gemini/{DEFAULT_GEMINI_MODEL}"
+    else:
+        # Ollama uses different models for different tasks
+        return "ollama/llama3+command-r"
+
+
+def print_node_header(node_name: str):
+    """
+    Print a standardized node header with model information.
+
+    Shows which LLM model is being used for this node execution.
+
+    Example:
+        print_node_header("MASTER PLANNER")
+        # Outputs: ---MASTER PLANNER (ollama/llama3+command-r)---
+
+    Args:
+        node_name: Name of the node (e.g., "MASTER PLANNER", "SYNTHESIZER")
+    """
+    model_info = get_current_model_info()
+    print(f"---{node_name} ({model_info})---")
+
+
 class ExecutionLogger:
     """
     Logger for tracking execution flow through the LangGraph workflow.

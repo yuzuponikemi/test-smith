@@ -5,6 +5,7 @@ Part of the Causal Inference Graph workflow for root cause analysis.
 """
 
 from src.models import get_causal_checker_model
+from src.utils.logging_utils import print_node_header
 from src.prompts.causal_checker_prompt import CAUSAL_CHECKER_PROMPT
 from src.schemas import CausalAnalysis
 
@@ -19,7 +20,7 @@ def causal_checker_node(state: dict) -> dict:
     Returns:
         Updated state with causal_relationships
     """
-    print("---CAUSAL CHECKER---")
+    print_node_header("CAUSAL CHECKER")
 
     query = state.get("query", "")
     issue_summary = state.get("issue_summary", "")

@@ -5,6 +5,8 @@ Part of the Causal Inference Graph workflow for root cause analysis.
 Generates structured data representing causal relationships as a graph.
 """
 
+from src.utils.logging_utils import print_node_header
+
 
 def causal_graph_builder_node(state: dict) -> dict:
     """
@@ -20,7 +22,7 @@ def causal_graph_builder_node(state: dict) -> dict:
     Returns:
         Updated state with causal_graph_data
     """
-    print("---CAUSAL GRAPH BUILDER---")
+    print_node_header("CAUSAL GRAPH BUILDER")
 
     hypotheses = state.get("hypotheses", [])
     symptoms = state.get("symptoms", [])

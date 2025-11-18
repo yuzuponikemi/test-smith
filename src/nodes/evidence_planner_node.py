@@ -8,6 +8,7 @@ Reuses the strategic planning approach from the research graph.
 import os
 from pathlib import Path
 from src.models import get_evidence_planner_model
+from src.utils.logging_utils import print_node_header
 from src.prompts.evidence_planner_prompt import EVIDENCE_PLANNER_PROMPT
 from src.schemas import StrategicPlan
 
@@ -67,7 +68,7 @@ def evidence_planner_node(state: dict) -> dict:
     Returns:
         Updated state with rag_queries, web_queries, and allocation_strategy
     """
-    print("---EVIDENCE PLANNER---")
+    print_node_header("EVIDENCE PLANNER")
 
     query = state.get("query", "")
     issue_summary = state.get("issue_summary", "")

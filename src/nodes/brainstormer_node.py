@@ -5,6 +5,7 @@ Part of the Causal Inference Graph workflow for root cause analysis.
 """
 
 from src.models import get_brainstormer_model
+from src.utils.logging_utils import print_node_header
 from src.prompts.brainstormer_prompt import BRAINSTORMER_PROMPT
 from src.schemas import HypothesisList
 
@@ -19,7 +20,7 @@ def brainstormer_node(state: dict) -> dict:
     Returns:
         Updated state with hypotheses list
     """
-    print("---BRAINSTORMER---")
+    print_node_header("BRAINSTORMER")
 
     query = state.get("query", "")
     issue_summary = state.get("issue_summary", "")
