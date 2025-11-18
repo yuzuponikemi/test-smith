@@ -158,6 +158,96 @@ class PlanRevision(BaseModel):
         description="How this revision will improve the final report quality"
     )
 
+# === Reflection & Self-Critique Schemas ===
+
+class CritiquePoint(BaseModel):
+    """
+    A single critique point identified during reflection.
+
+    Used to identify specific issues in research findings that need attention
+    before synthesis.
+    """
+    category: Literal[
+        "logical_fallacy",
+        "contradiction",
+        "missing_evidence",
+        "bias_detected",
+        "source_credibility",
+        "alternative_perspective",
+        "incomplete_coverage",
+        "other"
+    ] = Field(
+        description="Category of the critique point"
+    )
+    severity: Literal["critical", "moderate", "minor"] = Field(
+        description="Severity level: 'critical' = must fix before synthesis, "
+                    "'moderate' = should address if possible, "
+                    "'minor' = note for improvement"
+    )
+    description: str = Field(
+        description="Clear description of the issue identified"
+    )
+    location: str = Field(
+        description="Where in the analyzed data this issue appears (e.g., 'subtask_2', 'web results', 'overall')"
+    )
+    recommendation: str = Field(
+        description="Specific recommendation for addressing this issue"
+    )
+    confidence: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Confidence in this critique (0.0-1.0)"
+    )
+
+class ReflectionCritique(BaseModel):
+    """
+    Meta-reasoning analysis of research findings before synthesis.
+
+    Provides critical review of information quality, identifies gaps,
+    contradictions, biases, and suggests improvements to ensure
+    high-quality, trustworthy research output.
+    """
+    overall_quality: Literal["excellent", "good", "adequate", "poor"] = Field(
+        description="Overall assessment of research findings quality"
+    )
+    quality_reasoning: str = Field(
+        description="Detailed explanation of the overall quality assessment"
+    )
+    critique_points: List[CritiquePoint] = Field(
+        default_factory=list,
+        description="Specific issues identified in the research findings"
+    )
+    missing_perspectives: List[str] = Field(
+        default_factory=list,
+        description="Important perspectives or viewpoints that are missing from the research"
+    )
+    contradictions: List[str] = Field(
+        default_factory=list,
+        description="Contradictions or conflicts found in the research data"
+    )
+    bias_indicators: List[str] = Field(
+        default_factory=list,
+        description="Potential biases detected in sources or analysis"
+    )
+    evidence_strength: Literal["strong", "moderate", "weak"] = Field(
+        description="Overall strength of evidence supporting conclusions"
+    )
+    should_continue_research: bool = Field(
+        description="Whether additional research iteration is needed to address critical gaps"
+    )
+    continuation_reasoning: str = Field(
+        description="Explanation for whether to continue research or proceed to synthesis"
+    )
+    synthesis_recommendations: List[str] = Field(
+        default_factory=list,
+        description="Specific recommendations for the synthesis phase to address identified issues"
+    )
+    confidence_score: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Overall confidence in the research findings (0.0-1.0)"
+    )
+
 # === Causal Inference Schemas ===
 
 class IssueAnalysis(BaseModel):

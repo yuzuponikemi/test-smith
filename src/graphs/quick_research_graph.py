@@ -27,6 +27,7 @@ from src.nodes.rag_retriever_node import rag_retriever
 from src.nodes.analyzer_node import analyzer_node
 from src.nodes.synthesizer_node import synthesizer_node
 from src.nodes.evaluator_node import evaluator_node
+from src.nodes.reflection_node import reflection_node
 
 
 class QuickResearchState(TypedDict):
@@ -51,19 +52,41 @@ class QuickResearchState(TypedDict):
     reason: str
     loop_count: int
 
+    # Reflection & Self-Critique
+    reflection_critique: dict  # ReflectionCritique as dict (JSON-serializable)
+    reflection_quality: str  # Overall quality assessment
+    should_continue_research: bool  # Whether reflection identified critical gaps
+    reflection_confidence: float  # Confidence score from reflection (0.0-1.0)
+
 
 def quick_router(state: QuickResearchState) -> Literal["synthesizer", "planner"]:
     """
-    Simple router: synthesize if sufficient or max loops reached, else refine
+    Router with reflection-aware decision making.
 
+    Checks both evaluation and reflection critique to determine next step.
     Max 2 iterations to keep response time fast.
     """
     loop_count = state.get("loop_count", 0)
     evaluation = state.get("evaluation", "")
+    should_continue_research = state.get("should_continue_research", False)
+    reflection_quality = state.get("reflection_quality", "adequate")
 
-    if "sufficient" in evaluation.lower() or loop_count >= 2:
+    # Force exit after max loops
+    if loop_count >= 2:
+        print(f"  Quick mode: Max loops reached (quality: {reflection_quality}) → synthesize")
+        return "synthesizer"
+
+    # Check reflection feedback first (higher priority for quality)
+    if should_continue_research:
+        print(f"  Quick mode: Reflection identified critical gaps (quality: {reflection_quality}) → refine")
+        return "planner"
+
+    # Check evaluation
+    if "sufficient" in evaluation.lower():
+        print(f"  Quick mode: Evaluation sufficient (quality: {reflection_quality}) → synthesize")
         return "synthesizer"
     else:
+        print("  Quick mode: Evaluation insufficient → refine")
         return "planner"
 
 
@@ -84,6 +107,7 @@ class QuickResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_node("rag_retriever", rag_retriever)
         workflow.add_node("analyzer", analyzer_node)
         workflow.add_node("evaluator", evaluator_node)
+        workflow.add_node("reflection", reflection_node)
         workflow.add_node("synthesizer", synthesizer_node)
 
         # Set up linear flow with evaluation loop
@@ -100,9 +124,12 @@ class QuickResearchGraphBuilder(BaseGraphBuilder):
         # Analyzer → Evaluator
         workflow.add_edge("analyzer", "evaluator")
 
-        # Evaluator → Router (synthesize or refine)
+        # Evaluator → Reflection (meta-reasoning critique)
+        workflow.add_edge("evaluator", "reflection")
+
+        # Reflection → Router (synthesize or refine based on reflection + evaluation)
         workflow.add_conditional_edges(
-            "evaluator",
+            "reflection",
             quick_router,
             {
                 "synthesizer": "synthesizer",
@@ -126,6 +153,7 @@ class QuickResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_node("rag_retriever", rag_retriever)
         workflow.add_node("analyzer", analyzer_node)
         workflow.add_node("evaluator", evaluator_node)
+        workflow.add_node("reflection", reflection_node)
         workflow.add_node("synthesizer", synthesizer_node)
 
         # Set up edges
@@ -135,8 +163,9 @@ class QuickResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_edge("searcher", "analyzer")
         workflow.add_edge("rag_retriever", "analyzer")
         workflow.add_edge("analyzer", "evaluator")
+        workflow.add_edge("evaluator", "reflection")
         workflow.add_conditional_edges(
-            "evaluator",
+            "reflection",
             quick_router,
             {"synthesizer": "synthesizer", "planner": "planner"}
         )
@@ -165,6 +194,7 @@ class QuickResearchGraphBuilder(BaseGraphBuilder):
                 "Strategic query allocation (RAG vs Web)",
                 "Fast results with minimal overhead",
                 "Maximum 2 refinement iterations",
+                "Meta-reasoning reflection & self-critique",
                 "Parallel RAG and web search"
             ],
             "performance": {

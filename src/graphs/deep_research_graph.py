@@ -45,6 +45,9 @@ from src.nodes.drill_down_generator import drill_down_generator
 # Hierarchical nodes (Phase 4 - Dynamic Replanning)
 from src.nodes.plan_revisor_node import plan_revisor
 
+# Reflection node (Meta-reasoning & Self-Critique)
+from src.nodes.reflection_node import reflection_node
+
 
 # Override print for Studio compatibility (prevents BrokenPipeError)
 def _safe_print(*args, **kwargs):
@@ -102,25 +105,47 @@ class DeepResearchState(TypedDict):
     reason: str  # Evaluator's reasoning (used as feedback for planner refinement)
     loop_count: int
 
+    # === Reflection & Self-Critique Fields ===
+    reflection_critique: dict  # ReflectionCritique as dict (JSON-serializable)
+    reflection_quality: str  # Overall quality assessment: "excellent" | "good" | "adequate" | "poor"
+    should_continue_research: bool  # Whether reflection identified critical gaps requiring more research
+    reflection_confidence: float  # Confidence score from reflection (0.0-1.0)
+
 
 def router(state):
     """
-    Router after evaluator - handles both simple and hierarchical modes
+    Router after reflection - handles both simple and hierarchical modes
 
-    Simple mode: Loop back to planner if insufficient
+    Incorporates reflection critique to make more informed routing decisions.
+    Checks both evaluation and reflection to determine next step.
+
+    Simple mode: Loop back to planner if reflection identifies critical gaps
     Hierarchical mode: Save result and move to next subtask or synthesize
     """
-    print("---ROUTER (POST-EVALUATOR)---")
+    print("---ROUTER (POST-REFLECTION)---")
 
     execution_mode = state.get("execution_mode", "simple")
 
     if execution_mode == "simple":
-        # Existing simple mode logic
+        # Check both evaluation and reflection
         loop_count = state.get("loop_count", 0)
         evaluation = state.get("evaluation", "")
+        should_continue_research = state.get("should_continue_research", False)
+        reflection_quality = state.get("reflection_quality", "adequate")
 
-        if "sufficient" in evaluation.lower() or loop_count >= 2:
-            print("  Simple mode: Evaluation sufficient or max loops reached → synthesize")
+        # Force exit after max loops
+        if loop_count >= 2:
+            print("  Simple mode: Max loops reached → synthesize")
+            return "synthesizer"
+
+        # Check reflection feedback first (higher priority)
+        if should_continue_research:
+            print(f"  Simple mode: Reflection identified critical gaps (quality: {reflection_quality}) → refine with planner")
+            return "planner"
+
+        # Check evaluation
+        if "sufficient" in evaluation.lower():
+            print(f"  Simple mode: Evaluation sufficient, reflection quality: {reflection_quality} → synthesize")
             return "synthesizer"
         else:
             print("  Simple mode: Evaluation insufficient → refine with planner")
@@ -182,6 +207,9 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         # Register new hierarchical nodes (Phase 4)
         workflow.add_node("plan_revisor", plan_revisor)
 
+        # Register reflection node (Meta-reasoning & Self-Critique)
+        workflow.add_node("reflection", reflection_node)
+
         # Entry point: Master Planner (Phase 1 change)
         workflow.set_entry_point("master_planner")
 
@@ -220,9 +248,12 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_edge("drill_down_generator", "plan_revisor")  # Phase 4: Plan revision after drill-down
         workflow.add_edge("plan_revisor", "save_result")
 
-        # After evaluator: Route based on mode
+        # After evaluator: Go to reflection for meta-reasoning critique
+        workflow.add_edge("evaluator", "reflection")
+
+        # After reflection: Route based on mode and reflection feedback
         workflow.add_conditional_edges(
-            "evaluator",
+            "reflection",
             router,
             {
                 "synthesizer": "synthesizer",  # Simple mode: sufficient
@@ -263,6 +294,7 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_node("depth_evaluator", depth_evaluator)
         workflow.add_node("drill_down_generator", drill_down_generator)
         workflow.add_node("plan_revisor", plan_revisor)
+        workflow.add_node("reflection", reflection_node)
 
         # Set up all edges (same as build())
         workflow.set_entry_point("master_planner")
@@ -284,8 +316,9 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_edge("depth_evaluator", "drill_down_generator")
         workflow.add_edge("drill_down_generator", "plan_revisor")
         workflow.add_edge("plan_revisor", "save_result")
+        workflow.add_edge("evaluator", "reflection")
         workflow.add_conditional_edges(
-            "evaluator",
+            "reflection",
             router,
             {"synthesizer": "synthesizer", "planner": "planner", "save_result": "save_result"}
         )
@@ -319,7 +352,8 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
                 "Depth-aware exploration",
                 "Strategic query allocation (RAG vs Web)",
                 "Recursive drill-down up to 2 levels",
-                "Budget-aware execution control"
+                "Budget-aware execution control",
+                "Meta-reasoning reflection & self-critique"
             ],
             "phases": {
                 "1": "Basic hierarchical decomposition",
