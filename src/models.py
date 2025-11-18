@@ -104,3 +104,59 @@ def get_synthesizer_model():
         ollama_model="llama3",
         temperature=0.8  # Slightly higher for more creative synthesis
     )
+
+
+# === Causal Inference Models ===
+
+def get_issue_analyzer_model():
+    """Issue analysis and symptom extraction for causal inference"""
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="llama3",
+        temperature=0.5  # Lower temperature for systematic analysis
+    )
+
+
+def get_brainstormer_model():
+    """Root cause hypothesis generation (brainstorming)"""
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="llama3",
+        temperature=0.9  # Higher temperature for creative divergent thinking
+    )
+
+
+def get_evidence_planner_model():
+    """Strategic evidence gathering planning for causal validation"""
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="llama3",
+        temperature=0.7
+    )
+
+
+def get_causal_checker_model():
+    """Causal relationship validation and evidence assessment"""
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="command-r",
+        temperature=0.5  # Lower temperature for rigorous causal reasoning
+    )
+
+
+def get_hypothesis_validator_model():
+    """Hypothesis ranking and probability assessment"""
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="command-r",
+        temperature=0.5  # Lower temperature for consistent ranking
+    )
+
+
+def get_root_cause_synthesizer_model():
+    """Root cause analysis report synthesis"""
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="llama3",
+        temperature=0.8  # Slightly higher for comprehensive reporting
+    )

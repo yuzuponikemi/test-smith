@@ -2,7 +2,7 @@
 
 This directory contains visual diagrams for all registered graph workflows.
 
-**Generated:** 4 / 4 graphs
+**Generated:** 5 / 5 graphs
 
 ## Available Graphs
 
@@ -50,6 +50,17 @@ Side-by-side analysis and comparison workflow
 - 🖼️ [comparative_graph.png](./comparative_graph.png) (PNG image)
 - 📝 [comparative_graph.txt](./comparative_graph.txt) (ASCII diagram)
 
+### Causal Inference
+
+Root cause analysis with causal reasoning and hypothesis ranking
+
+- **Complexity:** medium
+- **Version:** 1.0
+
+**Files:**
+- 🖼️ [causal_inference_graph.png](./causal_inference_graph.png) (PNG image)
+- 📝 [causal_inference_graph.txt](./causal_inference_graph.txt) (ASCII diagram)
+
 ## Graph Comparison
 
 | Graph | Complexity | Best For |
@@ -58,3 +69,4 @@ Side-by-side analysis and comparison workflow
 | Quick Research | low | Simple, straightforward questions |
 | Fact Check | medium | Verify factual claims |
 | Comparative Research | medium | Compare technologies, frameworks, or tools |
+| Causal Inference | medium | Root cause analysis for technical issues |
