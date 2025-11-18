@@ -521,7 +521,7 @@ LANGCHAIN_PROJECT="deep-research-v1-proto"
 **Common Root Causes:**
 - UnstructuredLoader over-splitting → Use preprocessor
 - Repeated headers/footers → Enable boilerplate removal
-- Small sections in source docs → Follow `WRITING_RAG_FRIENDLY_DOCUMENTATION.md`
+- Small sections in source docs → Follow `docs/knowledge-base/writing-docs.md`
 
 **Solution:** Always use `scripts/ingest/ingest_with_preprocessor.py` for production ingestion.
 
@@ -545,21 +545,32 @@ TAVILY_API_KEY="<tavily-key>"
 
 ## Additional Resources
 
-**Architecture & System Design:**
-- **docs/system-overview.md** - Comprehensive architecture deep dive with preprocessing details
-- **CLAUDE.md** - This file - Quick reference for Claude Code
+**Documentation Entry Point:**
+- **[docs/README.md](docs/README.md)** - Start here for all documentation
 
-**RAG & Knowledge Base:**
-- **docs/RAG_DATA_PREPARATION_GUIDE.md** - 400+ line comprehensive guide
-- **docs/WRITING_RAG_FRIENDLY_DOCUMENTATION.md** - Best practices for document authors
-- **docs/DOCUMENT_DESIGN_EVALUATION.md** - Reproducible quality metrics
-- **PREPROCESSOR_QUICKSTART.md** - Quick start guide for preprocessing
+**Getting Started:**
+- **docs/getting-started/installation.md** - Setup and dependencies
+- **docs/getting-started/quick-start.md** - First query in 5 minutes
+- **docs/getting-started/model-providers.md** - Ollama vs Gemini configuration
+
+**Architecture:**
+- **docs/architecture/system-overview.md** - Complete system architecture
+- **docs/architecture/multi-graph-workflows.md** - Available workflow graphs
+
+**Knowledge Base:**
+- **docs/knowledge-base/rag-guide.md** - Complete RAG configuration guide
+- **docs/knowledge-base/writing-docs.md** - Best practices for documentation
+- **docs/knowledge-base/quality-evaluation.md** - Quality metrics and evaluation
+- **docs/knowledge-base/preprocessor.md** - Document preprocessor usage
+
+**Development:**
+- **docs/development/evaluation-guide.md** - LangSmith evaluation framework
+- **docs/development/logging-debugging.md** - Logging and debugging guide
+- **docs/development/creating-graphs.md** - Building custom workflows
+- **docs/development/ci-cd.md** - CI/CD integration
 
 **Tools & Analysis:**
-- **chroma_explorer.ipynb** - Interactive notebook for database analysis with PCA
-- **scripts/ingest/ingest_with_preprocessor.py** - Production ingestion with quality pipeline
-- **scripts/ingest/ingest_diagnostic.py** - Enhanced ingestion with real-time quality checks
-- **scripts/ingest/clean_and_reingest.sh** - Automated clean re-ingest workflow
-- **scripts/visualization/visualize_graphs.py** - Generate graph diagrams for all workflows
-- **scripts/visualization/visualize_causal_graph.py** - Interactive causal graph visualization
+- **chroma_explorer.ipynb** - Interactive notebook for database analysis
+- **scripts/ingest/ingest_with_preprocessor.py** - Production ingestion
+- **scripts/visualization/visualize_graphs.py** - Graph diagram generation
 - **evaluation/evaluate_agent.py** - LangSmith evaluation runner
