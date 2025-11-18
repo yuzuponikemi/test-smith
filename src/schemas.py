@@ -246,6 +246,8 @@ class ReflectionCritique(BaseModel):
         ge=0.0,
         le=1.0,
         description="Overall confidence in the research findings (0.0-1.0)"
+    )
+
 # === Causal Inference Schemas ===
 
 class IssueAnalysis(BaseModel):
