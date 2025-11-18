@@ -1,7 +1,7 @@
 import argparse
-import uuid
-
-# IMPORTANT: Load .env BEFORE any imports that read environment variables
+import json
+from pathlib import Path
+from datetime import datetime
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -195,6 +195,28 @@ Examples:
                         execution_mode,
                         metadata
                     )
+
+                # Save causal graph data if available (for causal_inference graph)
+                if "causal_graph_data" in final_state and graph_name == "causal_inference":
+                    # Create output directory if needed
+                    Path("causal_graphs").mkdir(exist_ok=True)
+
+                    # Generate filename with timestamp
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    graph_file = Path("causal_graphs") / f"causal_graph_{timestamp}.json"
+
+                    # Save graph data to JSON
+                    with open(graph_file, 'w') as f:
+                        json.dump(final_state["causal_graph_data"], f, indent=2)
+
+                    print(f"\n✓ Causal graph data saved to: {graph_file}")
+                    print(f"  Visualize with: python visualize_causal_graph.py {graph_file}")
+
+                    # Also save as causal_graph.json for easy access
+                    latest_file = Path("causal_graphs") / "causal_graph.json"
+                    with open(latest_file, 'w') as f:
+                        json.dump(final_state["causal_graph_data"], f, indent=2)
+                    print(f"  Latest graph also saved to: {latest_file}\n")
 
                     if logger:
                         logger.log(f"Report saved to: {report_path}")

@@ -131,6 +131,12 @@ def _auto_register_graphs():
     except ImportError as e:
         print(f"[GraphRegistry] Warning: Could not load comparative graph: {e}")
 
+    try:
+        from .causal_inference_graph import CausalInferenceGraphBuilder
+        register_graph("causal_inference", CausalInferenceGraphBuilder())
+    except ImportError as e:
+        print(f"[GraphRegistry] Warning: Could not load causal_inference graph: {e}")
+
 
 # Auto-register graphs on module import
 _auto_register_graphs()
