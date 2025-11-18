@@ -7,6 +7,9 @@ import uuid
 # Import new graph registry system
 from src.graphs import get_graph, list_graphs, get_default_graph
 
+# Import tool system
+from src.tools import initialize_tools, list_available_tools
+
 # Keep backward compatibility - import old graph
 try:
     from src.graph import graph as legacy_graph
@@ -47,6 +50,18 @@ Examples:
         help="Show detailed information including features and performance metrics"
     )
 
+    # Tools command - list available tools
+    tools_parser = subparsers.add_parser(
+        "tools",
+        help="List all available tools (function + MCP)",
+        description="Display all registered tools for computational enhancement"
+    )
+    tools_parser.add_argument(
+        "--initialize",
+        action="store_true",
+        help="Initialize tools first (loads built-in and connects to MCP servers)"
+    )
+
     # Run command
     run_parser = subparsers.add_parser("run", help="Run the LangGraph agent")
     run_parser.add_argument("query", type=str, help="The query to send to the agent")
@@ -59,6 +74,8 @@ Examples:
     run_parser.add_argument("--thread-id", type=str, help="The thread ID to use for the conversation")
     run_parser.add_argument("--no-log", action="store_true", help="Disable file logging (console only)")
     run_parser.add_argument("--no-report", action="store_true", help="Don't save final report to file")
+    run_parser.add_argument("--no-tools", action="store_true", help="Disable tool use (computation/verification)")
+    run_parser.add_argument("--mcp-servers", type=str, help="Comma-separated list of MCP servers to connect")
 
     # List command
     list_parser = subparsers.add_parser("list", help="List recent reports or logs")
@@ -104,6 +121,16 @@ Examples:
         print("\nUsage: python main.py run \"your query\" --graph <graph_name>")
         print("="*80 + "\n")
 
+    elif args.command == "tools":
+        # Initialize tools if requested
+        if args.initialize:
+            initialize_tools(enable_builtin=True, enable_mcp=True)
+        else:
+            # Just register built-in tools for listing
+            initialize_tools(enable_builtin=True, enable_mcp=False)
+
+        list_available_tools()
+
     elif args.command == "run":
         # Select graph workflow
         graph_name = args.graph if args.graph else get_default_graph()
@@ -117,6 +144,18 @@ Examples:
             print(f"\nAvailable graphs: {', '.join(list_graphs().keys())}")
             print("Use 'python main.py graphs' for detailed information")
             return
+
+        # Initialize tools if not disabled
+        tools_enabled = not args.no_tools
+        if tools_enabled:
+            mcp_servers = args.mcp_servers.split(",") if args.mcp_servers else None
+            initialize_tools(
+                enable_builtin=True,
+                enable_mcp=bool(mcp_servers),
+                mcp_servers=mcp_servers
+            )
+        else:
+            print("[System] Tools disabled")
 
         with SqliteSaver.from_conn_string(":memory:") as memory:
             # Get uncompiled graph and compile with checkpointer
@@ -140,7 +179,11 @@ Examples:
 
             # Track state for report saving
             final_state = {}
-            inputs = {"query": args.query, "loop_count": 0}
+            inputs = {
+                "query": args.query,
+                "loop_count": 0,
+                "tools_enabled": tools_enabled
+            }
 
             try:
                 for output in app.stream(inputs, config=config):

@@ -45,6 +45,10 @@ from src.nodes.drill_down_generator import drill_down_generator
 # Hierarchical nodes (Phase 4 - Dynamic Replanning)
 from src.nodes.plan_revisor_node import plan_revisor
 
+# Tool use nodes (Phase 5 - Computational Enhancement)
+from src.nodes.tool_planner_node import tool_planner
+from src.nodes.tool_executor_node import tool_executor, tool_results_aggregator
+
 
 # Override print for Studio compatibility (prevents BrokenPipeError)
 def _safe_print(*args, **kwargs):
@@ -89,6 +93,13 @@ class DeepResearchState(TypedDict):
     node_execution_count: int  # Number of node executions (tracks recursion usage)
     recursion_limit: int  # Maximum recursion limit from config (default: 150)
     budget_warnings: list  # Warnings when budget is running low
+
+    # === Tool Use Fields (Phase 5 - Computational Enhancement) ===
+    tools_enabled: bool  # Whether tool use is enabled (default: True)
+    tool_calls: list  # Planned tool invocations from tool_planner
+    tool_results: list  # Results from tool_executor
+    tool_results_text: str  # Formatted tool results for synthesis
+    tool_planning_result: str  # Reasoning from tool planner
 
     # === Existing Fields (used per-subtask in hierarchical mode) ===
     web_queries: list[str]  # Queries for web search
@@ -182,6 +193,11 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         # Register new hierarchical nodes (Phase 4)
         workflow.add_node("plan_revisor", plan_revisor)
 
+        # Register tool use nodes (Phase 5)
+        workflow.add_node("tool_planner", tool_planner)
+        workflow.add_node("tool_executor", tool_executor)
+        workflow.add_node("tool_aggregator", tool_results_aggregator)
+
         # Entry point: Master Planner (Phase 1 change)
         workflow.set_entry_point("master_planner")
 
@@ -205,9 +221,16 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_edge("searcher", "analyzer")
         workflow.add_edge("rag_retriever", "analyzer")
 
-        # After analyzer: Route to appropriate evaluator based on mode (Phase 2 enhancement)
+        # After analyzer: Go to tool planner for computational enhancement (Phase 5)
+        workflow.add_edge("analyzer", "tool_planner")
+
+        # Tool execution chain
+        workflow.add_edge("tool_planner", "tool_executor")
+        workflow.add_edge("tool_executor", "tool_aggregator")
+
+        # After tool aggregation: Route to appropriate evaluator based on mode (Phase 2 enhancement)
         workflow.add_conditional_edges(
-            "analyzer",
+            "tool_aggregator",
             analyzer_router,
             {
                 "evaluator": "evaluator",
@@ -264,6 +287,11 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_node("drill_down_generator", drill_down_generator)
         workflow.add_node("plan_revisor", plan_revisor)
 
+        # Register tool use nodes (Phase 5)
+        workflow.add_node("tool_planner", tool_planner)
+        workflow.add_node("tool_executor", tool_executor)
+        workflow.add_node("tool_aggregator", tool_results_aggregator)
+
         # Set up all edges (same as build())
         workflow.set_entry_point("master_planner")
         workflow.add_conditional_edges(
@@ -276,8 +304,14 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_edge("planner", "rag_retriever")
         workflow.add_edge("searcher", "analyzer")
         workflow.add_edge("rag_retriever", "analyzer")
+
+        # Tool use chain (Phase 5)
+        workflow.add_edge("analyzer", "tool_planner")
+        workflow.add_edge("tool_planner", "tool_executor")
+        workflow.add_edge("tool_executor", "tool_aggregator")
+
         workflow.add_conditional_edges(
-            "analyzer",
+            "tool_aggregator",
             analyzer_router,
             {"evaluator": "evaluator", "depth_evaluator": "depth_evaluator"}
         )
@@ -319,13 +353,16 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
                 "Depth-aware exploration",
                 "Strategic query allocation (RAG vs Web)",
                 "Recursive drill-down up to 2 levels",
-                "Budget-aware execution control"
+                "Budget-aware execution control",
+                "Tool use for computation and verification (Phase 5)",
+                "MCP tool integration for external services"
             ],
             "phases": {
                 "1": "Basic hierarchical decomposition",
                 "2": "Depth evaluation and quality assessment",
                 "3": "Recursive drill-down for important subtasks",
                 "4": "Dynamic plan revision based on discoveries",
-                "4.1": "Budget-aware control and monitoring"
+                "4.1": "Budget-aware control and monitoring",
+                "5": "Tool use for computational enhancement and verification"
             }
         }
