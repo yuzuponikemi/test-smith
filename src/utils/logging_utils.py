@@ -26,6 +26,44 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 
+def get_current_model_info() -> str:
+    """
+    Get information about the currently configured LLM provider and model.
+
+    Returns:
+        String like "gemini-2.5-flash" or "ollama/llama3"
+    """
+    from dotenv import load_dotenv
+    load_dotenv()
+
+    provider = os.getenv("MODEL_PROVIDER", "ollama")
+
+    if provider == "gemini":
+        # Import to get the actual model name
+        try:
+            from src.models import DEFAULT_GEMINI_MODEL
+            return f"gemini/{DEFAULT_GEMINI_MODEL}"
+        except:
+            return "gemini/unknown"
+    else:
+        return "ollama/llama3+command-r"
+
+
+def print_node_header(node_name: str):
+    """
+    Print a standardized node header with model information.
+
+    Args:
+        node_name: Name of the node (e.g., "MASTER PLANNER")
+
+    Example:
+        print_node_header("MASTER PLANNER")
+        # Outputs: ---MASTER PLANNER (ollama/llama3+command-r)---
+    """
+    model_info = get_current_model_info()
+    print(f"---{node_name} ({model_info})---")
+
+
 class ExecutionLogger:
     """
     Logger for tracking execution flow through the LangGraph workflow.
@@ -87,8 +125,9 @@ Start Time: {self.start_time.isoformat()}
         print(message)
 
     def log_node_start(self, node_name: str):
-        """Log the start of a node execution."""
-        self.log(f"\n--- {node_name.upper()} ---", "NODE")
+        """Log the start of a node execution with model info."""
+        model_info = get_current_model_info()
+        self.log(f"\n--- {node_name.upper()} ({model_info}) ---", "NODE")
 
     def log_node_end(self, node_name: str, output: Dict[str, Any]):
         """Log the end of a node execution with its output."""

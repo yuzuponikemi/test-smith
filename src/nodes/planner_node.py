@@ -1,6 +1,7 @@
 from src.models import get_planner_model
 from src.prompts.planner_prompt import STRATEGIC_PLANNER_PROMPT
 from src.schemas import StrategicPlan
+from src.utils.logging_utils import print_node_header
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
 import os
@@ -83,7 +84,7 @@ def planner(state):
     - What needs current/external information from web
     - Query complexity and information requirements
     """
-    print("---STRATEGIC PLANNER---")
+    print_node_header("STRATEGIC PLANNER")
 
     query = state["query"]
     feedback = state.get("reason", "")

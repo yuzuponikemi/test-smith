@@ -1,6 +1,7 @@
 from src.models import get_master_planner_model
 from src.prompts.master_planner_prompt import MASTER_PLANNER_PROMPT
 from src.schemas import MasterPlan
+from src.utils.logging_utils import print_node_header
 
 def master_planner(state):
     """
@@ -11,7 +12,7 @@ def master_planner(state):
 
     Phase 1 (v2.0-alpha): Basic hierarchical decomposition
     """
-    print("---MASTER PLANNER---")
+    print_node_header("MASTER PLANNER")
 
     query = state["query"]
     print(f"  Analyzing query: {query[:100]}...")

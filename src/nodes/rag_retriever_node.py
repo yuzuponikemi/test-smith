@@ -1,6 +1,7 @@
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
 
+from src.utils.logging_utils import print_node_header
 def rag_retriever(state):
     """
     RAG Retriever Node - Retrieves relevant chunks from ChromaDB knowledge base
@@ -14,7 +15,7 @@ def rag_retriever(state):
     IMPORTANT: Uses nomic-embed-text for embedding queries (same model used during ingestion)
     to ensure embeddings are in the same vector space.
     """
-    print("---RAG RETRIEVER---")
+    print_node_header("RAG RETRIEVER")
     rag_queries = state.get("rag_queries", [])
 
     if not rag_queries:

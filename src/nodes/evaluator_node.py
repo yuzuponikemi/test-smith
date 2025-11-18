@@ -1,9 +1,10 @@
 from src.models import get_evaluation_model
+from src.utils.logging_utils import print_node_header
 from src.prompts.evaluator_prompt import EVALUATOR_PROMPT
 from src.schemas import Evaluation
 
 def evaluator_node(state):
-    print("---EVALUATOR---")
+    print_node_header("EVALUATOR")
     model = get_evaluation_model()
 
     # Get context for evaluation

@@ -1,4 +1,5 @@
 from src.models import get_evaluation_model
+from src.utils.logging_utils import print_node_header
 from src.prompts.depth_evaluator_prompt import DEPTH_EVALUATOR_PROMPT
 from src.schemas import DepthEvaluation
 
@@ -16,7 +17,7 @@ def depth_evaluator(state):
     - drill_down_areas: Specific areas for deeper exploration
     - reasoning: Explanation of the assessment
     """
-    print("---DEPTH EVALUATOR---")
+    print_node_header("DEPTH EVALUATOR")
 
     # Get current subtask context
     master_plan = state.get("master_plan", {})

@@ -1,9 +1,10 @@
 from src.models import get_synthesizer_model
+from src.utils.logging_utils import print_node_header
 from src.prompts.synthesizer_prompt import SYNTHESIZER_PROMPT, HIERARCHICAL_SYNTHESIZER_PROMPT
 import json
 
 def synthesizer_node(state):
-    print("---SYNTHESIZER---")
+    print_node_header("SYNTHESIZER")
     model = get_synthesizer_model()
 
     # Get execution mode

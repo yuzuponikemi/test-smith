@@ -6,6 +6,7 @@ revised to add new subtasks, adjust priorities, or change scope based on discove
 """
 
 from src.models import get_evaluation_model
+from src.utils.logging_utils import print_node_header
 from src.prompts.plan_revisor_prompt import PLAN_REVISOR_PROMPT
 from src.schemas import PlanRevision, SubTask
 from src.utils.recursion_budget import calculate_recursion_budget, log_budget_status, increment_execution_count
@@ -37,7 +38,7 @@ def plan_revisor(state):
     Returns:
         dict: Updated state with revised master_plan (if revision needed)
     """
-    print("---PLAN REVISOR---")
+    print_node_header("PLAN REVISOR")
 
     # Track execution
     state.update(increment_execution_count(state))

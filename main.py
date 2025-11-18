@@ -1,10 +1,14 @@
 import argparse
-from dotenv import load_dotenv
-from langgraph.checkpoint.sqlite import SqliteSaver
-from src.utils.logging_utils import setup_execution_logger, save_report, get_recent_reports, get_recent_logs
 import uuid
 
-# Import new graph registry system
+# IMPORTANT: Load .env BEFORE any imports that read environment variables
+from dotenv import load_dotenv
+load_dotenv()
+
+from langgraph.checkpoint.sqlite import SqliteSaver
+from src.utils.logging_utils import setup_execution_logger, save_report, get_recent_reports, get_recent_logs
+
+# Import new graph registry system (depends on MODEL_PROVIDER being set)
 from src.graphs import get_graph, list_graphs, get_default_graph
 
 # Keep backward compatibility - import old graph
@@ -14,7 +18,7 @@ except ImportError:
     legacy_graph = None
 
 def main():
-    load_dotenv()
+    # Note: load_dotenv() is called at module import time (top of file)
     parser = argparse.ArgumentParser(
         description="Test-Smith v2.1 - Multi-Graph Research Agent System",
         formatter_class=argparse.RawDescriptionHelpFormatter,

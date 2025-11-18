@@ -1,3 +1,4 @@
+from src.utils.logging_utils import print_node_header
 def subtask_executor(state):
     """
     Prepares state for executing a single subtask
@@ -8,7 +9,7 @@ def subtask_executor(state):
     The Strategic Planner will receive a focused query for this subtask
     instead of the original broad query.
     """
-    print("---SUBTASK EXECUTOR---")
+    print_node_header("SUBTASK EXECUTOR")
 
     master_plan = state["master_plan"]
     current_index = state["current_subtask_index"]
