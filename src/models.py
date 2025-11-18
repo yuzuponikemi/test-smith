@@ -160,3 +160,32 @@ def get_root_cause_synthesizer_model():
         ollama_model="llama3",
         temperature=0.8  # Slightly higher for comprehensive reporting
     )
+
+
+# === Code Execution Models ===
+
+def get_code_needs_detector_model():
+    """Analyze whether code execution would benefit the research"""
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="llama3",
+        temperature=0.3  # Low temperature for consistent detection
+    )
+
+
+def get_code_generator_model():
+    """Generate Python code for data analysis and computation"""
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="llama3",
+        temperature=0.3  # Low temperature for deterministic code generation
+    )
+
+
+def get_code_result_analyzer_model():
+    """Analyze and interpret code execution results"""
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="llama3",
+        temperature=0.5  # Moderate temperature for result interpretation
+    )

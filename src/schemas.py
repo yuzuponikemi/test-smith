@@ -387,3 +387,110 @@ class HypothesisRanking(BaseModel):
     overall_assessment: str = Field(
         description="Overall assessment of root cause certainty"
     )
+
+# === Code Execution Schemas ===
+
+class CodeNeedsAnalysis(BaseModel):
+    """
+    Analysis of whether code execution would benefit the research.
+
+    Determines if the query and available data warrant programmatic analysis
+    such as calculations, data processing, or visualizations.
+    """
+    needs_code_execution: bool = Field(
+        description="Whether code execution would be beneficial for this query"
+    )
+    reasoning: str = Field(
+        description="Explanation of why code execution is or isn't needed"
+    )
+    task_type: Literal[
+        "calculation",
+        "data_analysis",
+        "visualization",
+        "text_analysis",
+        "statistical_analysis",
+        "comparison",
+        "none"
+    ] = Field(
+        description="Type of computational task needed (or 'none' if not needed)"
+    )
+    task_description: str = Field(
+        description="Specific description of what computation should be performed"
+    )
+    data_to_extract: List[str] = Field(
+        default_factory=list,
+        description="Specific data points to extract from analyzed results for computation"
+    )
+    expected_output: str = Field(
+        description="What the code execution should produce (e.g., 'growth rate percentage', 'comparison chart')"
+    )
+
+class GeneratedCode(BaseModel):
+    """
+    Python code generated for execution.
+
+    Contains executable code to perform analysis or computations
+    on research data.
+    """
+    code: str = Field(
+        description="Executable Python code"
+    )
+    description: str = Field(
+        description="Brief description of what the code does"
+    )
+    required_packages: List[str] = Field(
+        default_factory=list,
+        description="Python packages required to run this code"
+    )
+    expected_runtime: Literal["fast", "medium", "slow"] = Field(
+        default="fast",
+        description="Expected execution time: 'fast' (<5s), 'medium' (5-30s), 'slow' (>30s)"
+    )
+
+class CodeExecutionResult(BaseModel):
+    """
+    Result of code execution.
+
+    Contains the execution output, status, and any generated artifacts.
+    """
+    success: bool = Field(
+        description="Whether the code executed successfully"
+    )
+    output: str = Field(
+        description="Standard output from code execution"
+    )
+    error: str = Field(
+        default="",
+        description="Error message if execution failed"
+    )
+    execution_time_seconds: float = Field(
+        description="Time taken to execute the code"
+    )
+    artifacts: List[str] = Field(
+        default_factory=list,
+        description="List of generated artifacts (e.g., 'output_plot.png')"
+    )
+
+class CodeAnalysisResult(BaseModel):
+    """
+    Analysis of code execution results for research purposes.
+
+    Interprets computational output in the context of the research query.
+    """
+    key_findings: List[str] = Field(
+        description="Key findings from the code execution"
+    )
+    quantitative_results: str = Field(
+        description="Summary of numerical/quantitative results"
+    )
+    interpretation: str = Field(
+        description="Interpretation of results in context of the original query"
+    )
+    limitations: List[str] = Field(
+        default_factory=list,
+        description="Limitations or caveats of the analysis"
+    )
+    visualization_description: str = Field(
+        default="",
+        description="Description of any generated visualizations"
+    )
