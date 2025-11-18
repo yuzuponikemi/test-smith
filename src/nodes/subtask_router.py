@@ -1,3 +1,4 @@
+from src.utils.logging_utils import print_node_header
 def subtask_router(state):
     """
     Routes execution based on Master Plan mode
@@ -7,7 +8,7 @@ def subtask_router(state):
     - "execute_subtask" → Execute next subtask in hierarchical mode
     - "synthesize" → All subtasks complete, synthesize results
     """
-    print("---SUBTASK ROUTER---")
+    print_node_header("SUBTASK ROUTER")
 
     execution_mode = state.get("execution_mode", "simple")
 

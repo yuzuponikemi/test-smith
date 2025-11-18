@@ -1,5 +1,6 @@
 from src.utils.recursion_budget import calculate_recursion_budget, log_budget_status, increment_execution_count
 
+from src.utils.logging_utils import print_node_header
 def drill_down_generator(state):
     """
     Drill-Down Generator - Creates child subtasks when deeper exploration is needed
@@ -17,7 +18,7 @@ def drill_down_generator(state):
 
     Returns updated master_plan with child subtasks added.
     """
-    print("---DRILL-DOWN GENERATOR---")
+    print_node_header("DRILL-DOWN GENERATOR")
 
     # Track execution
     state.update(increment_execution_count(state))

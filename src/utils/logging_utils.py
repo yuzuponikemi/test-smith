@@ -124,8 +124,9 @@ Start Time: {self.start_time.isoformat()}
         print(message)
 
     def log_node_start(self, node_name: str):
-        """Log the start of a node execution."""
-        self.log(f"\n--- {node_name.upper()} ---", "NODE")
+        """Log the start of a node execution with model info."""
+        model_info = get_current_model_info()
+        self.log(f"\n--- {node_name.upper()} ({model_info}) ---", "NODE")
 
     def log_node_end(self, node_name: str, output: Dict[str, Any]):
         """Log the end of a node execution with its output."""

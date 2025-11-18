@@ -1,8 +1,9 @@
 from src.models import get_analyzer_model
+from src.utils.logging_utils import print_node_header
 from src.prompts.analyzer_prompt import ANALYZER_PROMPT
 
 def analyzer_node(state):
-    print("---ANALYZER---")
+    print_node_header("ANALYZER")
     model = get_analyzer_model()
 
     # Get strategic context

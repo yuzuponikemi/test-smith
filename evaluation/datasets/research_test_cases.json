@@ -1,0 +1,353 @@
+{
+  "dataset_name": "research_agent_evaluation_v1",
+  "version": "1.0",
+  "description": "Comprehensive test cases for evaluating Test-Smith research agent across different complexity levels and graph types",
+  "metadata": {
+    "created_at": "2025-01-17",
+    "author": "Test-Smith Team",
+    "total_examples": 20
+  },
+  "examples": [
+    {
+      "id": "simple_factual_001",
+      "input": "What is the capital of France?",
+      "reference_output": "Paris is the capital of France.",
+      "expected_graph": "quick_research",
+      "complexity": "simple",
+      "category": "factual_lookup",
+      "evaluation_criteria": {
+        "accuracy": "Must correctly state Paris",
+        "conciseness": "Should be brief, no more than 2-3 sentences",
+        "speed": "Should complete in under 30 seconds"
+      },
+      "metadata": {
+        "expected_sources": ["web"],
+        "should_use_rag": false
+      }
+    },
+    {
+      "id": "simple_factual_002",
+      "input": "Who invented the telephone?",
+      "reference_output": "Alexander Graham Bell is credited with inventing the telephone in 1876.",
+      "expected_graph": "quick_research",
+      "complexity": "simple",
+      "category": "factual_lookup",
+      "evaluation_criteria": {
+        "accuracy": "Must mention Alexander Graham Bell",
+        "completeness": "Should include the year 1876",
+        "hallucination": "Should not invent false details"
+      }
+    },
+    {
+      "id": "fact_check_001",
+      "input": "Is it true that humans only use 10% of their brain?",
+      "reference_output": "False. The claim that humans only use 10% of their brain is a myth. Neuroimaging studies show that virtually all parts of the brain have a known function and are active at different times.",
+      "expected_graph": "fact_check",
+      "complexity": "medium",
+      "category": "claim_verification",
+      "evaluation_criteria": {
+        "accuracy": "Must correctly identify this as a myth/false",
+        "evidence": "Should provide scientific reasoning or studies",
+        "confidence": "Should express high confidence given strong evidence"
+      }
+    },
+    {
+      "id": "fact_check_002",
+      "input": "Did Albert Einstein fail mathematics in school?",
+      "reference_output": "False. This is a common misconception. Einstein excelled in mathematics from a young age. The myth may have originated from confusion about the grading system change in Switzerland or his initial failure of the entrance exam to ETH Zurich (which he later passed).",
+      "expected_graph": "fact_check",
+      "complexity": "medium",
+      "category": "claim_verification",
+      "evaluation_criteria": {
+        "accuracy": "Must identify this as false/myth",
+        "nuance": "Should explain the origin of the misconception",
+        "citations": "Should ideally reference historical records"
+      }
+    },
+    {
+      "id": "comparative_001",
+      "input": "Compare Python vs JavaScript for web development",
+      "reference_output": "Python and JavaScript serve different but complementary roles in web development. JavaScript is essential for frontend development and runs natively in browsers, while Python excels in backend development with frameworks like Django and Flask. Key differences include: async programming models, typing systems, ecosystem maturity, and learning curves.",
+      "expected_graph": "comparative",
+      "complexity": "medium",
+      "category": "comparative_analysis",
+      "evaluation_criteria": {
+        "structure": "Should present clear comparison matrix or side-by-side analysis",
+        "balance": "Should be fair to both technologies",
+        "completeness": "Should cover frontend/backend, performance, ecosystem",
+        "actionability": "Should help reader make informed decision"
+      }
+    },
+    {
+      "id": "comparative_002",
+      "input": "React vs Vue.js: which should I choose?",
+      "reference_output": "React (by Meta) and Vue.js are both excellent frontend frameworks with different philosophies. React has larger community, more job opportunities, and better ecosystem. Vue is easier to learn, has cleaner syntax, and better documentation. Choose React for: large enterprise apps, strong TypeScript needs, native mobile (React Native). Choose Vue for: rapid prototyping, smaller teams, gentler learning curve.",
+      "expected_graph": "comparative",
+      "complexity": "medium",
+      "category": "comparative_analysis",
+      "evaluation_criteria": {
+        "structure": "Should use comparison format with pros/cons",
+        "guidance": "Should provide decision criteria",
+        "recency": "Should reflect current state (2024-2025)",
+        "objectivity": "Should avoid strong bias"
+      }
+    },
+    {
+      "id": "deep_research_001",
+      "input": "Explain quantum computing and its potential applications",
+      "reference_output": "A comprehensive report covering: (1) Quantum computing fundamentals (qubits, superposition, entanglement), (2) Current state of technology (IBM, Google, leading players), (3) Key applications (cryptography, drug discovery, optimization, machine learning), (4) Challenges (decoherence, error correction, scalability), (5) Timeline and future outlook.",
+      "expected_graph": "deep_research",
+      "complexity": "high",
+      "category": "complex_topic",
+      "evaluation_criteria": {
+        "depth": "Should cover multiple subtopics comprehensively",
+        "structure": "Should be well-organized with clear sections",
+        "technical_accuracy": "Should correctly explain quantum principles",
+        "completeness": "Should address current state AND future potential",
+        "sources": "Should synthesize multiple sources"
+      },
+      "metadata": {
+        "expected_subtasks": 4,
+        "min_execution_time": 60,
+        "should_use_hierarchical": true
+      }
+    },
+    {
+      "id": "deep_research_002",
+      "input": "What are the economic and environmental impacts of cryptocurrency mining?",
+      "reference_output": "A multi-faceted analysis covering: (1) Economic aspects (energy costs, hardware investment, profitability, job creation, regional economic impact), (2) Environmental concerns (carbon footprint, e-waste, water usage, renewable energy trends), (3) Regulatory responses, (4) Technological solutions (proof-of-stake, green mining), (5) Future outlook balancing innovation and sustainability.",
+      "expected_graph": "deep_research",
+      "complexity": "high",
+      "category": "complex_multi_faceted",
+      "evaluation_criteria": {
+        "multi_perspective": "Should cover economic AND environmental angles",
+        "nuance": "Should acknowledge trade-offs, not be one-sided",
+        "current_data": "Should include recent statistics/trends",
+        "depth": "Should go beyond surface-level analysis",
+        "synthesis": "Should connect economic and environmental aspects"
+      },
+      "metadata": {
+        "expected_subtasks": 5,
+        "requires_recent_data": true,
+        "controversial_topic": true
+      }
+    },
+    {
+      "id": "deep_research_003",
+      "input": "How do CRISPR gene editing technologies work and what are the ethical implications?",
+      "reference_output": "Comprehensive coverage: (1) CRISPR mechanism (Cas9, guide RNA, DNA cutting and repair), (2) Applications (disease treatment, agriculture, research), (3) Recent breakthroughs and clinical trials, (4) Ethical concerns (germline editing, designer babies, consent, equity), (5) Regulatory landscape globally, (6) Future directions and ongoing debates.",
+      "expected_graph": "deep_research",
+      "complexity": "high",
+      "category": "science_ethics",
+      "evaluation_criteria": {
+        "technical_depth": "Should explain mechanism accurately",
+        "ethical_coverage": "Should thoroughly explore ethical dimensions",
+        "balance": "Should present multiple viewpoints on ethics",
+        "recency": "Should include latest developments (2023-2025)",
+        "accessibility": "Should explain complex science clearly"
+      },
+      "metadata": {
+        "expected_subtasks": 6,
+        "requires_technical_accuracy": true,
+        "requires_ethical_analysis": true
+      }
+    },
+    {
+      "id": "edge_case_001",
+      "input": "asdfghjkl",
+      "reference_output": "I cannot provide a meaningful response to random characters. Could you please provide a clear research question?",
+      "expected_graph": "any",
+      "complexity": "edge_case",
+      "category": "invalid_input",
+      "evaluation_criteria": {
+        "robustness": "Should handle gracefully without errors",
+        "response": "Should ask for clarification or indicate inability to process",
+        "no_hallucination": "Should NOT generate made-up research on gibberish"
+      }
+    },
+    {
+      "id": "edge_case_002",
+      "input": "",
+      "reference_output": "No query provided. Please provide a research question.",
+      "expected_graph": "any",
+      "complexity": "edge_case",
+      "category": "empty_input",
+      "evaluation_criteria": {
+        "robustness": "Should handle empty input without crashing",
+        "error_handling": "Should provide helpful error message"
+      }
+    },
+    {
+      "id": "ambiguous_001",
+      "input": "Tell me about Python",
+      "reference_output": "Should ask for clarification OR provide overview covering both the programming language and the snake, noting the ambiguity.",
+      "expected_graph": "quick_research",
+      "complexity": "ambiguous",
+      "category": "ambiguous_query",
+      "evaluation_criteria": {
+        "ambiguity_handling": "Should recognize multiple interpretations",
+        "clarification": "Should either ask for clarification or address both meanings",
+        "context_awareness": "Given tech context, programming language is more likely"
+      }
+    },
+    {
+      "id": "rag_specific_001",
+      "input": "How does the strategic query allocation work in Test-Smith?",
+      "reference_output": "Test-Smith uses strategic query allocation to intelligently distribute queries between RAG (knowledge base) and web search. The planner checks KB contents and allocates domain-specific queries to RAG and general/current queries to web search, optimizing information retrieval.",
+      "expected_graph": "quick_research",
+      "complexity": "medium",
+      "category": "internal_documentation",
+      "evaluation_criteria": {
+        "rag_usage": "MUST use RAG/knowledge base, not just web",
+        "accuracy": "Should accurately describe the system's design",
+        "technical_detail": "Should mention planner, allocation strategy",
+        "source_attribution": "Should indicate information came from internal docs"
+      },
+      "metadata": {
+        "requires_kb": true,
+        "should_use_rag": true
+      }
+    },
+    {
+      "id": "rag_specific_002",
+      "input": "What is the hierarchical plan-and-execute strategy in the deep research graph?",
+      "reference_output": "The hierarchical plan-and-execute strategy in Test-Smith's deep research graph includes: master planner for task decomposition, subtask execution with strategic allocation, depth evaluation, drill-down generation for recursive exploration, and dynamic replanning (Phase 4) that adapts the plan based on discoveries during execution.",
+      "expected_graph": "any",
+      "complexity": "medium",
+      "category": "internal_documentation",
+      "evaluation_criteria": {
+        "rag_usage": "MUST retrieve from knowledge base",
+        "completeness": "Should cover all 4 phases mentioned in docs",
+        "accuracy": "Should correctly describe Phase 4 dynamic replanning",
+        "technical_terms": "Should use correct terminology from codebase"
+      },
+      "metadata": {
+        "requires_kb": true,
+        "should_use_rag": true,
+        "tests_rag_quality": true
+      }
+    },
+    {
+      "id": "multi_hop_001",
+      "input": "What challenges does quantum computing face and how might CRISPR be used to address computational biology problems?",
+      "reference_output": "A synthesis connecting two complex topics: (1) Quantum computing challenges (decoherence, error rates, scalability), (2) CRISPR applications in biology (gene editing, disease treatment), (3) Potential intersection: quantum computing could accelerate CRISPR design by simulating molecular interactions, optimizing guide RNA design, and predicting off-target effects.",
+      "expected_graph": "deep_research",
+      "complexity": "very_high",
+      "category": "multi_hop_synthesis",
+      "evaluation_criteria": {
+        "multi_topic": "Should address both quantum computing AND CRISPR",
+        "connection": "Should identify meaningful connections between topics",
+        "depth": "Should go beyond superficial treatment of each",
+        "synthesis": "Should synthesize rather than just concatenate",
+        "speculation_clarity": "Should distinguish proven applications from potential ones"
+      },
+      "metadata": {
+        "expected_subtasks": 6,
+        "requires_synthesis": true,
+        "interdisciplinary": true
+      }
+    },
+    {
+      "id": "current_events_001",
+      "input": "What are the latest developments in artificial intelligence regulation in the EU?",
+      "reference_output": "Current information about EU AI Act, implementation timeline, key provisions (high-risk AI classification, transparency requirements, prohibited practices), enforcement mechanisms, and impact on tech companies.",
+      "expected_graph": "quick_research",
+      "complexity": "medium",
+      "category": "current_events",
+      "evaluation_criteria": {
+        "recency": "MUST include 2024-2025 developments",
+        "accuracy": "Should reflect actual regulatory status",
+        "web_usage": "MUST use web search (not RAG) for current events",
+        "specificity": "Should mention specific laws/acts by name"
+      },
+      "metadata": {
+        "requires_web": true,
+        "time_sensitive": true
+      }
+    },
+    {
+      "id": "technical_depth_001",
+      "input": "Explain the CAP theorem and its implications for distributed database design",
+      "reference_output": "Detailed explanation of: (1) CAP theorem components (Consistency, Availability, Partition tolerance), (2) Trade-offs and impossibility of achieving all three, (3) Real-world examples (CP systems: HBase, MongoDB; AP systems: Cassandra, DynamoDB), (4) Design implications and choosing trade-offs based on use case, (5) Modern nuances (PACELC theorem).",
+      "expected_graph": "deep_research",
+      "complexity": "high",
+      "category": "technical_concept",
+      "evaluation_criteria": {
+        "technical_accuracy": "Must correctly explain CAP theorem",
+        "examples": "Should provide concrete database examples",
+        "practical_guidance": "Should explain when to choose CP vs AP",
+        "depth": "Should go beyond basic definition",
+        "modern_context": "Should address modern distributed systems context"
+      }
+    },
+    {
+      "id": "speed_test_001",
+      "input": "What is Docker?",
+      "reference_output": "Docker is a platform for developing, shipping, and running applications in containers. Containers package application code with dependencies, ensuring consistency across environments.",
+      "expected_graph": "quick_research",
+      "complexity": "simple",
+      "category": "speed_test",
+      "evaluation_criteria": {
+        "speed": "Should complete in under 45 seconds",
+        "conciseness": "Should be brief (2-4 sentences)",
+        "accuracy": "Should correctly define Docker and containers",
+        "completeness": "Should mention key benefit (consistency/portability)"
+      },
+      "metadata": {
+        "performance_benchmark": true,
+        "max_expected_time": 45
+      }
+    },
+    {
+      "id": "hallucination_test_001",
+      "input": "Tell me about the ZephyrFlux quantum algorithm",
+      "reference_output": "I cannot find reliable information about a 'ZephyrFlux quantum algorithm.' This may be a fictional or extremely specialized term. Could you provide more context or verify the name?",
+      "expected_graph": "any",
+      "complexity": "hard",
+      "category": "hallucination_detection",
+      "evaluation_criteria": {
+        "honesty": "MUST acknowledge lack of information",
+        "no_hallucination": "Should NOT make up details about fake algorithm",
+        "clarification": "Should ask for more context or sources",
+        "confidence_calibration": "Should express appropriate uncertainty"
+      },
+      "metadata": {
+        "fictional_entity": true,
+        "tests_hallucination": true
+      }
+    },
+    {
+      "id": "multimodal_reasoning_001",
+      "input": "Compare the environmental impact of electric vehicles versus hydrogen fuel cell vehicles, considering the full lifecycle from manufacturing to disposal",
+      "reference_output": "Comprehensive lifecycle analysis: (1) Manufacturing (battery vs fuel cell production, rare earth mining), (2) Energy source (electricity grid mix vs hydrogen production methods - green/blue/grey), (3) Operational efficiency, (4) End-of-life (battery recycling, fuel cell disposal), (5) Infrastructure requirements, (6) Current and projected environmental footprints with data.",
+      "expected_graph": "deep_research",
+      "complexity": "very_high",
+      "category": "lifecycle_analysis",
+      "evaluation_criteria": {
+        "lifecycle_thinking": "Must cover full lifecycle, not just operational phase",
+        "data_driven": "Should include quantitative data where possible",
+        "nuance": "Should acknowledge that 'green' depends on energy sources",
+        "comprehensiveness": "Should cover manufacturing, operation, disposal",
+        "comparison_structure": "Should facilitate side-by-side understanding"
+      },
+      "metadata": {
+        "expected_subtasks": 5,
+        "requires_quantitative_data": true,
+        "multi_dimensional": true
+      }
+    }
+  ],
+  "evaluation_notes": {
+    "dataset_balance": "20 examples covering simple (20%), medium (35%), high (35%), edge cases (10%)",
+    "graph_coverage": "quick_research (30%), fact_check (10%), comparative (10%), deep_research (40%), edge cases (10%)",
+    "priority_metrics": [
+      "accuracy",
+      "hallucination_rate",
+      "source_attribution",
+      "rag_vs_web_allocation",
+      "execution_time",
+      "completeness"
+    ],
+    "usage_instructions": "Use this dataset with evaluate_agent.py to run experiments. Compare performance across different graph types and model configurations."
+  }
+}

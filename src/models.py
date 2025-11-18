@@ -6,7 +6,7 @@ MODEL_PROVIDER = os.getenv("MODEL_PROVIDER", "ollama")  # "gemini" or "ollama"
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Default Gemini models
-DEFAULT_GEMINI_MODEL = "gemini-1.5-flash"  # Fast and efficient
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"  # Stable and widely supported
 ADVANCED_GEMINI_MODEL = "gemini-1.5-pro"   # For complex tasks (optional)
 
 

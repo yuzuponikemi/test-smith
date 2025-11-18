@@ -1,6 +1,7 @@
 from langchain_community.tools import TavilySearchResults
 import os
 
+from src.utils.logging_utils import print_node_header
 def searcher(state):
     """
     Searcher Node - Executes web searches via Tavily API
@@ -11,7 +12,7 @@ def searcher(state):
     - General knowledge not in KB
     - External sources and references
     """
-    print("---SEARCHER---")
+    print_node_header("SEARCHER")
 
     # Get the Tavily API key from the environment
     tavily_api_key = os.environ.get("TAVILY_API_KEY")
