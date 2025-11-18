@@ -239,25 +239,25 @@ python main.py --version
 ```bash
 # Place documents in documents/ directory
 # Run intelligent preprocessing pipeline
-python ingest_with_preprocessor.py
+python scripts/ingest/ingest_with_preprocessor.py
 
 # With quality filtering (skip files with score < 0.5)
-python ingest_with_preprocessor.py --min-quality 0.5
+python scripts/ingest/ingest_with_preprocessor.py --min-quality 0.5
 
 # Disable specific cleaning steps if needed
-python ingest_with_preprocessor.py --disable-deduplication
+python scripts/ingest/ingest_with_preprocessor.py --disable-deduplication
 ```
 
 **Diagnostic Ingestion (For Debugging):**
 ```bash
 # Use for investigating embedding issues
-python ingest_diagnostic.py
+python scripts/ingest/ingest_diagnostic.py
 ```
 
 **Automated Clean Re-ingest:**
 ```bash
 # Backs up existing database and re-ingests
-./clean_and_reingest.sh
+./scripts/ingest/clean_and_reingest.sh
 ```
 
 #### Analyzing Your Knowledge Base
@@ -333,13 +333,33 @@ Restart PostgreSQL after changes: sudo systemctl restart postgresql
 ```
 test-smith/
 ├── main.py                          # Entry point and CLI
-├── ingest_with_preprocessor.py      # Production ingestion
-├── ingest_diagnostic.py             # Diagnostic ingestion
-├── clean_and_reingest.sh            # Automated re-ingest
 ├── chroma_explorer.ipynb            # Analysis notebook
 ├── PREPROCESSOR_QUICKSTART.md       # Quick start guide
+├── scripts/                         # Organized utility scripts
+│   ├── ingest/                      # Knowledge base ingestion
+│   │   ├── ingest.py               # Basic document ingestion
+│   │   ├── ingest_diagnostic.py    # Diagnostic ingestion
+│   │   ├── ingest_with_preprocessor.py # Production ingestion
+│   │   └── clean_and_reingest.sh   # Automated clean re-ingest
+│   ├── testing/                     # Test scripts
+│   │   ├── test_gemini_models.py
+│   │   ├── test_langsmith_monitoring.py
+│   │   └── test_phase4_dynamic_replanning.py
+│   ├── utils/                       # Utility scripts
+│   │   ├── switch_model_provider.py
+│   │   ├── verify_model_provider.py
+│   │   └── update_node_logging.py
+│   └── visualization/               # Visualization scripts
+│       ├── visualize_graphs.py     # Generate graph diagrams
+│       └── visualize_causal_graph.py
+├── evaluation/                      # Evaluation framework
+│   ├── evaluate_agent.py           # LangSmith evaluation runner
+│   ├── evaluators.py               # Heuristic + LLM evaluators
+│   ├── datasets/                    # Test datasets
+│   └── results/                     # Evaluation results
 ├── docs/                            # Documentation
 │   ├── system-overview.md           # Architecture deep dive
+│   ├── GEMINI.md                    # Gemini API integration
 │   ├── RAG_DATA_PREPARATION_GUIDE.md
 │   ├── WRITING_RAG_FRIENDLY_DOCUMENTATION.md
 │   └── DOCUMENT_DESIGN_EVALUATION.md
@@ -347,6 +367,12 @@ test-smith/
 │   ├── graph.py                     # Workflow definition
 │   ├── models.py                    # LLM configurations
 │   ├── schemas.py                   # Data schemas
+│   ├── graphs/                      # Multiple graph workflows
+│   │   ├── deep_research_graph.py
+│   │   ├── quick_research_graph.py
+│   │   ├── fact_check_graph.py
+│   │   ├── comparative_graph.py
+│   │   └── causal_inference_graph.py
 │   ├── nodes/                       # Agent nodes
 │   │   ├── planner_node.py
 │   │   ├── searcher_node.py
@@ -355,10 +381,6 @@ test-smith/
 │   │   ├── evaluator_node.py
 │   │   └── synthesizer_node.py
 │   ├── prompts/                     # Prompt templates
-│   │   ├── planner_prompt.py
-│   │   ├── analyzer_prompt.py
-│   │   ├── evaluator_prompt.py
-│   │   └── synthesizer_prompt.py
 │   └── preprocessor/                # Preprocessing pipeline
 │       ├── document_analyzer.py     # Quality analysis
 │       ├── chunking_strategy.py     # Smart chunking
@@ -397,7 +419,7 @@ cat ingestion_preprocessed_*.log
 
 **Monthly Evaluation:**
 
-1. Run ingestion: `python ingest_with_preprocessor.py`
+1. Run ingestion: `python scripts/ingest/ingest_with_preprocessor.py`
 2. Extract metrics from log file
 3. Run PCA analysis in notebook (Section 3.0)
 4. Record scores and track progress
@@ -457,7 +479,7 @@ PLANNER_PROMPT = PromptTemplate(
 
 ### Tuning Preprocessing
 
-Edit `ingest_with_preprocessor.py`:
+Edit `scripts/ingest/ingest_with_preprocessor.py`:
 
 ```python
 ingestion = PreprocessedIngestion(
@@ -484,7 +506,7 @@ cleaner = ContentCleaner(
 **Diagnosis:**
 ```bash
 # Run diagnostic ingestion
-python ingest_diagnostic.py
+python scripts/ingest/ingest_diagnostic.py
 
 # Check logs for:
 # - High duplication rate (>15%)
@@ -494,7 +516,7 @@ python ingest_diagnostic.py
 
 **Solutions:**
 1. Review source documents (follow `WRITING_RAG_FRIENDLY_DOCUMENTATION.md`)
-2. Re-ingest with preprocessor: `./clean_and_reingest.sh`
+2. Re-ingest with preprocessor: `./scripts/ingest/clean_and_reingest.sh`
 3. Check PCA analysis in notebook - should need 20-40 components for 95% variance
 
 ### "All Embeddings Look Similar" Issue
@@ -510,7 +532,7 @@ python ingest_diagnostic.py
 - Low content diversity
 
 **Solution:**
-Use `ingest_with_preprocessor.py` which addresses all these issues automatically.
+Use `scripts/ingest/ingest_with_preprocessor.py` which addresses all these issues automatically.
 
 ### Ollama Connection Errors
 
@@ -542,7 +564,7 @@ ollama run nomic-embed-text
 When adding to the knowledge base:
 
 1. Follow guidelines in `docs/WRITING_RAG_FRIENDLY_DOCUMENTATION.md`
-2. Run `python ingest_with_preprocessor.py` to ingest
+2. Run `python scripts/ingest/ingest_with_preprocessor.py` to ingest
 3. Check quality metrics in log file
 4. Run notebook Section 2.2 for validation
 5. Track quality score over time
