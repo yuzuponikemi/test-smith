@@ -26,6 +26,7 @@ class ChunkingMethod(Enum):
     FIXED_SIZE = "fixed_size"
     SEMANTIC = "semantic"
     HYBRID = "hybrid"
+    CODE_AWARE = "code_aware"
 
 
 @dataclass
@@ -87,7 +88,92 @@ class ChunkingStrategy:
                 ("Conclusion", "section"),
                 ("References", "section"),
             ]
+        ),
+        'code': ChunkingConfig(
+            method=ChunkingMethod.CODE_AWARE,
+            chunk_size=1500,
+            chunk_overlap=200,
+            min_chunk_size=50,  # Code can have smaller meaningful chunks
         )
+    }
+
+    # Language-specific separators for code-aware chunking
+    CODE_SEPARATORS = {
+        'python': [
+            "\n\nclass ",      # Class definitions
+            "\n\ndef ",        # Function definitions
+            "\n\nasync def ",  # Async functions
+            "\n\n@",           # Decorators
+            "\n\n",            # Double newlines
+            "\n",              # Single newlines
+            " ",
+            ""
+        ],
+        'javascript': [
+            "\n\nclass ",
+            "\n\nfunction ",
+            "\n\nexport ",
+            "\n\nconst ",
+            "\n\nlet ",
+            "\n\nvar ",
+            "\n\n",
+            "\n",
+            " ",
+            ""
+        ],
+        'typescript': [
+            "\n\nclass ",
+            "\n\ninterface ",
+            "\n\ntype ",
+            "\n\nfunction ",
+            "\n\nexport ",
+            "\n\nconst ",
+            "\n\n",
+            "\n",
+            " ",
+            ""
+        ],
+        'java': [
+            "\n\npublic class ",
+            "\n\nprivate class ",
+            "\n\nclass ",
+            "\n\npublic ",
+            "\n\nprivate ",
+            "\n\nprotected ",
+            "\n\n",
+            "\n",
+            " ",
+            ""
+        ],
+        'golang': [
+            "\n\nfunc ",
+            "\n\ntype ",
+            "\n\nvar ",
+            "\n\nconst ",
+            "\n\n",
+            "\n",
+            " ",
+            ""
+        ],
+        'rust': [
+            "\n\npub fn ",
+            "\n\nfn ",
+            "\n\npub struct ",
+            "\n\nstruct ",
+            "\n\nimpl ",
+            "\n\npub enum ",
+            "\n\nenum ",
+            "\n\n",
+            "\n",
+            " ",
+            ""
+        ],
+        'default': [
+            "\n\n",
+            "\n",
+            " ",
+            ""
+        ]
     }
 
     def __init__(self):
@@ -102,7 +188,8 @@ class ChunkingStrategy:
                      structure_type: str,
                      file_size: int,
                      language: str = 'english',
-                     has_complex_structure: bool = False) -> ChunkingConfig:
+                     has_complex_structure: bool = False,
+                     programming_language: str = None) -> ChunkingConfig:
         """Select appropriate chunking configuration"""
 
         # Start with base config for structure type
@@ -110,6 +197,21 @@ class ChunkingStrategy:
             config = self.DEFAULT_CONFIGS[structure_type]
         else:
             config = self.DEFAULT_CONFIGS['plain_text']
+
+        # Handle code files with language-specific separators
+        if structure_type == 'code' and programming_language:
+            separators = self.CODE_SEPARATORS.get(
+                programming_language,
+                self.CODE_SEPARATORS['default']
+            )
+            config = ChunkingConfig(
+                method=ChunkingMethod.CODE_AWARE,
+                chunk_size=config.chunk_size,
+                chunk_overlap=config.chunk_overlap,
+                min_chunk_size=config.min_chunk_size,
+                separators=separators,
+                metadata={'programming_language': programming_language}
+            )
 
         # Adjust for Japanese content (typically needs larger chunks)
         if language in ('japanese', 'mixed'):
@@ -162,6 +264,8 @@ class ChunkingStrategy:
             chunks = self._chunk_with_markdown_headers(documents, config)
         elif config.method == ChunkingMethod.HYBRID:
             chunks = self._chunk_hybrid(documents, config)
+        elif config.method == ChunkingMethod.CODE_AWARE:
+            chunks = self._chunk_code_aware(documents, config)
         else:
             # Use recursive for most cases
             text_splitter = RecursiveCharacterTextSplitter(
@@ -253,6 +357,31 @@ class ChunkingStrategy:
         except Exception:
             return self._chunk_recursive(documents, config)
 
+    def _chunk_code_aware(self,
+                         documents: List[Document],
+                         config: ChunkingConfig) -> List[Document]:
+        """Code-aware chunking that respects code structure"""
+
+        # Use language-specific separators or defaults
+        separators = config.separators if config.separators else self.CODE_SEPARATORS['default']
+
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=config.chunk_size,
+            chunk_overlap=config.chunk_overlap,
+            separators=separators,
+            length_function=len,
+            keep_separator=True,  # Keep the separator at the start of chunks
+        )
+
+        chunks = text_splitter.split_documents(documents)
+
+        # Add programming language to metadata if available
+        if config.metadata and 'programming_language' in config.metadata:
+            for chunk in chunks:
+                chunk.metadata['programming_language'] = config.metadata['programming_language']
+
+        return chunks
+
     def _chunk_recursive(self,
                         documents: List[Document],
                         config: ChunkingConfig) -> List[Document]:
@@ -296,16 +425,18 @@ def select_chunking_strategy(
     structure_type: str,
     file_size: int,
     language: str = 'english',
-    has_complex_structure: bool = False
+    has_complex_structure: bool = False,
+    programming_language: str = None
 ) -> ChunkingConfig:
     """
     Convenience function to select chunking configuration
 
     Args:
-        structure_type: Type of document ('markdown', 'pdf', 'plain_text')
+        structure_type: Type of document ('markdown', 'pdf', 'plain_text', 'code')
         file_size: Size of file in bytes
         language: Detected language ('english', 'japanese', 'mixed')
         has_complex_structure: Whether document has complex structure
+        programming_language: Programming language for code files ('python', 'javascript', etc.)
 
     Returns:
         ChunkingConfig with recommended settings
@@ -315,7 +446,8 @@ def select_chunking_strategy(
         structure_type=structure_type,
         file_size=file_size,
         language=language,
-        has_complex_structure=has_complex_structure
+        has_complex_structure=has_complex_structure,
+        programming_language=programming_language
     )
 
 

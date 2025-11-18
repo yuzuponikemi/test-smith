@@ -160,3 +160,14 @@ def get_root_cause_synthesizer_model():
         ollama_model="llama3",
         temperature=0.8  # Slightly higher for comprehensive reporting
     )
+
+
+# === Code Assistant Models ===
+
+def get_code_assistant_model():
+    """Code analysis and explanation for codebase queries"""
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="llama3",
+        temperature=0.5  # Lower temperature for accurate code analysis
+    )

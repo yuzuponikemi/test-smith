@@ -25,11 +25,12 @@ class DocumentAnalysis:
     file_type: str
     estimated_content_length: int
     language: str
-    structure_type: str  # 'markdown', 'pdf', 'plain_text', 'structured'
+    structure_type: str  # 'markdown', 'pdf', 'plain_text', 'code', 'structured'
     quality_score: float  # 0-1, higher is better
     issues: List[str]
     recommendations: List[str]
     metadata: Dict
+    programming_language: Optional[str] = None  # For code files: 'python', 'javascript', etc.
 
 
 class DocumentAnalyzer:
@@ -43,7 +44,41 @@ class DocumentAnalyzer:
     # File type detection
     TEXT_EXTENSIONS = {'.txt', '.md', '.markdown'}
     PDF_EXTENSIONS = {'.pdf'}
-    SUPPORTED_EXTENSIONS = TEXT_EXTENSIONS | PDF_EXTENSIONS
+    CODE_EXTENSIONS = {
+        '.py', '.js', '.ts', '.tsx', '.jsx', '.java', '.go', '.rs', '.rb',
+        '.cpp', '.c', '.h', '.hpp', '.cs', '.php', '.swift', '.kt', '.scala',
+        '.vue', '.svelte', '.html', '.css', '.scss', '.sass', '.less',
+        '.json', '.yaml', '.yml', '.toml', '.xml', '.sql', '.sh', '.bash',
+        '.dockerfile', '.makefile', '.cmake', '.gradle', '.pom'
+    }
+    SUPPORTED_EXTENSIONS = TEXT_EXTENSIONS | PDF_EXTENSIONS | CODE_EXTENSIONS
+
+    # Programming language detection
+    LANGUAGE_MAP = {
+        '.py': 'python', '.pyw': 'python',
+        '.js': 'javascript', '.jsx': 'javascript', '.mjs': 'javascript',
+        '.ts': 'typescript', '.tsx': 'typescript',
+        '.java': 'java',
+        '.go': 'golang',
+        '.rs': 'rust',
+        '.rb': 'ruby',
+        '.cpp': 'cpp', '.cc': 'cpp', '.cxx': 'cpp', '.c': 'c', '.h': 'c', '.hpp': 'cpp',
+        '.cs': 'csharp',
+        '.php': 'php',
+        '.swift': 'swift',
+        '.kt': 'kotlin', '.kts': 'kotlin',
+        '.scala': 'scala',
+        '.vue': 'vue',
+        '.svelte': 'svelte',
+        '.html': 'html', '.htm': 'html',
+        '.css': 'css', '.scss': 'scss', '.sass': 'sass', '.less': 'less',
+        '.json': 'json',
+        '.yaml': 'yaml', '.yml': 'yaml',
+        '.toml': 'toml',
+        '.xml': 'xml',
+        '.sql': 'sql',
+        '.sh': 'shell', '.bash': 'shell',
+    }
 
     def __init__(self):
         self.analyzed_documents: List[DocumentAnalysis] = []
@@ -71,6 +106,7 @@ class DocumentAnalyzer:
 
         # Detect file type
         file_type = self._detect_file_type(filepath, file_ext)
+        programming_language = self._detect_programming_language(file_ext)
 
         # Read and analyze content (for small files)
         content = ""
@@ -120,6 +156,11 @@ class DocumentAnalyzer:
                 recommendations.append("Large PDF - use batch processing to avoid memory issues")
             recommendations.append("PDFs may have headers/footers - consider custom cleaning")
 
+        elif structure_type == 'code':
+            recommendations.append(f"Code file ({programming_language}) - use code-aware chunking")
+            if programming_language in ('python', 'javascript', 'typescript'):
+                recommendations.append("Consider splitting by function/class boundaries")
+
         # Ensure quality score is in [0, 1]
         quality_score = max(0.0, min(1.0, quality_score))
 
@@ -129,6 +170,12 @@ class DocumentAnalyzer:
             'has_tables': bool(re.search(r'\|.*\|', content)) if content else False,
             'line_count': content.count('\n') if content else 0,
         }
+
+        # Add code-specific metadata
+        if programming_language and content:
+            code_metadata = self._analyze_code_content(content, programming_language)
+            metadata.update(code_metadata)
+            metadata['programming_language'] = programming_language
 
         analysis = DocumentAnalysis(
             filepath=filepath,
@@ -141,7 +188,8 @@ class DocumentAnalyzer:
             quality_score=quality_score,
             issues=issues,
             recommendations=recommendations,
-            metadata=metadata
+            metadata=metadata,
+            programming_language=programming_language
         )
 
         self.analyzed_documents.append(analysis)
@@ -215,10 +263,16 @@ class DocumentAnalyzer:
         """Detect file type"""
         if file_ext in self.PDF_EXTENSIONS:
             return 'pdf'
+        elif file_ext in self.CODE_EXTENSIONS:
+            return 'code'
         elif file_ext in self.TEXT_EXTENSIONS:
             return 'text'
         else:
             return 'unknown'
+
+    def _detect_programming_language(self, file_ext: str) -> Optional[str]:
+        """Detect programming language from file extension"""
+        return self.LANGUAGE_MAP.get(file_ext.lower())
 
     def _read_file_content(self, filepath: str, file_type: str) -> str:
         """Read file content based on type"""
@@ -254,6 +308,9 @@ class DocumentAnalyzer:
         if file_ext == '.pdf':
             return 'pdf'
 
+        if file_ext in self.CODE_EXTENSIONS:
+            return 'code'
+
         if not content:
             return 'unknown'
 
@@ -266,6 +323,56 @@ class DocumentAnalyzer:
             return 'markdown'
 
         return 'plain_text'
+
+    def _analyze_code_content(self, content: str, programming_language: str) -> Dict:
+        """Analyze code-specific characteristics"""
+        code_metadata = {
+            'function_count': 0,
+            'class_count': 0,
+            'import_count': 0,
+            'comment_lines': 0,
+            'code_lines': 0,
+            'docstring_count': 0,
+        }
+
+        if not content:
+            return code_metadata
+
+        lines = content.split('\n')
+        code_metadata['code_lines'] = len([l for l in lines if l.strip() and not l.strip().startswith('#') and not l.strip().startswith('//')])
+
+        if programming_language == 'python':
+            code_metadata['function_count'] = len(re.findall(r'^\s*def\s+\w+', content, re.MULTILINE))
+            code_metadata['class_count'] = len(re.findall(r'^\s*class\s+\w+', content, re.MULTILINE))
+            code_metadata['import_count'] = len(re.findall(r'^(?:from\s+\S+\s+)?import\s+', content, re.MULTILINE))
+            code_metadata['comment_lines'] = len(re.findall(r'^\s*#', content, re.MULTILINE))
+            code_metadata['docstring_count'] = len(re.findall(r'"""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\'', content))
+
+        elif programming_language in ('javascript', 'typescript'):
+            code_metadata['function_count'] = len(re.findall(r'(?:function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*(?:async\s*)?\(|(?:async\s+)?(?:\w+\s*)?=>)', content))
+            code_metadata['class_count'] = len(re.findall(r'^\s*class\s+\w+', content, re.MULTILINE))
+            code_metadata['import_count'] = len(re.findall(r'^import\s+', content, re.MULTILINE))
+            code_metadata['comment_lines'] = len(re.findall(r'^\s*(?://|/\*|\*)', content, re.MULTILINE))
+
+        elif programming_language == 'java':
+            code_metadata['function_count'] = len(re.findall(r'(?:public|private|protected|static|\s)+[\w\<\>\[\]]+\s+\w+\s*\([^\)]*\)\s*(?:\{|throws)', content))
+            code_metadata['class_count'] = len(re.findall(r'^\s*(?:public|private|protected)?\s*class\s+\w+', content, re.MULTILINE))
+            code_metadata['import_count'] = len(re.findall(r'^import\s+', content, re.MULTILINE))
+            code_metadata['comment_lines'] = len(re.findall(r'^\s*(?://|/\*|\*)', content, re.MULTILINE))
+
+        elif programming_language == 'golang':
+            code_metadata['function_count'] = len(re.findall(r'^\s*func\s+', content, re.MULTILINE))
+            code_metadata['class_count'] = len(re.findall(r'^\s*type\s+\w+\s+struct\s*\{', content, re.MULTILINE))
+            code_metadata['import_count'] = len(re.findall(r'^\s*import\s+', content, re.MULTILINE))
+            code_metadata['comment_lines'] = len(re.findall(r'^\s*(?://)', content, re.MULTILINE))
+
+        elif programming_language == 'rust':
+            code_metadata['function_count'] = len(re.findall(r'^\s*(?:pub\s+)?fn\s+', content, re.MULTILINE))
+            code_metadata['class_count'] = len(re.findall(r'^\s*(?:pub\s+)?struct\s+\w+', content, re.MULTILINE))
+            code_metadata['import_count'] = len(re.findall(r'^\s*use\s+', content, re.MULTILINE))
+            code_metadata['comment_lines'] = len(re.findall(r'^\s*(?://|/\*)', content, re.MULTILINE))
+
+        return code_metadata
 
     def _has_complex_structure(self, content: str) -> bool:
         """Check if markdown has complex structure (multiple header levels)"""
