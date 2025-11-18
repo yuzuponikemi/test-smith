@@ -1,5 +1,6 @@
 import argparse
 import json
+import uuid
 from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
@@ -7,6 +8,7 @@ load_dotenv()
 
 from langgraph.checkpoint.sqlite import SqliteSaver
 from src.utils.logging_utils import setup_execution_logger, save_report, get_recent_reports, get_recent_logs
+from src.utils.streaming_output import StreamingFormatter
 
 # Import new graph registry system (depends on MODEL_PROVIDER being set)
 from src.graphs import get_graph, list_graphs, get_default_graph
@@ -30,10 +32,16 @@ Examples:
   # Run with default graph (deep_research)
   python main.py run "What is quantum computing?"
 
+  # Run with streaming output (real-time progress updates)
+  python main.py run "What is quantum computing?" --stream
+
   # Run with specific graph
   python main.py run "Compare Python vs Go" --graph comparative
   python main.py run "Is the sky blue?" --graph fact_check
   python main.py run "Quick overview of Docker" --graph quick_research
+
+  # Combine streaming with specific graph
+  python main.py run "Why is my app slow?" --graph causal_inference --stream
         """
     )
     parser.add_argument("--version", action="version", version="%(prog)s 2.1")
@@ -63,6 +71,8 @@ Examples:
     run_parser.add_argument("--thread-id", type=str, help="The thread ID to use for the conversation")
     run_parser.add_argument("--no-log", action="store_true", help="Disable file logging (console only)")
     run_parser.add_argument("--no-report", action="store_true", help="Don't save final report to file")
+    run_parser.add_argument("--stream", action="store_true", help="Enable streaming progressive output (real-time updates)")
+    run_parser.add_argument("--no-color", action="store_true", help="Disable colored output in streaming mode")
 
     # List command
     list_parser = subparsers.add_parser("list", help="List recent reports or logs")
@@ -135,11 +145,19 @@ Examples:
             # Setup logger if enabled
             logger = None if args.no_log else setup_execution_logger(args.query, thread_id)
 
+            # Setup streaming formatter if enabled
+            streaming_formatter = None
+            if args.stream:
+                use_colors = not args.no_color
+                streaming_formatter = StreamingFormatter(graph_name=graph_name, use_colors=use_colors)
+
             if logger:
                 logger.log(f"Starting Test-Smith execution", "INFO")
                 logger.log(f"Query: {args.query}")
                 logger.log(f"Thread ID: {thread_id}")
-            else:
+                if args.stream:
+                    logger.log("Streaming mode enabled", "INFO")
+            elif not args.stream:
                 print("Running the LangGraph agent...")
 
             # Track state for report saving
@@ -149,11 +167,16 @@ Examples:
             try:
                 for output in app.stream(inputs, config=config):
                     for key, value in output.items():
-                        # Log node execution
+                        # Streaming output (real-time progressive updates)
+                        if streaming_formatter:
+                            streaming_formatter.process_node_output(key, value)
+
+                        # Log node execution (file logging)
                         if logger:
                             logger.log_node_start(key)
                             logger.log_node_end(key, value)
-                        else:
+                        elif not args.stream:
+                            # Default verbose output (only if not streaming)
                             print(f"Output from node '{key}':")
                             print("---")
                             print(value)
@@ -174,6 +197,10 @@ Examples:
 
                         # Update final state
                         final_state.update(value)
+
+                # Finalize streaming output
+                if streaming_formatter:
+                    streaming_formatter.finalize()
 
                 # Save final report if available
                 if "report" in final_state and not args.no_report:
