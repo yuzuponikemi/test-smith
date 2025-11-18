@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Test-Smith is a **LangGraph-based multi-agent research assistant** that autonomously conducts deep research and generates comprehensive reports. It uses an advanced "Hierarchical Plan-and-Execute" strategy with **dynamic replanning** capabilities, featuring specialized agents that collaborate through a state-based workflow.
 
-**Version:** v2.2 (Multi-Graph Architecture with 5 Specialized Workflows)
+**Version:** v2.3 (Code Execution for Quantitative Analysis)
 
 **Key Technologies:**
 - LangGraph 0.6.11 (orchestration)
@@ -15,6 +15,7 @@ Test-Smith is a **LangGraph-based multi-agent research assistant** that autonomo
 - ChromaDB 1.3.4 (vector database for RAG)
 - Tavily API (web search)
 - LangSmith (observability/tracing)
+- Docker (sandboxed code execution)
 
 ## Multi-Graph Architecture ⭐ NEW
 
@@ -23,8 +24,8 @@ Test-Smith now supports **multiple graph workflows** that can be selected based 
 ### Available Graphs
 
 1. **deep_research** (default) - Hierarchical multi-agent research with dynamic replanning
-   - Best for: Complex multi-faceted questions, deep exploration
-   - Features: Task decomposition, recursive drill-down, adaptive planning
+   - Best for: Complex multi-faceted questions, deep exploration, quantitative analysis
+   - Features: Task decomposition, recursive drill-down, adaptive planning, code execution
    - Complexity: High | Avg time: 2-5 minutes
 
 2. **quick_research** - Fast single-pass research
@@ -112,6 +113,7 @@ For complex queries, uses an **adaptive hierarchical workflow**:
 - **Strategic Query Allocation:** Targets queries to right information source (RAG vs web)
 - **Depth-Aware Exploration:** Automatically adjusts research depth based on importance
 - **Safety Controls:** Budget limits prevent runaway expansion (max 3 revisions, 20 subtasks)
+- **Code Execution (v2.3):** Automatically generates and executes Python code for quantitative analysis, data processing, and visualizations in a sandboxed Docker environment
 
 **Key Pattern:** Uses `Annotated[list[str], operator.add]` for cumulative result accumulation across iterations.
 
@@ -153,6 +155,55 @@ python scripts/visualization/visualize_causal_graph.py causal_graph.json
 # - Hypothesis nodes (color-coded by likelihood)
 # - Symptom nodes
 # - Causal relationships (edges with strength indicators)
+```
+
+### Code Execution Mode (v2.3 - Quantitative Analysis) ⭐ NEW
+
+The deep_research workflow now includes **automatic code execution** for queries that benefit from programmatic computation. The system detects when code would help and generates/executes Python code in a sandboxed Docker environment.
+
+**How It Works:**
+1. **Code Needs Detector** → Analyzes query and collected data to determine if code execution would be beneficial
+2. **Code Generator** → Generates Python code based on the task requirements
+3. **Sandbox Executor** → Executes code in Docker container (no network, memory/CPU limits)
+4. **Result Analyzer** → Interprets execution output in research context
+
+**Use Cases:**
+- **Quantitative Analysis:** "Calculate the compound annual growth rate of AI papers since 2020"
+- **Data Processing:** "Analyze the CSV benchmark data and identify trends"
+- **Visualization:** "Create a comparison chart of database performance metrics"
+- **Statistical Analysis:** "Compute correlation between variables in this dataset"
+- **Text Analysis:** "Analyze sentiment distribution in these Reddit comments"
+
+**Supported Task Types:**
+- `calculation` - Mathematical computations, growth rates, ratios
+- `data_analysis` - CSV/JSON processing, aggregation, filtering
+- `visualization` - Charts, graphs, plots (saved as PNG)
+- `statistical_analysis` - Correlation, regression, distributions
+- `text_analysis` - Sentiment, frequency, NLP tasks
+- `comparison` - Side-by-side metrics analysis
+
+**Safety Features:**
+- **Docker Sandbox:** Code runs in isolated container with:
+  - No network access (`--network=none`)
+  - Memory limit (512MB)
+  - CPU limit (1 core)
+  - 60-second timeout
+- **Fallback:** If Docker unavailable, uses direct execution with warnings (development only)
+
+**Available Libraries:**
+The sandbox pre-installs: `pandas`, `numpy`, `matplotlib`, `seaborn`, `scipy`, `requests`
+
+**Example Workflow:**
+```bash
+# Query that triggers code execution
+python main.py run "What was the year-over-year growth rate of electric vehicle sales from 2018 to 2023?"
+
+# The system will:
+# 1. Search for EV sales data
+# 2. Detect need for growth rate calculation
+# 3. Generate Python code to compute YoY growth
+# 4. Execute in sandbox and analyze results
+# 5. Include quantitative findings in final report
 ```
 
 ### State Management
@@ -312,7 +363,9 @@ src/
 │   ├── causal_checker_node.py          # ⭐ NEW
 │   ├── hypothesis_validator_node.py    # ⭐ NEW
 │   ├── causal_graph_builder_node.py    # ⭐ NEW
-│   └── root_cause_synthesizer_node.py  # ⭐ NEW
+│   ├── root_cause_synthesizer_node.py  # ⭐ NEW
+│   ├── code_needs_detector_node.py     # ⭐ NEW: Code execution nodes
+│   └── code_executor_node.py           # ⭐ NEW
 ├── prompts/                     # LangChain prompt templates (reusable)
 │   ├── planner_prompt.py
 │   ├── analyzer_prompt.py
@@ -324,7 +377,8 @@ src/
 │   ├── evidence_planner_prompt.py       # ⭐ NEW
 │   ├── causal_checker_prompt.py         # ⭐ NEW
 │   ├── hypothesis_validator_prompt.py   # ⭐ NEW
-│   └── root_cause_synthesizer_prompt.py # ⭐ NEW
+│   ├── root_cause_synthesizer_prompt.py # ⭐ NEW
+│   └── code_executor_prompt.py          # ⭐ NEW: Code execution prompts
 └── preprocessor/                # Document preprocessing system
     ├── __init__.py
     ├── document_analyzer.py    # Quality analysis & scoring

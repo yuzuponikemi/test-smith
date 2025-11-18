@@ -48,6 +48,10 @@ from src.nodes.plan_revisor_node import plan_revisor
 # Reflection node (Meta-reasoning & Self-Critique)
 from src.nodes.reflection_node import reflection_node
 
+# Code execution nodes (Quantitative analysis & computation)
+from src.nodes.code_needs_detector_node import code_needs_detector_node
+from src.nodes.code_executor_node import code_executor_node
+
 
 # Override print for Studio compatibility (prevents BrokenPipeError)
 def _safe_print(*args, **kwargs):
@@ -111,6 +115,17 @@ class DeepResearchState(TypedDict):
     should_continue_research: bool  # Whether reflection identified critical gaps requiring more research
     reflection_confidence: float  # Confidence score from reflection (0.0-1.0)
 
+    # === Code Execution Fields ===
+    needs_code_execution: bool  # Whether code execution would benefit this query
+    code_task_description: str  # Description of computation to perform
+    code_data_context: str  # Data context for code generation
+    code_expected_output: str  # Expected output from code execution
+    code_task_type: str  # Type of computation: calculation, visualization, etc.
+    code_execution_results: str  # Results from code execution
+    code_artifacts: list[str]  # Generated artifacts (plots, files)
+    code_output: str  # Raw output from code execution
+    code_success: bool  # Whether code executed successfully
+
 
 def router(state):
     """
@@ -158,13 +173,37 @@ def router(state):
 
 
 def analyzer_router(state):
-    """Route to depth_evaluator for hierarchical mode, regular evaluator for simple mode"""
+    """Route to code_needs_detector after analyzer (for all modes)"""
+    print("---ANALYZER ROUTER: Checking if code execution is needed---")
+    return "code_needs_detector"
+
+
+def code_execution_router(state):
+    """Route based on whether code execution is needed"""
+    needs_code = state.get("needs_code_execution", False)
+    execution_mode = state.get("execution_mode", "simple")
+
+    if needs_code:
+        print("---CODE EXECUTION ROUTER: Routing to code executor---")
+        return "code_executor"
+    else:
+        # Route to appropriate evaluator based on mode
+        if execution_mode == "hierarchical":
+            print("---CODE EXECUTION ROUTER: No code needed, using depth_evaluator---")
+            return "depth_evaluator"
+        else:
+            print("---CODE EXECUTION ROUTER: No code needed, using regular evaluator---")
+            return "evaluator"
+
+
+def post_code_execution_router(state):
+    """Route after code execution to appropriate evaluator"""
     execution_mode = state.get("execution_mode", "simple")
     if execution_mode == "hierarchical":
-        print("---ANALYZER ROUTER: Using depth_evaluator for hierarchical mode---")
+        print("---POST-CODE ROUTER: Using depth_evaluator for hierarchical mode---")
         return "depth_evaluator"
     else:
-        print("---ANALYZER ROUTER: Using regular evaluator for simple mode---")
+        print("---POST-CODE ROUTER: Using regular evaluator for simple mode---")
         return "evaluator"
 
 
@@ -210,6 +249,10 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         # Register reflection node (Meta-reasoning & Self-Critique)
         workflow.add_node("reflection", reflection_node)
 
+        # Register code execution nodes (Quantitative analysis)
+        workflow.add_node("code_needs_detector", code_needs_detector_node)
+        workflow.add_node("code_executor", code_executor_node)
+
         # Entry point: Master Planner (Phase 1 change)
         workflow.set_entry_point("master_planner")
 
@@ -233,10 +276,24 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_edge("searcher", "analyzer")
         workflow.add_edge("rag_retriever", "analyzer")
 
-        # After analyzer: Route to appropriate evaluator based on mode (Phase 2 enhancement)
+        # After analyzer: Route to code needs detector (for all modes)
+        workflow.add_edge("analyzer", "code_needs_detector")
+
+        # After code needs detector: Route based on whether code execution is needed
         workflow.add_conditional_edges(
-            "analyzer",
-            analyzer_router,
+            "code_needs_detector",
+            code_execution_router,
+            {
+                "code_executor": "code_executor",
+                "evaluator": "evaluator",
+                "depth_evaluator": "depth_evaluator"
+            }
+        )
+
+        # After code execution: Route to appropriate evaluator based on mode
+        workflow.add_conditional_edges(
+            "code_executor",
+            post_code_execution_router,
             {
                 "evaluator": "evaluator",
                 "depth_evaluator": "depth_evaluator"
@@ -295,6 +352,8 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_node("drill_down_generator", drill_down_generator)
         workflow.add_node("plan_revisor", plan_revisor)
         workflow.add_node("reflection", reflection_node)
+        workflow.add_node("code_needs_detector", code_needs_detector_node)
+        workflow.add_node("code_executor", code_executor_node)
 
         # Set up all edges (same as build())
         workflow.set_entry_point("master_planner")
@@ -308,9 +367,15 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_edge("planner", "rag_retriever")
         workflow.add_edge("searcher", "analyzer")
         workflow.add_edge("rag_retriever", "analyzer")
+        workflow.add_edge("analyzer", "code_needs_detector")
         workflow.add_conditional_edges(
-            "analyzer",
-            analyzer_router,
+            "code_needs_detector",
+            code_execution_router,
+            {"code_executor": "code_executor", "evaluator": "evaluator", "depth_evaluator": "depth_evaluator"}
+        )
+        workflow.add_conditional_edges(
+            "code_executor",
+            post_code_execution_router,
             {"evaluator": "evaluator", "depth_evaluator": "depth_evaluator"}
         )
         workflow.add_edge("depth_evaluator", "drill_down_generator")
@@ -353,7 +418,8 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
                 "Strategic query allocation (RAG vs Web)",
                 "Recursive drill-down up to 2 levels",
                 "Budget-aware execution control",
-                "Meta-reasoning reflection & self-critique"
+                "Meta-reasoning reflection & self-critique",
+                "Code execution for quantitative analysis"
             ],
             "phases": {
                 "1": "Basic hierarchical decomposition",
