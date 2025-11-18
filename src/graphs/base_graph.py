@@ -105,6 +105,11 @@ class ExtendedAgentState(BaseAgentState):
     rag_results: Annotated[list[str], operator.add]
     analyzed_data: Annotated[list[str], operator.add]
 
+    # Provenance tracking (uses operator.add for accumulation across iterations)
+    web_sources: Annotated[list[dict], operator.add]  # SourceReference dicts from web search
+    rag_sources: Annotated[list[dict], operator.add]  # SourceReference dicts from RAG retrieval
+    provenance_graph: dict  # Complete lineage graph (sources → evidence → claims)
+
     # Evaluation and control flow
     evaluation: str
     reason: str

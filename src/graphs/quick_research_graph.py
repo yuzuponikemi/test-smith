@@ -47,6 +47,11 @@ class QuickResearchState(TypedDict):
     rag_results: Annotated[list[str], operator.add]
     analyzed_data: Annotated[list[str], operator.add]
 
+    # Provenance tracking (for citations and lineage)
+    web_sources: Annotated[list[dict], operator.add]  # SourceReference dicts from web search
+    rag_sources: Annotated[list[dict], operator.add]  # SourceReference dicts from RAG retrieval
+    provenance_graph: dict  # Complete lineage graph (optional, built on demand)
+
     # Evaluation and control
     evaluation: str
     reason: str
