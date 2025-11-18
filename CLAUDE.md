@@ -147,7 +147,7 @@ The workflow generates a structured graph representation (nodes + edges) that ca
 ```bash
 # Extract graph data from workflow output and save to JSON
 # Then visualize using the included script
-python visualize_causal_graph.py causal_graph.json
+python scripts/visualization/visualize_causal_graph.py causal_graph.json
 
 # Opens an interactive HTML visualization showing:
 # - Hypothesis nodes (color-coded by likelihood)
@@ -212,16 +212,16 @@ python main.py --version
 
 ```bash
 # RECOMMENDED: Production ingestion with intelligent preprocessing
-python ingest_with_preprocessor.py
+python scripts/ingest/ingest_with_preprocessor.py
 
 # With quality filtering (skip files with score < 0.5)
-python ingest_with_preprocessor.py --min-quality 0.5
+python scripts/ingest/ingest_with_preprocessor.py --min-quality 0.5
 
 # Diagnostic ingestion (use for debugging embedding issues)
-python ingest_diagnostic.py
+python scripts/ingest/ingest_diagnostic.py
 
 # Automated clean re-ingest with validation
-./clean_and_reingest.sh
+./scripts/ingest/clean_and_reingest.sh
 ```
 
 **Ingestion Configuration:**
@@ -258,6 +258,31 @@ cat ingestion_diagnostic_*.log
 ### Project Structure
 
 ```
+scripts/                         # Organized utility scripts
+├── ingest/                      # Knowledge base ingestion
+│   ├── ingest.py               # Basic document ingestion
+│   ├── ingest_diagnostic.py    # Enhanced ingestion with diagnostics
+│   ├── ingest_with_preprocessor.py # Production ingestion (recommended)
+│   └── clean_and_reingest.sh   # Automated clean re-ingest
+├── testing/                     # Test scripts
+│   ├── test_gemini_models.py   # Google Gemini model tests
+│   ├── test_langsmith_monitoring.py # LangSmith monitoring tests
+│   └── test_phase4_dynamic_replanning.py # Dynamic replanning tests
+├── utils/                       # Utility scripts
+│   ├── switch_model_provider.py # Toggle Ollama/Gemini providers
+│   ├── verify_model_provider.py # Verify current provider
+│   ├── update_node_logging.py  # Update logging config
+│   └── update_causal_nodes_logging.py # Update causal node logging
+└── visualization/               # Visualization scripts
+    ├── visualize_graphs.py     # Generate graph diagrams
+    └── visualize_causal_graph.py # Interactive causal graph viz
+
+evaluation/                      # Evaluation framework
+├── evaluate_agent.py           # LangSmith evaluation runner
+├── evaluators.py               # Heuristic + LLM evaluators
+├── datasets/                    # Test datasets
+└── results/                     # Evaluation results
+
 src/
 ├── graphs/                      # ⭐ Multiple graph workflows
 │   ├── __init__.py             # Graph registry system
@@ -364,7 +389,7 @@ Edit the specific graph file (e.g., `src/graphs/quick_research_graph.py`):
 4. Use in any graph by importing and registering the node
 
 **Tune Preprocessing:**
-Edit parameters in `ingest_with_preprocessor.py`:
+Edit parameters in `scripts/ingest/ingest_with_preprocessor.py`:
 ```python
 min_quality_score=0.5        # Minimum quality threshold
 similarity_threshold=0.95    # Near-duplicate threshold
@@ -498,7 +523,7 @@ LANGCHAIN_PROJECT="deep-research-v1-proto"
 - Repeated headers/footers → Enable boilerplate removal
 - Small sections in source docs → Follow `WRITING_RAG_FRIENDLY_DOCUMENTATION.md`
 
-**Solution:** Always use `ingest_with_preprocessor.py` for production ingestion.
+**Solution:** Always use `scripts/ingest/ingest_with_preprocessor.py` for production ingestion.
 
 ## Configuration Files
 
@@ -532,6 +557,9 @@ TAVILY_API_KEY="<tavily-key>"
 
 **Tools & Analysis:**
 - **chroma_explorer.ipynb** - Interactive notebook for database analysis with PCA
-- **ingest_with_preprocessor.py** - Production ingestion with quality pipeline
-- **ingest_diagnostic.py** - Enhanced ingestion with real-time quality checks
-- **clean_and_reingest.sh** - Automated clean re-ingest workflow
+- **scripts/ingest/ingest_with_preprocessor.py** - Production ingestion with quality pipeline
+- **scripts/ingest/ingest_diagnostic.py** - Enhanced ingestion with real-time quality checks
+- **scripts/ingest/clean_and_reingest.sh** - Automated clean re-ingest workflow
+- **scripts/visualization/visualize_graphs.py** - Generate graph diagrams for all workflows
+- **scripts/visualization/visualize_causal_graph.py** - Interactive causal graph visualization
+- **evaluation/evaluate_agent.py** - LangSmith evaluation runner
