@@ -137,6 +137,12 @@ def _auto_register_graphs():
     except ImportError as e:
         print(f"[GraphRegistry] Warning: Could not load causal_inference graph: {e}")
 
+    try:
+        from .code_execution_graph import CodeExecutionGraphBuilder
+        register_graph("code_execution", CodeExecutionGraphBuilder())
+    except ImportError as e:
+        print(f"[GraphRegistry] Warning: Could not load code_execution graph: {e}")
+
 
 # Auto-register graphs on module import
 _auto_register_graphs()
