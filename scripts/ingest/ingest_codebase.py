@@ -35,7 +35,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional, Set
 
-from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain.schema import Document
 from langchain_community.vectorstores.utils import filter_complex_metadata
@@ -49,12 +48,16 @@ from src.preprocessor import (
     ContentCleaner,
     QualityMetrics
 )
+from src.utils.embedding_utils import (
+    get_embeddings,
+    get_model_config,
+    store_embedding_metadata,
+    DEFAULT_EMBEDDING_MODEL
+)
 
 # Configuration
 CHROMA_DB_DIR = "chroma_db"
 DEFAULT_COLLECTION_NAME = "codebase_collection"
-EMBEDDING_MODEL = "nomic-embed-text"
-OLLAMA_BASE_URL = "http://localhost:11434"
 
 # Default directories to skip
 DEFAULT_SKIP_DIRS = {
@@ -136,7 +139,8 @@ class CodebaseIngestion:
                  chroma_db_dir: str = CHROMA_DB_DIR,
                  collection_name: str = DEFAULT_COLLECTION_NAME,
                  skip_dirs: Optional[Set[str]] = None,
-                 min_quality_score: float = 0.0):
+                 min_quality_score: float = 0.0,
+                 embedding_model: str = DEFAULT_EMBEDDING_MODEL):
         """
         Args:
             repo_path: Path to the repository root
@@ -144,12 +148,15 @@ class CodebaseIngestion:
             collection_name: Name of the collection
             skip_dirs: Additional directories to skip
             min_quality_score: Minimum quality score to include file (0-1)
+            embedding_model: Ollama embedding model to use
         """
         self.repo_path = os.path.abspath(repo_path)
         self.repo_name = os.path.basename(self.repo_path)
         self.chroma_db_dir = chroma_db_dir
         self.collection_name = collection_name
         self.min_quality_score = min_quality_score
+        self.embedding_model = embedding_model
+        self.model_config = get_model_config(embedding_model)
 
         # Combine default and custom skip dirs
         self.skip_dirs = DEFAULT_SKIP_DIRS.copy()
@@ -233,11 +240,9 @@ class CodebaseIngestion:
         logger.info("PHASE 2: EMBEDDING MODEL SETUP")
         logger.info("="*80)
 
-        embeddings = OllamaEmbeddings(
-            model=EMBEDDING_MODEL,
-            base_url=OLLAMA_BASE_URL
-        )
-        logger.info(f"Embedding model: {EMBEDDING_MODEL}")
+        embeddings = get_embeddings(self.embedding_model)
+        logger.info(f"Embedding model: {self.embedding_model}")
+        logger.info(f"Dimensions: {self.model_config.get('dimensions', 'unknown')}")
 
         # Initialize vector store
         vectorstore = Chroma(
@@ -246,6 +251,9 @@ class CodebaseIngestion:
             embedding_function=embeddings,
         )
         logger.info(f"Vector store: {self.chroma_db_dir}/{self.collection_name}")
+
+        # Store embedding model metadata for retrieval alignment
+        store_embedding_metadata(vectorstore, self.embedding_model)
 
         # Phase 3: File Analysis & Chunking
         logger.info("\n" + "="*80)
@@ -374,12 +382,16 @@ class CodebaseIngestion:
             logger.info(f"Ingesting {len(cleaned_chunks)} chunks...")
 
             try:
-                # Add in batches
-                batch_size = 100
+                # Add in batches (use model-specific batch size for stability)
+                batch_size = self.model_config.get("max_batch_size", 10)
+                total_batches = (len(cleaned_chunks) - 1) // batch_size + 1
+                logger.info(f"  Using batch size: {batch_size}")
                 for i in range(0, len(cleaned_chunks), batch_size):
                     batch = cleaned_chunks[i:i+batch_size]
                     vectorstore.add_documents(batch)
-                    logger.info(f"  Batch {i//batch_size + 1}/{(len(cleaned_chunks)-1)//batch_size + 1}")
+                    batch_num = i // batch_size + 1
+                    if batch_num % 20 == 0 or batch_num == total_batches:
+                        logger.info(f"  Progress: {batch_num}/{total_batches} batches ({i + len(batch)}/{len(cleaned_chunks)} chunks)")
 
                 logger.info("Successfully ingested all chunks")
 
@@ -466,6 +478,12 @@ def main():
         help=f'ChromaDB directory (default: {CHROMA_DB_DIR})'
     )
 
+    parser.add_argument(
+        '--embedding-model',
+        default=DEFAULT_EMBEDDING_MODEL,
+        help=f'Ollama embedding model (default: {DEFAULT_EMBEDDING_MODEL})'
+    )
+
     args = parser.parse_args()
 
     # Parse skip dirs
@@ -484,7 +502,8 @@ def main():
         chroma_db_dir=args.chroma_dir,
         collection_name=args.collection,
         skip_dirs=skip_dirs,
-        min_quality_score=args.min_quality
+        min_quality_score=args.min_quality,
+        embedding_model=args.embedding_model
     )
 
     ingestion.run()

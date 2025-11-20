@@ -196,6 +196,34 @@ python main.py run "How does user input flow through the validation system?" --g
 python main.py run "Where is the calculate_total function used?" --graph code_investigation
 ```
 
+**Testing the Code Investigation Graph:**
+```bash
+# Full test: ingest test-smith repo + run test queries
+python scripts/testing/test_code_investigation.py
+
+# Skip ingestion (use existing codebase_collection)
+python scripts/testing/test_code_investigation.py --skip-ingest
+
+# Run specific test
+python scripts/testing/test_code_investigation.py --test dependency
+python scripts/testing/test_code_investigation.py --test flow
+python scripts/testing/test_code_investigation.py --test usage
+python scripts/testing/test_code_investigation.py --test architecture
+python scripts/testing/test_code_investigation.py --test implementation
+```
+
+**Ingest Your Own Codebase:**
+```bash
+# Ingest any repository
+python scripts/ingest/ingest_codebase.py /path/to/your/repo
+
+# With custom collection name
+python scripts/ingest/ingest_codebase.py . --collection my_project_code
+
+# Then query it
+python main.py run "How does auth work?" --graph code_investigation
+```
+
 ### State Management
 
 ```python
@@ -308,7 +336,8 @@ scripts/                         # Organized utility scripts
 ├── testing/                     # Test scripts
 │   ├── test_gemini_models.py   # Google Gemini model tests
 │   ├── test_langsmith_monitoring.py # LangSmith monitoring tests
-│   └── test_phase4_dynamic_replanning.py # Dynamic replanning tests
+│   ├── test_phase4_dynamic_replanning.py # Dynamic replanning tests
+│   └── test_code_investigation.py # ⭐ NEW: Code investigation graph tests
 ├── utils/                       # Utility scripts
 │   ├── switch_model_provider.py # Toggle Ollama/Gemini providers
 │   ├── verify_model_provider.py # Verify current provider

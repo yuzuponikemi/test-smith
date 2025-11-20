@@ -7,10 +7,10 @@ codebase collection.
 """
 
 from langchain_chroma import Chroma
-from langchain_ollama import OllamaEmbeddings
 from langchain_core.prompts import PromptTemplate
 
 from src.utils.logging_utils import print_node_header
+from src.utils.embedding_utils import get_embeddings_for_collection
 from src.prompts.code_assistant_prompt import CODE_ASSISTANT_PROMPT
 from src.models import get_code_assistant_model
 
@@ -37,12 +37,13 @@ def code_retriever(state):
 
     all_results = []
 
-    # Initialize ChromaDB with codebase collection
-    embeddings = OllamaEmbeddings(model="nomic-embed-text")
+    # Initialize ChromaDB with correct embedding model (from collection metadata)
+    persist_directory = "chroma_db"
+    embeddings = get_embeddings_for_collection(persist_directory, collection_name)
     vectorstore = Chroma(
         collection_name=collection_name,
         embedding_function=embeddings,
-        persist_directory="chroma_db",
+        persist_directory=persist_directory,
     )
 
     # Configure retriever - get more chunks for code context

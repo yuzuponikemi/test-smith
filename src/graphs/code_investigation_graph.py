@@ -63,10 +63,10 @@ class CodeInvestigationState(TypedDict):
     variable_usage: list[dict]  # Variable definitions and usages
     function_calls: list[dict]  # Function call hierarchy
 
-    # Aggregated analysis
-    key_findings: list[str]  # Important discoveries
-    related_files: list[str]  # Files involved in the investigation
-    architecture_patterns: list[str]  # Detected patterns (MVC, Factory, etc.)
+    # Aggregated analysis (use Annotated for concurrent updates from parallel nodes)
+    key_findings: Annotated[list[str], operator.add]  # Important discoveries
+    related_files: Annotated[list[str], operator.add]  # Files involved in the investigation
+    architecture_patterns: Annotated[list[str], operator.add]  # Detected patterns (MVC, Factory, etc.)
 
     # Control flow
     loop_count: int  # Iteration counter

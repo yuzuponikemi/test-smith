@@ -2,7 +2,7 @@
 
 This directory contains visual diagrams for all registered graph workflows.
 
-**Generated:** 5 / 5 graphs
+**Generated:** 6 / 6 graphs
 
 ## Available Graphs
 
@@ -61,6 +61,17 @@ Root cause analysis with causal reasoning and hypothesis ranking
 - 🖼️ [causal_inference_graph.png](./causal_inference_graph.png) (PNG image)
 - 📝 [causal_inference_graph.txt](./causal_inference_graph.txt) (ASCII diagram)
 
+### Code Investigation
+
+Deep codebase analysis with dependency tracking and flow analysis
+
+- **Complexity:** medium
+- **Version:** 1.0
+
+**Files:**
+- 🖼️ [code_investigation_graph.png](./code_investigation_graph.png) (PNG image)
+- 📝 [code_investigation_graph.txt](./code_investigation_graph.txt) (ASCII diagram)
+
 ## Graph Comparison
 
 | Graph | Complexity | Best For |
@@ -70,3 +81,4 @@ Root cause analysis with causal reasoning and hypothesis ranking
 | Fact Check | medium | Verify factual claims |
 | Comparative Research | medium | Compare technologies, frameworks, or tools |
 | Causal Inference | medium | Root cause analysis for technical issues |
+| Code Investigation | medium | Understanding how a feature is implemented |
