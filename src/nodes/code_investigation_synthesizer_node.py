@@ -12,7 +12,10 @@ import json
 from langchain_core.prompts import PromptTemplate
 
 from src.utils.logging_utils import print_node_header
-from src.prompts.code_investigation_prompts import CODE_INVESTIGATION_SYNTHESIZER_PROMPT
+from src.prompts.code_investigation_prompts import (
+    CODE_INVESTIGATION_SYNTHESIZER_PROMPT,
+    CODE_INVESTIGATION_COMPARISON_PROMPT
+)
 from src.models import get_synthesizer_model
 
 
@@ -21,6 +24,7 @@ def code_investigation_synthesizer_node(state):
     Code Investigation Synthesizer Node - Creates comprehensive investigation report
 
     Synthesizes all collected analysis into a final report.
+    Supports both single-repository and multi-repository comparison mode.
     """
     print_node_header("CODE INVESTIGATION SYNTHESIZER")
 
@@ -38,7 +42,14 @@ def code_investigation_synthesizer_node(state):
     architecture_patterns = state.get("architecture_patterns", [])
     related_files = state.get("related_files", [])
 
+    # Comparison mode detection
+    comparison_mode = state.get("comparison_mode", False)
+    collection_names = state.get("collection_names", [])
+
     print(f"  Investigation type: {investigation_type}")
+    if comparison_mode:
+        print(f"  Comparison Mode: YES")
+        print(f"  Repositories: {', '.join(collection_names)}")
     print(f"  Target elements: {len(target_elements)}")
     print(f"  Code results: {len(code_results)}")
     print(f"  Dependencies: {len(dependencies)}")
@@ -60,13 +71,25 @@ def code_investigation_synthesizer_node(state):
     # Format key findings
     findings_str = "\n".join(f"- {f}" for f in key_findings) if key_findings else "No specific findings"
 
-    # Create prompt
-    prompt = PromptTemplate(
-        template=CODE_INVESTIGATION_SYNTHESIZER_PROMPT,
-        input_variables=[
+    # Select prompt based on comparison mode
+    if comparison_mode:
+        template = CODE_INVESTIGATION_COMPARISON_PROMPT
+        input_vars = [
+            "query", "repositories", "investigation_type", "target_elements",
+            "code_context", "dependency_analysis", "flow_analysis", "key_findings"
+        ]
+        repositories_str = "\n".join(f"- {repo}" for repo in collection_names)
+    else:
+        template = CODE_INVESTIGATION_SYNTHESIZER_PROMPT
+        input_vars = [
             "query", "investigation_type", "target_elements",
             "code_context", "dependency_analysis", "flow_analysis", "key_findings"
         ]
+
+    # Create prompt
+    prompt = PromptTemplate(
+        template=template,
+        input_variables=input_vars
     )
 
     # Get model
@@ -74,15 +97,21 @@ def code_investigation_synthesizer_node(state):
     chain = prompt | model
 
     try:
-        response = chain.invoke({
+        invoke_params = {
             "query": query,
             "investigation_type": investigation_type,
             "target_elements": ", ".join(target_elements) if target_elements else "Not specified",
-            "code_context": code_context[:12000],  # Limit size
+            "code_context": code_context[:20000] if comparison_mode else code_context[:12000],  # More context for comparison
             "dependency_analysis": dependency_analysis,
             "flow_analysis": flow_analysis,
             "key_findings": findings_str
-        })
+        }
+
+        # Add repositories parameter only for comparison mode
+        if comparison_mode:
+            invoke_params["repositories"] = repositories_str
+
+        response = chain.invoke(invoke_params)
 
         # Extract content
         if hasattr(response, 'content'):

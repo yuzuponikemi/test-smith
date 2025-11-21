@@ -8,6 +8,7 @@ load_dotenv()
 
 from langgraph.checkpoint.sqlite import SqliteSaver
 from src.utils.logging_utils import setup_execution_logger, save_report, get_recent_reports, get_recent_logs
+from src.utils.codebase_registry import CodebaseRegistry, format_codebase_list
 
 # Import new graph registry system (depends on MODEL_PROVIDER being set)
 from src.graphs import get_graph, list_graphs, get_default_graph
@@ -61,6 +62,18 @@ Examples:
         default=None,
         help=f"Graph workflow to use (default: {get_default_graph()}). Use 'python main.py graphs' to see available options."
     )
+    run_parser.add_argument(
+        "--collection",
+        type=str,
+        default=None,
+        help="Codebase collection to search (only for code_investigation graph). Use 'python main.py list-codebases' to see available collections."
+    )
+    run_parser.add_argument(
+        "--collections",
+        type=str,
+        nargs="+",
+        help="Multiple codebase collections for comparison mode (e.g., --collections codebase_test_smith codebase_local_deepr). Enables multi-repo comparison."
+    )
     run_parser.add_argument("--thread-id", type=str, help="The thread ID to use for the conversation")
     run_parser.add_argument("--no-log", action="store_true", help="Disable file logging (console only)")
     run_parser.add_argument("--no-report", action="store_true", help="Don't save final report to file")
@@ -70,6 +83,18 @@ Examples:
     list_parser.add_argument("type", choices=["reports", "logs"], help="Type of files to list")
     list_parser.add_argument("--limit", type=int, default=10, help="Number of files to show")
     list_parser.add_argument("--mode", choices=["simple", "hierarchical"], help="Filter reports by execution mode")
+
+    # List codebases command
+    codebases_parser = subparsers.add_parser(
+        "list-codebases",
+        help="List all ingested code repositories",
+        description="Display all registered code repositories with metadata"
+    )
+    codebases_parser.add_argument(
+        "--stats",
+        action="store_true",
+        help="Show aggregate statistics"
+    )
 
     args = parser.parse_args()
 
@@ -146,6 +171,38 @@ Examples:
             # Track state for report saving
             final_state = {}
             inputs = {"query": args.query, "loop_count": 0}
+
+            # Add collection_name(s) if specified (for code_investigation graph)
+            if args.collections and len(args.collections) > 1:
+                # Multi-collection comparison mode
+                inputs["collection_names"] = args.collections
+                inputs["comparison_mode"] = True
+                if logger:
+                    logger.log(f"Comparison Mode: {', '.join(args.collections)}")
+                else:
+                    print(f"Comparison Mode: {len(args.collections)} collections")
+                    for coll in args.collections:
+                        print(f"  - {coll}")
+            elif args.collection:
+                # Single collection
+                inputs["collection_name"] = args.collection
+                inputs["comparison_mode"] = False
+                if logger:
+                    logger.log(f"Collection: {args.collection}")
+                else:
+                    print(f"Using collection: {args.collection}")
+            elif args.collections and len(args.collections) == 1:
+                # Single collection via --collections flag
+                inputs["collection_name"] = args.collections[0]
+                inputs["comparison_mode"] = False
+                if logger:
+                    logger.log(f"Collection: {args.collections[0]}")
+                else:
+                    print(f"Using collection: {args.collections[0]}")
+            elif graph_name == "code_investigation":
+                # Default to codebase_collection for backwards compatibility
+                inputs["collection_name"] = "codebase_collection"
+                inputs["comparison_mode"] = False
 
             try:
                 for output in app.stream(inputs, config=config):
@@ -259,6 +316,34 @@ Examples:
                 print(f"    Size: {size_kb:.1f} KB | Modified: {mtime_str}")
                 print(f"    Path: {log}")
                 print()
+
+    elif args.command == "list-codebases":
+        registry = CodebaseRegistry()
+        codebases = registry.list_all()
+
+        if not codebases:
+            print("\nNo codebases registered.")
+            print("Run 'python scripts/ingest/ingest_codebases.py' to ingest repositories from codebases.yaml")
+            return
+
+        # Display formatted list
+        print(format_codebase_list(codebases))
+
+        # Show stats if requested
+        if args.stats:
+            stats = registry.get_stats()
+            print("\n" + "=" * 80)
+            print("AGGREGATE STATISTICS")
+            print("=" * 80)
+            print(f"Total Codebases: {stats['total_codebases']}")
+            print(f"Total Chunks: {stats['total_chunks']:,}")
+            print(f"Total Files: {stats['total_files']:,}")
+            print(f"Embedding Models: {', '.join(stats['embedding_models'])}")
+            print("=" * 80 + "\n")
+
+        print("\nUsage:")
+        print(f"  python main.py run \"your query\" --graph code_investigation --collection <collection_name>")
+        print()
 
     else:
         parser.print_help()

@@ -40,6 +40,9 @@ class CodeInvestigationState(TypedDict):
     # Core fields
     query: str  # Original investigation question
     report: str  # Final investigation report
+    collection_name: str  # ChromaDB collection to search (e.g., codebase_test_smith)
+    collection_names: list[str]  # Multiple collections for comparison (e.g., ["codebase_test_smith", "codebase_local_deepr"])
+    comparison_mode: bool  # Whether this is a multi-repo comparison
 
     # Query analysis
     investigation_type: str  # Type: 'dependency', 'flow', 'usage', 'architecture', 'general'

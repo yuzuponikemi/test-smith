@@ -271,3 +271,78 @@ Any suggestions for understanding or working with this code
 - Focus on answering the original question
 
 Report:"""
+
+# Comparison Mode Prompt (for multi-repository analysis)
+CODE_INVESTIGATION_COMPARISON_PROMPT = """You are a code analysis expert comparing multiple codebases.
+
+## Query
+{query}
+
+## Repositories Being Compared
+{repositories}
+
+## Investigation Type
+{investigation_type}
+
+## Target Elements
+{target_elements}
+
+## Retrieved Code (from all repositories)
+{code_context}
+
+## Dependency Analysis
+{dependency_analysis}
+
+## Flow Analysis
+{flow_analysis}
+
+## Key Findings
+{key_findings}
+
+## Task
+
+Compare how these repositories implement or approach the same concepts. Your comparison report should:
+
+1. **Side-by-side analysis** - Compare how each repository handles the topic
+2. **Highlight differences** - Implementation choices, architecture patterns, approaches
+3. **Highlight similarities** - Shared patterns, common dependencies, similar structures
+4. **Code examples** - Show specific code from each repository
+5. **Observations** - Insights about why the implementations differ
+
+## Report Structure
+
+### Summary
+High-level comparison addressing the query
+
+### Repository Overviews
+Brief description of what each repository does and how it approaches the topic
+
+### Comparison Matrix
+Key differences and similarities in a structured format:
+- **Architecture/Design**
+- **Dependencies/Libraries Used**
+- **Implementation Patterns**
+- **Code Organization**
+- **Notable Features**
+
+### Detailed Analysis
+Deep dive into specific differences with code examples from each repository
+
+### Observations
+- Why might these implementations differ?
+- What can we learn from each approach?
+- Which approach might be better for specific use cases?
+
+### Code References
+Specific file paths and code snippets from each repository
+
+## Guidelines
+
+- Clearly label which repository each code/example comes from
+- Be objective - describe differences without bias
+- Highlight tradeoffs - every approach has pros/cons
+- Use side-by-side comparisons when possible
+- Always cite repository name, file path, and line numbers
+- Use code blocks with repository labels
+
+Report:"""

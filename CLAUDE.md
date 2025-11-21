@@ -47,10 +47,11 @@ Test-Smith now supports **multiple graph workflows** that can be selected based 
    - Features: Hypothesis generation, evidence validation, causal graph, probability ranking
    - Complexity: Medium | Avg time: 60-90 seconds
 
-6. **code_investigation** ⭐ NEW - Deep codebase analysis and investigation
-   - Best for: Understanding code structure, finding dependencies, tracing data flow
-   - Features: Dependency tracking, flow analysis, variable usage, architecture patterns
+6. **code_investigation** ⭐ NEW - Deep codebase analysis and multi-repository comparison
+   - Best for: Understanding code structure, finding dependencies, comparing codebases
+   - Features: Dependency tracking, flow analysis, multi-repo comparison, architecture patterns
    - Complexity: Medium | Avg time: 45-90 seconds
+   - Supports: Single repository queries OR multi-repository comparison mode
 
 ### Graph Selection
 
@@ -224,6 +225,57 @@ python scripts/ingest/ingest_codebase.py . --collection my_project_code
 python main.py run "How does auth work?" --graph code_investigation
 ```
 
+**Multi-Repository Comparison:** ⭐ NEW
+
+The code investigation graph now supports comparing multiple codebases side-by-side:
+
+**Features:**
+- Compare how different projects implement similar concepts
+- Analyze architectural differences between repositories
+- Identify common patterns and unique approaches
+- Side-by-side dependency and flow analysis
+
+**Configuration:**
+- Add repositories to `codebases.yaml`
+- Ingest using batch script: `python scripts/ingest/ingest_codebases.py`
+- Each repo gets a separate ChromaDB collection
+
+**Usage Examples:**
+```bash
+# List all registered codebases
+python main.py list-codebases
+
+# Single repository query
+python main.py run "How does authentication work?" \
+  --graph code_investigation \
+  --collection codebase_my_project
+
+# Compare two repositories
+python main.py run "How do these repos handle authentication differently?" \
+  --graph code_investigation \
+  --collections codebase_project_a codebase_project_b
+
+# Compare LangGraph usage across repos
+python main.py run "Compare the graph workflows and state management approaches" \
+  --graph code_investigation \
+  --collections codebase_test_smith codebase_local-deepr
+```
+
+**Comparison Report Features:**
+- Comparison matrix (side-by-side analysis)
+- Architecture/design differences
+- Dependencies and libraries used
+- Implementation patterns
+- Key similarities and differences
+- Code references from both repositories
+
+**For detailed information on multi-repository management:**
+- See `docs/CODEBASE_MANAGEMENT.md` for complete guide
+- Explains `codebases.yaml` configuration file
+- Explains `codebase_registry.json` tracking database
+- Details batch vs direct ingestion workflows
+- Troubleshooting and best practices
+
 ### State Management
 
 ```python
@@ -308,6 +360,53 @@ python scripts/ingest/ingest_diagnostic.py
 - Duplicate detection and removal (exact + 95% similarity threshold)
 - Boilerplate pattern removal
 - Quality metrics and recommendations
+
+### Multi-Repository Codebase Management ⭐ NEW
+
+**Feature:** Config-based ingestion of multiple code repositories into separate collections.
+
+```bash
+# 1. Configure repositories in codebases.yaml
+vim codebases.yaml
+
+# 2. Ingest all enabled repositories
+python scripts/ingest/ingest_codebases.py
+
+# 3. List ingested codebases
+python main.py list-codebases
+
+# 4. Query specific repository
+python main.py run "How does authentication work?" \
+  --graph code_investigation \
+  --collection codebase_myproject
+```
+
+**Key Benefits:**
+- **One collection per repository** - Clean isolation and targeted queries
+- **Auto-detect git metadata** - Branch, commit, URL automatically tracked
+- **Registry system** - Centralized tracking of all ingested codebases
+- **Quality preprocessing** - Same powerful pipeline as document ingestion
+- **Multi-language support** - Python, C#, JavaScript, TypeScript, and more
+
+**Example Configuration (codebases.yaml):**
+```yaml
+repositories:
+  - name: my-csharp-app
+    path: /path/to/my-csharp-app
+    description: "My C# Application"
+    enabled: true
+    ingestion_options:
+      file_extensions:
+        - .cs
+        - .csproj
+        - .sln
+        - .xaml
+      exclude_patterns:
+        - "**/bin/**"
+        - "**/obj/**"
+```
+
+**See docs/MULTI_REPO_WORKFLOW.md for complete guide.**
 
 ### Diagnostic Tools
 
@@ -633,9 +732,14 @@ TAVILY_API_KEY="<tavily-key>"
 - **docs/DOCUMENT_DESIGN_EVALUATION.md** - Reproducible quality metrics
 - **PREPROCESSOR_QUICKSTART.md** - Quick start guide for preprocessing
 
+**Code Investigation & Multi-Repository:**
+- **docs/CODEBASE_MANAGEMENT.md** - ⭐ NEW: Complete guide to yaml/json files, batch vs direct ingestion, troubleshooting
+- **docs/MULTI_REPO_WORKFLOW.md** - Quick start guide for multi-repository workflows
+
 **Tools & Analysis:**
 - **chroma_explorer.ipynb** - Interactive notebook for database analysis with PCA
 - **scripts/ingest/ingest_with_preprocessor.py** - Production ingestion with quality pipeline
+- **scripts/ingest/ingest_codebases.py** - ⭐ NEW: Batch multi-repository ingestion from config
 - **scripts/ingest/ingest_diagnostic.py** - Enhanced ingestion with real-time quality checks
 - **scripts/ingest/clean_and_reingest.sh** - Automated clean re-ingest workflow
 - **scripts/visualization/visualize_graphs.py** - Generate graph diagrams for all workflows

@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "codebases": {
+    "test-smith": {
+      "name": "test-smith",
+      "description": "Test-Smith - Multi-Graph Research Agent System",
+      "repo_path": "/Users/ikmx/source/personal/test-smith",
+      "collection_name": "codebase_test_smith",
+      "embedding_model": "mxbai-embed-large",
+      "chunk_count": 1246,
+      "file_count": 133,
+      "ingested_at": "2025-11-21T11:19:27.613615",
+      "updated_at": "2025-11-21T11:25:12.874000",
+      "repo_url": "https://github.com/yuzuponikemi/test-smith.git",
+      "branch": "claude/update-ingest-script-01JgQyhKqmP6rSucb1fNLVEx",
+      "commit_hash": "ebf273b",
+      "commit_date": "2025-11-21 00:18:54 +0900"
+    },
+    "local-deepr": {
+      "name": "local-deepr",
+      "description": "Local DeepR - Research/Analysis Application",
+      "repo_path": "/Users/ikmx/source/personal/local-deepR",
+      "collection_name": "codebase_local-deepr",
+      "embedding_model": "mxbai-embed-large",
+      "chunk_count": 15,
+      "file_count": 15,
+      "ingested_at": "2025-11-21T10:25:00.979439",
+      "updated_at": "2025-11-21T10:25:00.979444",
+      "repo_url": "https://github.com/yuzuponikemi/local-deepR",
+      "branch": "main",
+      "commit_hash": "967e635",
+      "commit_date": "2025-11-05 00:33:06 +0900"
+    },
+    "flappy-bird-csharp": {
+      "name": "flappy-bird-csharp",
+      "description": "Flappy Bird Game - C# Windows Forms Application",
+      "repo_path": "/Users/ikmx/source/personal/C-Flappy-Bird-Game-Windows-Form",
+      "collection_name": "codebase_flappy-bird-csharp",
+      "embedding_model": "mxbai-embed-large",
+      "chunk_count": 13,
+      "file_count": 13,
+      "ingested_at": "2025-11-21T10:25:01.816690",
+      "updated_at": "2025-11-21T10:25:01.816692",
+      "repo_url": "https://github.com/mooict/C-Flappy-Bird-Game-Windows-Form",
+      "branch": "main",
+      "commit_hash": "1fdfba6",
+      "commit_date": "2022-06-12 15:52:26 +0100"
+    }
+  }
+}

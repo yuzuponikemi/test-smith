@@ -1,0 +1,106 @@
+# Codebase Ingestion Configuration
+# Define repositories to ingest into separate ChromaDB collections
+#
+# Each repository will be ingested into its own collection named: codebase_{name}
+# You can specify paths as absolute or relative to this config file
+#
+# Usage:
+#   python scripts/ingest/ingest_codebases.py
+#
+# To ingest specific repositories only:
+#   python scripts/ingest/ingest_codebases.py --repos test-smith my-other-project
+
+repositories:
+  # This repository (Test-Smith) - LangGraph Multi-Agent System
+  - name: test-smith
+    path: .
+    description: "Test-Smith - Multi-Graph Research Agent System"
+    enabled: true
+    ingestion_options:
+      min_quality: 0.5
+      file_extensions:
+        - .py
+        - .md
+        - .txt
+        - .yaml
+        - .yml
+        - .json
+      exclude_patterns:
+        - "**/__pycache__/**"
+        - "**/node_modules/**"
+        - "**/.venv/**"
+        - "**/venv/**"
+        - "**/.git/**"
+        - "**/chroma_db/**"
+        - "**/reports/**"
+        - "**/logs/**"
+
+  # Local DeepR Repository (Python project) - already ingested
+  - name: local-deepr
+    path: /Users/ikmx/source/personal/local-deepR
+    description: "Local DeepR - Research/Analysis Application"
+    enabled: false
+    ingestion_options:
+      min_quality: 0.5
+      file_extensions:
+        - .py
+        - .md
+        - .txt
+        - .yaml
+        - .yml
+        - .json
+        - .ipynb
+      exclude_patterns:
+        - "**/__pycache__/**"
+        - "**/node_modules/**"
+        - "**/.venv/**"
+        - "**/venv/**"
+        - "**/.git/**"
+        - "**/dist/**"
+        - "**/build/**"
+        - "**/*.egg-info/**"
+
+  # C# Flappy Bird Game (Windows Forms) - already ingested
+  - name: flappy-bird-csharp
+    path: /Users/ikmx/source/personal/C-Flappy-Bird-Game-Windows-Form
+    description: "Flappy Bird Game - C# Windows Forms Application"
+    enabled: false
+    ingestion_options:
+      min_quality: 0.5
+      file_extensions:
+        - .cs
+        - .csproj
+        - .sln
+        - .xaml
+        - .resx
+        - .config
+        - .settings
+        - .md
+        - .txt
+      exclude_patterns:
+        - "**/bin/**"
+        - "**/obj/**"
+        - "**/.vs/**"
+        - "**/packages/**"
+        - "**/Debug/**"
+        - "**/Release/**"
+
+# Global settings
+global_settings:
+  # Embedding model to use (must be available in Ollama)
+  embedding_model: mxbai-embed-large
+
+  # ChromaDB persist directory
+  persist_directory: chroma_db
+
+  # Registry file location
+  registry_file: codebase_registry.json
+
+  # Default batch size for embedding
+  batch_size: 10
+
+  # Auto-detect repository metadata (git branch, commit, etc.)
+  auto_detect_git: true
+
+  # Verbose logging
+  verbose: true

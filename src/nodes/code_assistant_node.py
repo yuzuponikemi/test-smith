@@ -17,75 +17,105 @@ from src.models import get_code_assistant_model
 
 def code_retriever(state):
     """
-    Code Retriever Node - Retrieves relevant code chunks from codebase collection
+    Code Retriever Node - Retrieves relevant code chunks from codebase collection(s)
 
-    Searches the indexed codebase for code relevant to the user's query.
+    Searches the indexed codebase(s) for code relevant to the user's query.
+    Supports both single and multiple collection comparison mode.
     Returns formatted code context with file paths and metadata.
     """
     print_node_header("CODE RETRIEVER")
 
     query = state.get("query", "")
     code_queries = state.get("code_queries", [query])  # Default to original query
-    collection_name = state.get("collection_name", "codebase_collection")
+    comparison_mode = state.get("comparison_mode", False)
+
+    # Determine which collections to search
+    if comparison_mode and "collection_names" in state and state["collection_names"]:
+        collections_to_search = state["collection_names"]
+    else:
+        collection_name = state.get("collection_name", "codebase_collection")
+        collections_to_search = [collection_name]
 
     if not code_queries:
         print("  No code queries - using original query")
         code_queries = [query]
 
     print(f"  Executing {len(code_queries)} code searches")
-    print(f"  Collection: {collection_name}")
+    if comparison_mode:
+        print(f"  Comparison Mode: Searching {len(collections_to_search)} collections")
+        for coll in collections_to_search:
+            print(f"    - {coll}")
+    else:
+        print(f"  Collection: {collections_to_search[0]}")
 
     all_results = []
-
-    # Initialize ChromaDB with correct embedding model (from collection metadata)
     persist_directory = "chroma_db"
-    embeddings = get_embeddings_for_collection(persist_directory, collection_name)
-    vectorstore = Chroma(
-        collection_name=collection_name,
-        embedding_function=embeddings,
-        persist_directory=persist_directory,
-    )
 
-    # Configure retriever - get more chunks for code context
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 8})
-
-    for query in code_queries:
-        print(f"  Searching codebase for: {query}")
+    # Search each collection
+    for collection_name in collections_to_search:
+        print(f"\n  --- Searching {collection_name} ---")
 
         try:
-            documents = retriever.get_relevant_documents(query)
+            # Initialize ChromaDB with correct embedding model (from collection metadata)
+            embeddings = get_embeddings_for_collection(persist_directory, collection_name)
+            vectorstore = Chroma(
+                collection_name=collection_name,
+                embedding_function=embeddings,
+                persist_directory=persist_directory,
+            )
 
-            if documents:
-                doc_string = f"=== Code Results for '{query}' ===\n\n"
+            # Configure retriever - get more chunks for code context
+            retriever = vectorstore.as_retriever(search_kwargs={"k": 8})
 
-                for i, doc in enumerate(documents, 1):
-                    # Extract metadata
-                    rel_path = doc.metadata.get('relative_path', doc.metadata.get('source', 'Unknown'))
-                    prog_lang = doc.metadata.get('programming_language', 'unknown')
-                    filename = doc.metadata.get('filename', '')
+            for query_text in code_queries:
+                print(f"  Searching for: {query_text}")
 
-                    doc_string += f"[Result {i}]\n"
-                    doc_string += f"File: {rel_path}\n"
-                    if prog_lang != 'unknown':
-                        doc_string += f"Language: {prog_lang}\n"
+                try:
+                    documents = retriever.get_relevant_documents(query_text)
 
-                    # Format code content
-                    doc_string += f"```{prog_lang if prog_lang != 'unknown' else ''}\n"
-                    doc_string += doc.page_content
-                    doc_string += "\n```\n"
-                    doc_string += "---\n"
+                    if documents:
+                        # Add collection label if in comparison mode
+                        if comparison_mode:
+                            doc_string = f"=== Code Results from '{collection_name}' for query '{query_text}' ===\n\n"
+                        else:
+                            doc_string = f"=== Code Results for '{query_text}' ===\n\n"
 
-                all_results.append(doc_string)
-                print(f"    Retrieved {len(documents)} code chunks")
-            else:
-                all_results.append(f"No code found for query: {query}\n")
-                print(f"    No results found")
+                        for i, doc in enumerate(documents, 1):
+                            # Extract metadata
+                            rel_path = doc.metadata.get('relative_path', doc.metadata.get('source', 'Unknown'))
+                            prog_lang = doc.metadata.get('programming_language', 'unknown')
+                            filename = doc.metadata.get('filename', '')
+
+                            doc_string += f"[Result {i}]\n"
+                            if comparison_mode:
+                                doc_string += f"Repository: {collection_name}\n"
+                            doc_string += f"File: {rel_path}\n"
+                            if prog_lang != 'unknown':
+                                doc_string += f"Language: {prog_lang}\n"
+
+                            # Format code content
+                            doc_string += f"```{prog_lang if prog_lang != 'unknown' else ''}\n"
+                            doc_string += doc.page_content
+                            doc_string += "\n```\n"
+                            doc_string += "---\n"
+
+                        all_results.append(doc_string)
+                        print(f"    Retrieved {len(documents)} code chunks")
+                    else:
+                        result_msg = f"No code found in {collection_name} for query: {query_text}\n" if comparison_mode else f"No code found for query: {query_text}\n"
+                        all_results.append(result_msg)
+                        print(f"    No results found")
+
+                except Exception as e:
+                    print(f"    Error searching for '{query_text}': {e}")
+                    all_results.append(f"Error searching {collection_name}: {str(e)}\n")
 
         except Exception as e:
-            print(f"    Error searching for '{query}': {e}")
-            all_results.append(f"Error searching codebase: {str(e)}\n")
+            print(f"  Error accessing collection '{collection_name}': {e}")
+            all_results.append(f"Error accessing collection '{collection_name}': {str(e)}\n")
 
-    print(f"  Completed {len(all_results)} code searches")
+    print(f"\n  Completed searches across {len(collections_to_search)} collection(s)")
+    print(f"  Total result sets: {len(all_results)}")
 
     return {"code_results": all_results}
 
