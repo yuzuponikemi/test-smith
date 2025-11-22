@@ -1,7 +1,11 @@
 {
   "dependencies": ["."],
   "graphs": {
-    "test_smith": "./src/graph.py:workflow"
+    "deep_research": "./src/studio_graphs.py:deep_research",
+    "code_execution": "./src/studio_graphs.py:code_execution",
+    "quick_research": "./src/studio_graphs.py:quick_research",
+    "comparative": "./src/studio_graphs.py:comparative",
+    "fact_check": "./src/studio_graphs.py:fact_check"
   },
   "env": ".env",
   "config_schemas": {

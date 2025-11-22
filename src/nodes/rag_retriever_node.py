@@ -46,7 +46,8 @@ def rag_retriever(state):
         print(f"  Retrieving from KB for: {query}")
 
         try:
-            documents = retriever.get_relevant_documents(query)
+            # Use invoke() instead of get_relevant_documents() for newer LangChain versions
+            documents = retriever.invoke(query)
 
             # Format the documents into a string
             doc_string = ""

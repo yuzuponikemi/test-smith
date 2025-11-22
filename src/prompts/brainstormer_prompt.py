@@ -1,4 +1,4 @@
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 
 BRAINSTORMER_TEMPLATE = """You are an expert brainstormer specializing in root cause analysis and causal reasoning.
 

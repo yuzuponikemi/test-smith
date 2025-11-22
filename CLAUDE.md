@@ -277,6 +277,28 @@ python main.py run "Why is my application experiencing high latency?" --graph ca
 python main.py --version
 ```
 
+### LangGraph Studio (Visual Debugging)
+
+LangGraph Studioを使用すると、グラフをビジュアルに確認・デバッグできます。
+
+```bash
+# ワンクリックで起動
+./scripts/studio/start_studio.sh
+
+# 停止
+./scripts/studio/stop_studio.sh
+# または Ctrl+C
+```
+
+**起動後のアクセス:**
+- Studio UI: ブラウザが自動的に開きます
+- API: `http://127.0.0.1:8123`
+- Docs: `http://127.0.0.1:8123/docs`
+
+**詳細ガイド:**
+- **[scripts/studio/README.md](scripts/studio/README.md)** - スクリプト使用方法
+- **[docs/STUDIO_GUIDE.md](docs/STUDIO_GUIDE.md)** - Studio機能の詳細
+
 ### Knowledge Base Ingestion
 
 ```bash
@@ -605,13 +627,36 @@ LANGCHAIN_PROJECT="deep-research-v1-proto"
 
 ## Configuration Files
 
-**.env** (required for LangSmith + Tavily):
+**.env** (required for LangSmith + Web Search):
 ```bash
+# LangSmith (monitoring/tracing)
 LANGCHAIN_TRACING_V2="true"
 LANGCHAIN_API_KEY="<langsmith-key>"
 LANGCHAIN_PROJECT="deep-research-v1-proto"
-TAVILY_API_KEY="<tavily-key>"
+
+# Web Search Providers (multiple providers with auto-fallback)
+SEARCH_PROVIDER_PRIORITY="tavily,duckduckgo"  # Priority order
+TAVILY_API_KEY="<tavily-key>"  # Optional: High-quality search (1,000/month free)
+# BRAVE_API_KEY="<brave-key>"  # Optional: Alternative provider (2,000/month free)
+
+# Model Provider
+MODEL_PROVIDER="ollama"  # or "google" for Gemini
+# GOOGLE_API_KEY="<google-key>"  # Required if MODEL_PROVIDER="google"
 ```
+
+**Web Search Providers:**
+- **Tavily** (推奨): High-quality search optimized for LLMs. Free tier: 1,000 searches/month. Requires API key.
+- **DuckDuckGo** (無料): Free search with no API key required. Built-in fallback.
+- **Brave Search** (オプション): Privacy-focused search. Free tier: 2,000 searches/month. (Coming soon)
+
+**Auto-Fallback**: If Tavily fails (API limit reached, invalid key, etc.), system automatically falls back to DuckDuckGo.
+
+**Health Check:**
+```bash
+python scripts/utils/check_search_providers.py
+```
+
+**詳細ガイド**: [docs/WEB_SEARCH_PROVIDERS.md](docs/WEB_SEARCH_PROVIDERS.md)
 
 **Note:** `.env` is checked into git with actual keys (not best practice for production).
 
@@ -652,3 +697,191 @@ TAVILY_API_KEY="<tavily-key>"
 - **scripts/ingest/ingest_with_preprocessor.py** - Production ingestion
 - **scripts/visualization/visualize_graphs.py** - Graph diagram generation
 - **evaluation/evaluate_agent.py** - LangSmith evaluation runner
+
+---
+
+# 🧠 Cognitive Extension Protocol (Personal Assistant Settings)
+
+## Core Identity & Mission
+Claude Code acts as an **extension of the user's cognition** when working with this codebase.
+Prioritize as a **Senior Software Architect**:
+
+1. **Cognitive Clarity**: Reduce cognitive load - explain *why*, not just *what*
+2. **Scalability**: Prefer robust, scalable solutions over quick hacks (unless prototyping)
+3. **Context Awareness**: Always infer the broader goal from code changes
+
+## Guidelines
+- **Language**: Read in any language, but **reply in Japanese** unless asked otherwise
+- **Output Format**: Use Markdown. When summarizing, use bullet points for readability
+- **Tool Usage**: Full access to `gh` (GitHub CLI) and standard Unix tools
+
+## ⚡ Custom Commands
+
+### `/comp-pr [id1] [id2]` - Compare Pull Requests
+**Goal**: Act as a neutral referee to compare two implementations
+
+**Steps**:
+1. Run `gh pr view [id1]` and `gh pr view [id2]` to get descriptions
+2. Run `gh pr diff [id1]` and `gh pr diff [id2]` to get code changes
+3. Analyze based on:
+   - **Architectural Fit**: Which fits the current system design better?
+   - **Complexity**: Which is simpler to maintain?
+   - **Edge Cases**: Did anyone miss error handling?
+4. **Output**: Generate a comparison table and a final recommendation ("Adopt PR A but borrow X from PR B")
+
+**Example**:
+```
+User: /comp-pr 5 7
+Claude: [Fetches both PRs, analyzes diffs, generates comparison table]
+```
+
+### `/review` - Deep Code Review
+**Goal**: Perform a security and quality audit on current changes
+
+**Steps**:
+1. Run `git diff --staged` (or currently modified files)
+2. Check for:
+   - Security vulnerabilities (secrets, injection risks)
+   - Performance bottlenecks (N+1 queries, heavy loops)
+   - Naming consistency
+3. **Output**: A prioritized list of issues (Critical / Warning / Suggestion)
+
+**Example**:
+```
+User: /review
+Claude:
+Critical:
+  - line 45: API key exposed in config
+Warning:
+  - line 120: N+1 query in loop
+Suggestion:
+  - line 67: Consider using more descriptive variable name
+```
+
+### `/commit` - Smart Commit Message
+**Goal**: Generate a conventional commit message based on changes
+
+**Steps**:
+1. Analyze `git diff --staged`
+2. Generate a commit message following **Conventional Commits** format:
+   - `feat: ...` for new features
+   - `fix: ...` for bug fixes
+   - `refactor: ...` for code restructuring
+   - `docs: ...` for documentation
+3. Wait for user approval before running `git commit`
+
+**Example**:
+```
+User: /commit
+Claude:
+Proposed commit message:
+feat(code-investigation): Add multi-repository comparison support
+
+- Add comparison mode to code investigation graph
+- Update synthesizer to use comparison-specific prompts
+- Support --collections flag for multi-repo queries
+
+Proceed with this commit? (yes/no)
+```
+
+### `/obsidian` - Knowledge Sync
+**Goal**: Summarize the current session for the user's Obsidian notes
+
+**Steps**:
+1. Review the conversation and code changes
+2. Output a Markdown block containing:
+   - **Topic**: 1-line summary
+   - **Key Decisions**: What was decided and why
+   - **Questions for Later**: Philosophical or technical questions sparked by this session
+
+**Example Output**:
+```markdown
+## Session: Multi-Repository Code Comparison Implementation
+
+**Topic**: Added multi-repo comparison to code investigation workflow
+
+**Key Decisions**:
+- Use separate ChromaDB collections per repository for isolation
+- Implement comparison mode via `--collections` flag
+- Create specialized comparison prompt for synthesizer
+- Registry tracks all ingested repositories
+
+**Questions for Later**:
+- Should we support comparison of 3+ repositories?
+- How to handle different embedding models across collections?
+- Could we auto-detect related codebases based on dependencies?
+
+**Files Modified**:
+- src/graphs/code_investigation_graph.py
+- src/nodes/code_investigation_synthesizer_node.py
+- main.py
+- docs/CODEBASE_MANAGEMENT.md
+```
+
+## 🚀 Prototyping Modes (User Preference)
+
+### Small Task
+Provide a single Python script or Jupyter Notebook snippet
+
+### Medium Task
+Provide an "Implementation Design Spec" before coding:
+```markdown
+## Design Spec: [Feature Name]
+
+**Goal**: [1-sentence objective]
+
+**Approach**:
+1. [High-level step 1]
+2. [High-level step 2]
+
+**Files to Modify**:
+- file1.py: [what changes]
+- file2.py: [what changes]
+
+**Trade-offs**:
+- Option A: [pros/cons]
+- Option B: [pros/cons]
+
+**Recommendation**: Option B because [reasoning]
+```
+
+### Large Task
+Provide a Roadmap with Tech Stack choices first:
+```markdown
+## Roadmap: [Project Name]
+
+**Phase 1**: Foundation
+- [ ] Database schema design
+- [ ] API structure
+- [ ] Authentication layer
+
+**Phase 2**: Core Features
+- [ ] Feature X
+- [ ] Feature Y
+
+**Tech Stack Choices**:
+- DB: PostgreSQL vs MongoDB
+  - Recommendation: PostgreSQL (reasoning...)
+- API: REST vs GraphQL
+  - Recommendation: REST (reasoning...)
+```
+
+---
+
+## GitHub PR Comparison Example
+
+To try the `/comp-pr` command with this repository:
+
+```bash
+# List recent PRs
+gh pr list
+
+# Compare two PRs
+# Usage: /comp-pr [pr-number-1] [pr-number-2]
+```
+
+The comparison will analyze:
+- Code changes and architectural impact
+- Complexity and maintainability
+- Test coverage and edge cases
+- Which approach better fits Test-Smith's multi-graph architecture

@@ -388,6 +388,55 @@ class HypothesisRanking(BaseModel):
         description="Overall assessment of root cause certainty"
     )
 
+# === Code Execution Schemas ===
+
+class CodeExecutionRequest(BaseModel):
+    """
+    Request for code execution with context and requirements.
+
+    Used to generate and execute Python code for data analysis,
+    calculations, or information processing during research.
+    """
+    task_description: str = Field(
+        description="Clear description of what the code should accomplish"
+    )
+    context: str = Field(
+        description="Relevant context from previous research steps"
+    )
+    input_data: Optional[str] = Field(
+        default=None,
+        description="Input data or parameters for the code (JSON format if structured)"
+    )
+    requirements: List[str] = Field(
+        default_factory=list,
+        description="Specific requirements or constraints for the code"
+    )
+    expected_output: str = Field(
+        description="Description of expected output format"
+    )
+
+class CodeExecutionResult(BaseModel):
+    """
+    Result of code execution including output and metadata.
+
+    Captures both successful execution results and errors
+    for proper handling in the workflow.
+    """
+    success: bool = Field(
+        description="Whether code execution succeeded"
+    )
+    output: str = Field(
+        description="Output from code execution (stdout or return value)"
+    )
+    error: Optional[str] = Field(
+        default=None,
+        description="Error message if execution failed"
+    )
+    execution_time: float = Field(
+        description="Execution time in seconds"
+    )
+    code: str = Field(
+        description="The actual code that was executed"
 
 # === Code Assistant Schemas ===
 

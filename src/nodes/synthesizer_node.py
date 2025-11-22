@@ -70,8 +70,27 @@ def synthesizer_node(state):
         analyzed_data = state.get("analyzed_data", [])
         loop_count = state.get("loop_count", 0)
 
+        # Get code execution results if available
+        code_results = state.get("code_execution_results", [])
+
         print(f"  Iterations: {loop_count}")
         print(f"  Total analyzed data entries: {len(analyzed_data)}")
+        print(f"  Code execution results: {len(code_results)}")
+
+        # Format code results for inclusion in prompt
+        code_results_str = ""
+        if code_results:
+            code_results_str = "\n\n**CODE EXECUTION RESULTS:**\n"
+            code_results_str += "The following code was executed to answer the query:\n\n"
+            for i, result in enumerate(code_results, 1):
+                code_results_str += f"Result {i}:\n"
+                code_results_str += f"- Success: {result.get('success', False)}\n"
+                code_results_str += f"- Output: {result.get('output', 'N/A')}\n"
+                code_results_str += f"- Execution Mode: {result.get('execution_mode', 'N/A')}\n"
+                if result.get('code'):
+                    code_results_str += f"- Code:\n```python\n{result['code']}\n```\n"
+                code_results_str += "\n"
+            code_results_str += "**IMPORTANT:** Use the actual output values from the code execution results above in your final answer. Do not use placeholders like '[insert value]'.\n"
 
         prompt = SYNTHESIZER_PROMPT.format(
             original_query=original_query,
@@ -80,7 +99,7 @@ def synthesizer_node(state):
             rag_queries=rag_queries,
             analyzed_data=analyzed_data,
             loop_count=loop_count
-        )
+        ) + code_results_str
 
     message = model.invoke(prompt)
     print("  ✓ Report generated successfully\n")

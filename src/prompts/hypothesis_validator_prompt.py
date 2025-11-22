@@ -1,4 +1,4 @@
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 
 HYPOTHESIS_VALIDATOR_TEMPLATE = """You are an expert validator specializing in ranking root cause hypotheses by likelihood.
 

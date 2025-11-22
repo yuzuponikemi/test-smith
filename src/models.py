@@ -162,6 +162,16 @@ def get_root_cause_synthesizer_model():
     )
 
 
+# === Code Execution Models ===
+
+def get_code_executor_model():
+    """Code generation and execution planning"""
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="llama3",
+        temperature=0.3  # Lower temperature for precise code generation
+    )
+  
 # === Code Assistant Models ===
 
 def get_code_assistant_model():

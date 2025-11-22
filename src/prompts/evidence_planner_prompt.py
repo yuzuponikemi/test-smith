@@ -1,4 +1,4 @@
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 
 EVIDENCE_PLANNER_TEMPLATE = """You are a strategic research planner specializing in evidence gathering for causal analysis.
 
