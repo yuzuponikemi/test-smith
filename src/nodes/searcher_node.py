@@ -1,23 +1,28 @@
-from langchain_community.tools import TavilySearchResults
-import os
-
 from src.utils.logging_utils import print_node_header
+from src.utils.search_providers import SearchProviderManager
+
+
 def searcher(state):
     """
-    Searcher Node - Executes web searches via Tavily API
+    Searcher Node - Executes web searches with automatic provider fallback
+
+    Supports multiple search providers with automatic fallback:
+    - Tavily (high-quality, requires API key)
+    - DuckDuckGo (free, no API key required)
+    - Brave Search (optional, requires API key)
 
     Uses strategically allocated web_queries from the planner.
     These queries are specifically chosen for information that needs:
     - Recent events or current data
     - General knowledge not in KB
     - External sources and references
+
+    Environment Variables:
+        SEARCH_PROVIDER_PRIORITY: Comma-separated provider priority (default: "tavily,duckduckgo")
+        TAVILY_API_KEY: API key for Tavily (optional)
+        BRAVE_API_KEY: API key for Brave Search (optional)
     """
     print_node_header("SEARCHER")
-
-    # Get the Tavily API key from the environment
-    tavily_api_key = os.environ.get("TAVILY_API_KEY")
-    if not tavily_api_key:
-        raise ValueError("Tavily API key not found in environment variables. Please set the TAVILY_API_KEY environment variable.")
 
     web_queries = state.get("web_queries", [])
 
@@ -27,12 +32,36 @@ def searcher(state):
 
     print(f"  Executing {len(web_queries)} web searches")
 
+    # Initialize search provider manager
+    try:
+        manager = SearchProviderManager()
+        print(f"  Available providers: {', '.join(manager.get_available_providers())}")
+    except Exception as e:
+        print(f"  ⚠️  Failed to initialize search providers: {e}")
+        return {"search_results": []}
+
     all_results = []
     for query in web_queries:
         print(f"  Searching web for: {query}")
-        search = TavilySearchResults(max_results=5)
-        search_results = search.invoke({"query": query})
-        all_results.append(search_results)
+        try:
+            # Search with automatic fallback
+            search_results = manager.search(query, max_results=5, attempt_all=True)
+            all_results.append(search_results)
+
+        except Exception as e:
+            # All providers failed
+            error_msg = str(e)
+            print(f"    ⚠️  All search providers failed: {error_msg}")
+
+            error_info = [
+                {
+                    "content": f"⚠️ Web search failed for query: {query}\n"
+                    f"Error: {error_msg}\n"
+                    f"Tip: Check your search provider configuration",
+                    "url": "",
+                }
+            ]
+            all_results.append(error_info)
 
     print(f"  Completed {len(all_results)} web searches")
     return {"search_results": all_results}

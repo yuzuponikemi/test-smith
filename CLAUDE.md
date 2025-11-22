@@ -208,6 +208,28 @@ python main.py run "Why is my application experiencing high latency?" --graph ca
 python main.py --version
 ```
 
+### LangGraph Studio (Visual Debugging)
+
+LangGraph Studioを使用すると、グラフをビジュアルに確認・デバッグできます。
+
+```bash
+# ワンクリックで起動
+./scripts/studio/start_studio.sh
+
+# 停止
+./scripts/studio/stop_studio.sh
+# または Ctrl+C
+```
+
+**起動後のアクセス:**
+- Studio UI: ブラウザが自動的に開きます
+- API: `http://127.0.0.1:8123`
+- Docs: `http://127.0.0.1:8123/docs`
+
+**詳細ガイド:**
+- **[scripts/studio/README.md](scripts/studio/README.md)** - スクリプト使用方法
+- **[docs/STUDIO_GUIDE.md](docs/STUDIO_GUIDE.md)** - Studio機能の詳細
+
 ### Knowledge Base Ingestion
 
 ```bash
@@ -527,13 +549,36 @@ LANGCHAIN_PROJECT="deep-research-v1-proto"
 
 ## Configuration Files
 
-**.env** (required for LangSmith + Tavily):
+**.env** (required for LangSmith + Web Search):
 ```bash
+# LangSmith (monitoring/tracing)
 LANGCHAIN_TRACING_V2="true"
 LANGCHAIN_API_KEY="<langsmith-key>"
 LANGCHAIN_PROJECT="deep-research-v1-proto"
-TAVILY_API_KEY="<tavily-key>"
+
+# Web Search Providers (multiple providers with auto-fallback)
+SEARCH_PROVIDER_PRIORITY="tavily,duckduckgo"  # Priority order
+TAVILY_API_KEY="<tavily-key>"  # Optional: High-quality search (1,000/month free)
+# BRAVE_API_KEY="<brave-key>"  # Optional: Alternative provider (2,000/month free)
+
+# Model Provider
+MODEL_PROVIDER="ollama"  # or "google" for Gemini
+# GOOGLE_API_KEY="<google-key>"  # Required if MODEL_PROVIDER="google"
 ```
+
+**Web Search Providers:**
+- **Tavily** (推奨): High-quality search optimized for LLMs. Free tier: 1,000 searches/month. Requires API key.
+- **DuckDuckGo** (無料): Free search with no API key required. Built-in fallback.
+- **Brave Search** (オプション): Privacy-focused search. Free tier: 2,000 searches/month. (Coming soon)
+
+**Auto-Fallback**: If Tavily fails (API limit reached, invalid key, etc.), system automatically falls back to DuckDuckGo.
+
+**Health Check:**
+```bash
+python scripts/utils/check_search_providers.py
+```
+
+**詳細ガイド**: [docs/WEB_SEARCH_PROVIDERS.md](docs/WEB_SEARCH_PROVIDERS.md)
 
 **Note:** `.env` is checked into git with actual keys (not best practice for production).
 
