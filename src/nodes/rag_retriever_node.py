@@ -1,7 +1,9 @@
 from langchain_chroma import Chroma
-from langchain_ollama import OllamaEmbeddings
 
 from src.utils.logging_utils import print_node_header
+from src.utils.embedding_utils import get_embeddings_for_collection
+
+
 def rag_retriever(state):
     """
     RAG Retriever Node - Retrieves relevant chunks from ChromaDB knowledge base
@@ -12,8 +14,8 @@ def rag_retriever(state):
     - Domain-specific knowledge
     - Established concepts and procedures
 
-    IMPORTANT: Uses nomic-embed-text for embedding queries (same model used during ingestion)
-    to ensure embeddings are in the same vector space.
+    IMPORTANT: Dynamically selects embedding model from collection metadata
+    to ensure embeddings match the model used during ingestion.
     """
     print_node_header("RAG RETRIEVER")
     rag_queries = state.get("rag_queries", [])
@@ -26,13 +28,15 @@ def rag_retriever(state):
 
     all_results = []
 
-    # Initialize ChromaDB with correct embedding model
-    # IMPORTANT: Must use nomic-embed-text (same model used in ingestion)
-    embeddings = OllamaEmbeddings(model="nomic-embed-text")
+    # Initialize ChromaDB with correct embedding model (from collection metadata)
+    collection_name = "research_agent_collection"
+    persist_directory = "chroma_db"
+
+    embeddings = get_embeddings_for_collection(persist_directory, collection_name)
     vectorstore = Chroma(
-        collection_name="research_agent_collection",
+        collection_name=collection_name,
         embedding_function=embeddings,
-        persist_directory="chroma_db",
+        persist_directory=persist_directory,
     )
 
     # Configure retriever with k=5 chunks per query

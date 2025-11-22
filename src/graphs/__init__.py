@@ -142,6 +142,12 @@ def _auto_register_graphs():
         register_graph("code_execution", CodeExecutionGraphBuilder())
     except ImportError as e:
         print(f"[GraphRegistry] Warning: Could not load code_execution graph: {e}")
+        
+    try:
+        from .code_investigation_graph import CodeInvestigationGraphBuilder
+        register_graph("code_investigation", CodeInvestigationGraphBuilder())
+    except ImportError as e:
+        print(f"[GraphRegistry] Warning: Could not load code_investigation graph: {e}")
 
 
 # Auto-register graphs on module import

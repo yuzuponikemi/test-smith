@@ -437,4 +437,58 @@ class CodeExecutionResult(BaseModel):
     )
     code: str = Field(
         description="The actual code that was executed"
+
+# === Code Assistant Schemas ===
+
+class CodeReference(BaseModel):
+    """
+    A reference to a specific location in the codebase.
+    """
+    file_path: str = Field(
+        description="Relative path to the file in the repository"
+    )
+    line_number: Optional[int] = Field(
+        default=None,
+        description="Specific line number (if applicable)"
+    )
+    symbol_name: Optional[str] = Field(
+        default=None,
+        description="Name of function, class, or variable referenced"
+    )
+    context: str = Field(
+        description="Brief description of what this code does"
+    )
+
+class CodeAnalysis(BaseModel):
+    """
+    Analysis result from the code assistant.
+    """
+    answer: str = Field(
+        description="Direct answer to the user's code question"
+    )
+    references: List[CodeReference] = Field(
+        default_factory=list,
+        description="Code references supporting the answer"
+    )
+    related_files: List[str] = Field(
+        default_factory=list,
+        description="Additional related files the user might want to check"
+    )
+    code_snippets: List[str] = Field(
+        default_factory=list,
+        description="Relevant code snippets (formatted with language identifier)"
+    )
+    confidence: Literal["high", "medium", "low"] = Field(
+        description="Confidence in this answer based on retrieved code context"
+    )
+
+class CodeSearchQueries(BaseModel):
+    """
+    Search queries generated for code retrieval.
+    """
+    queries: List[str] = Field(
+        description="List of search queries to find relevant code"
+    )
+    reasoning: str = Field(
+        description="Explanation of query generation strategy"
     )

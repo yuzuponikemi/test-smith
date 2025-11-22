@@ -22,7 +22,6 @@ from typing import List, Dict
 import argparse
 
 from langchain_unstructured import UnstructuredLoader
-from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain_community.vectorstores.utils import filter_complex_metadata
 
@@ -32,13 +31,17 @@ from src.preprocessor import (
     ContentCleaner,
     QualityMetrics
 )
+from src.utils.embedding_utils import (
+    get_embeddings,
+    get_model_config,
+    store_embedding_metadata,
+    DEFAULT_EMBEDDING_MODEL
+)
 
 # Configuration
 DOCUMENTS_DIR = "documents"
 CHROMA_DB_DIR = "chroma_db"
 COLLECTION_NAME = "research_agent_collection"
-EMBEDDING_MODEL = "nomic-embed-text"
-OLLAMA_BASE_URL = "http://localhost:11434"
 
 # Setup logging
 log_filename = f"ingestion_preprocessed_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
@@ -62,7 +65,8 @@ class PreprocessedIngestion:
                  collection_name: str = COLLECTION_NAME,
                  min_quality_score: float = 0.0,
                  enable_near_duplicate_detection: bool = True,
-                 enable_boilerplate_removal: bool = True):
+                 enable_boilerplate_removal: bool = True,
+                 embedding_model: str = DEFAULT_EMBEDDING_MODEL):
         """
         Args:
             documents_dir: Directory containing source documents
@@ -71,6 +75,7 @@ class PreprocessedIngestion:
             min_quality_score: Minimum quality score to include file (0-1)
             enable_near_duplicate_detection: Remove near-duplicates
             enable_boilerplate_removal: Remove common boilerplate
+            embedding_model: Ollama embedding model to use
         """
         self.documents_dir = documents_dir
         self.chroma_db_dir = chroma_db_dir
@@ -78,6 +83,8 @@ class PreprocessedIngestion:
         self.min_quality_score = min_quality_score
         self.enable_near_duplicate_detection = enable_near_duplicate_detection
         self.enable_boilerplate_removal = enable_boilerplate_removal
+        self.embedding_model = embedding_model
+        self.model_config = get_model_config(embedding_model)
 
         # Initialize components
         self.analyzer = DocumentAnalyzer()
@@ -144,12 +151,10 @@ class PreprocessedIngestion:
         logger.info("PHASE 2: EMBEDDING MODEL SETUP")
         logger.info("="*80)
 
-        embeddings = OllamaEmbeddings(
-            model=EMBEDDING_MODEL,
-            base_url=OLLAMA_BASE_URL
-        )
+        embeddings = get_embeddings(self.embedding_model)
 
-        logger.info(f"✓ Embedding model: {EMBEDDING_MODEL}")
+        logger.info(f"✓ Embedding model: {self.embedding_model}")
+        logger.info(f"✓ Dimensions: {self.model_config.get('dimensions', 'unknown')}")
 
         # Initialize vector store
         vectorstore = Chroma(
@@ -159,6 +164,9 @@ class PreprocessedIngestion:
         )
 
         logger.info(f"✓ Vector store initialized: {self.chroma_db_dir}")
+
+        # Store embedding model metadata for retrieval alignment
+        store_embedding_metadata(vectorstore, self.embedding_model)
 
         # Phase 3: Document Processing
         logger.info("\n" + "="*80)
@@ -263,12 +271,16 @@ class PreprocessedIngestion:
             logger.info(f"Adding {len(cleaned_chunks)} chunks to vector store...")
 
             try:
-                # Add in batches for large collections
-                batch_size = 100
+                # Add in batches (use model-specific batch size for stability)
+                batch_size = self.model_config.get("max_batch_size", 10)
+                total_batches = (len(cleaned_chunks) - 1) // batch_size + 1
+                logger.info(f"  Using batch size: {batch_size}")
                 for i in range(0, len(cleaned_chunks), batch_size):
                     batch = cleaned_chunks[i:i+batch_size]
                     vectorstore.add_documents(batch)
-                    logger.info(f"  Added batch {i//batch_size + 1}/{(len(cleaned_chunks)-1)//batch_size + 1}")
+                    batch_num = i // batch_size + 1
+                    if batch_num % 10 == 0 or batch_num == total_batches:
+                        logger.info(f"  Progress: {batch_num}/{total_batches} batches")
 
                 self.stats['total_chunks_ingested'] = len(cleaned_chunks)
                 logger.info("✓ Successfully ingested all chunks")
@@ -359,13 +371,20 @@ def main():
         help='Disable boilerplate removal'
     )
 
+    parser.add_argument(
+        '--embedding-model',
+        default=DEFAULT_EMBEDDING_MODEL,
+        help=f'Ollama embedding model (default: {DEFAULT_EMBEDDING_MODEL})'
+    )
+
     args = parser.parse_args()
 
     # Run ingestion
     ingestion = PreprocessedIngestion(
         min_quality_score=args.min_quality,
         enable_near_duplicate_detection=not args.disable_deduplication,
-        enable_boilerplate_removal=not args.disable_boilerplate
+        enable_boilerplate_removal=not args.disable_boilerplate,
+        embedding_model=args.embedding_model
     )
 
     ingestion.run(skip_analysis=args.skip_analysis)

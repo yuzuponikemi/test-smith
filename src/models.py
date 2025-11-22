@@ -171,3 +171,13 @@ def get_code_executor_model():
         ollama_model="llama3",
         temperature=0.3  # Lower temperature for precise code generation
     )
+  
+# === Code Assistant Models ===
+
+def get_code_assistant_model():
+    """Code analysis and explanation for codebase queries"""
+    return _get_model(
+        gemini_model=DEFAULT_GEMINI_MODEL,
+        ollama_model="llama3",
+        temperature=0.5  # Lower temperature for accurate code analysis
+    )
