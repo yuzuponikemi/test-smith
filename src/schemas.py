@@ -437,6 +437,7 @@ class CodeExecutionResult(BaseModel):
     )
     code: str = Field(
         description="The actual code that was executed"
+    )
 
 # === Code Assistant Schemas ===
 
