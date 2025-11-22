@@ -1,4 +1,4 @@
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 
 ISSUE_ANALYZER_TEMPLATE = """You are an expert issue analyst specializing in root cause analysis.
 

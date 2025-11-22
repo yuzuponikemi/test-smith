@@ -7,7 +7,11 @@ Each graph is instantiated and compiled for Studio visualization.
 Uses the existing graph registry to ensure consistency.
 """
 
+from dotenv import load_dotenv
 from src.graphs import get_graph
+
+# Load environment variables for LangGraph Studio
+load_dotenv()
 
 # Get all graphs from registry and compile them
 # This ensures we use the same graphs that main.py uses
@@ -27,10 +31,3 @@ code_execution = _compile_graph("code_execution")
 quick_research = _compile_graph("quick_research")
 comparative = _compile_graph("comparative")
 fact_check = _compile_graph("fact_check")
-causal_inference = _compile_graph("causal_inference")
-
-# For Code Investigation (if exists)
-try:
-    code_investigation = _compile_graph("code_investigation")
-except:
-    code_investigation = None

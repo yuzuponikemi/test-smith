@@ -1,4 +1,4 @@
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 
 CAUSAL_CHECKER_TEMPLATE = """You are an expert causal analyst specializing in validating cause-effect relationships using evidence.
 

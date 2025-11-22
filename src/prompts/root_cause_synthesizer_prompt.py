@@ -1,4 +1,4 @@
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 
 ROOT_CAUSE_SYNTHESIZER_TEMPLATE = """You are an expert report writer specializing in root cause analysis and causal inference.
 
