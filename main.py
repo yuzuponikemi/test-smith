@@ -119,13 +119,28 @@ Examples:
         print("="*80 + "\n")
 
     elif args.command == "run":
-        # Select graph workflow
-        graph_name = args.graph if args.graph else get_default_graph()
+        # Select graph workflow (auto-select if not specified)
+        if args.graph:
+            # User explicitly specified graph
+            graph_name = args.graph
+            selection_mode = "manual"
+        else:
+            # Auto-select based on query (MCP-aligned: load only necessary graph)
+            from src.utils.graph_selector import auto_select_graph, explain_selection
+            graph_name = auto_select_graph(args.query)
+            selection_mode = "auto"
 
         try:
             builder = get_graph(graph_name)
-            print(f"[System] Using graph workflow: {graph_name}")
-            print(f"[System] Description: {builder.get_metadata().get('description', 'N/A')}\n")
+            print(f"[System] Using graph workflow: {graph_name} ({selection_mode})")
+            print(f"[System] Description: {builder.get_metadata().get('description', 'N/A')}")
+
+            # Show selection reasoning if auto-selected
+            if selection_mode == "auto" and not args.no_log:
+                from src.utils.graph_selector import explain_selection
+                print(f"\n[Auto-Selection Reasoning]")
+                print(explain_selection(args.query, graph_name))
+            print()
         except KeyError as e:
             print(f"Error: {e}")
             print(f"\nAvailable graphs: {', '.join(list_graphs().keys())}")
