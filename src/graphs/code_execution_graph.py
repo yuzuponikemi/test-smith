@@ -64,18 +64,13 @@ class CodeExecutionState(TypedDict):
 
 def code_router(state: CodeExecutionState) -> Literal["code_executor", "evaluator"]:
     """
-    Router to determine if code execution is needed.
+    Router for code execution decision.
 
-    Checks if the analyzer determined that code execution would help.
+    For code_execution graph, we always execute code since this graph
+    was specifically selected for computational tasks.
     """
-    needs_code = state.get("needs_code_execution", False)
-
-    if needs_code:
-        print("  Code execution needed → executing code")
-        return "code_executor"
-    else:
-        print("  No code execution needed → proceed to evaluation")
-        return "evaluator"
+    print("  Code execution graph → always execute code")
+    return "code_executor"
 
 
 def continuation_router(state: CodeExecutionState) -> Literal["synthesizer", "planner"]:

@@ -196,14 +196,29 @@ def code_executor(state):
     print_node_header("CODE EXECUTOR")
 
     task_description = state.get("code_task", "")
+
+    # If no explicit code_task, use the original query
+    # (This happens when code_execution graph is auto-selected)
+    if not task_description:
+        task_description = state.get("query", "")
+        if task_description:
+            print(f"  Using query as code task: {task_description[:100]}...")
+        else:
+            print("  No code execution task or query - skipping")
+            return {"code_execution_results": []}
+
+    # Get context from analyzed data if available
     context = state.get("context_for_code", "")
+    if not context:
+        # Use analyzed data as context
+        analyzed_data = state.get("analyzed_data", [])
+        if analyzed_data:
+            context = "\n\n".join(analyzed_data[:2])  # Use first 2 analyzed chunks
+            print(f"  Using analyzed data as context ({len(context)} chars)")
+
     input_data = state.get("code_input_data", "")
     requirements = state.get("code_requirements", [])
     expected_output = state.get("expected_code_output", "")
-
-    if not task_description:
-        print("  No code execution task specified - skipping")
-        return {"code_execution_results": []}
 
     print(f"  Generating code for task: {task_description}")
 
