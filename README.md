@@ -121,6 +121,10 @@ TAVILY_API_KEY="your-tavily-api-key"
 LANGCHAIN_TRACING_V2="true"
 LANGCHAIN_API_KEY="your-langsmith-api-key"
 LANGCHAIN_PROJECT="deep-research-v1-proto"
+
+# Structured Logging (optional)
+STRUCTURED_LOGS_JSON="false"  # false for human-readable, true for JSON
+LOG_LEVEL="INFO"  # DEBUG, INFO, WARNING, ERROR
 ```
 
 **Using Google Gemini (Default):**
@@ -429,6 +433,38 @@ test-smith/
 ```
 
 ## Monitoring & Observability
+
+### Structured Logging
+
+Test-Smith uses `structlog` for machine-readable, queryable logging.
+
+**Features:**
+- **Contextual logging**: Automatic binding of query, node, thread_id
+- **Performance metrics**: Automatic timing of operations
+- **Development-friendly**: Human-readable console output
+- **Production-ready**: JSON output for log aggregation
+
+**Configuration** (in `.env`):
+```bash
+STRUCTURED_LOGS_JSON="false"  # false for dev, true for production
+LOG_LEVEL="INFO"  # DEBUG, INFO, WARNING, ERROR
+```
+
+**Log Output Example** (Development):
+```
+2025-01-24T10:30:45.123Z [info] node_start node=planner query="What is TDD?" model=gemini/gemini-2.5-flash
+2025-01-24T10:30:45.456Z [info] operation_complete operation=kb_contents_check duration_ms=123.45
+2025-01-24T10:30:47.891Z [info] query_allocation rag_query_count=2 web_query_count=1 strategy="Use RAG for basics"
+2025-01-24T10:30:47.892Z [info] node_end node=planner execution_time_ms=2769.12 status=success
+```
+
+**Benefits:**
+- Track performance bottlenecks
+- Debug with rich context
+- Analyze query patterns
+- Monitor error rates
+
+📖 **Full Guide**: [docs/STRUCTURED_LOGGING.md](docs/STRUCTURED_LOGGING.md)
 
 ### LangSmith Tracing
 
