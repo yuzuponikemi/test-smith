@@ -31,7 +31,10 @@ class EntityLinker:
         embedding_function: Optional[Callable[[str], List[float]]] = None,
         cache_embeddings: bool = True,
         hybrid_mode: bool = False,
-        hybrid_weight: float = 0.5
+        hybrid_weight: float = 0.5,
+        confidence_threshold: float = 0.3,
+        review_margin: float = 0.1,
+        min_occurrences: int = 1
     ):
         """
         Initialize EntityLinker
@@ -44,6 +47,9 @@ class EntityLinker:
             cache_embeddings: If True, cache embeddings to avoid redundant computation
             hybrid_mode: If True, combine string and embedding similarity
             hybrid_weight: Weight for embedding similarity in hybrid mode (0-1)
+            confidence_threshold: Minimum confidence score (0-1) for keeping entities
+            review_margin: Margin around threshold for flagging borderline entities
+            min_occurrences: Minimum number of occurrences to avoid review flag
         """
         self.abbreviations = abbreviations or {}
         self.preserve_case = preserve_case
@@ -52,6 +58,9 @@ class EntityLinker:
         self.cache_embeddings = cache_embeddings
         self.hybrid_mode = hybrid_mode
         self.hybrid_weight = hybrid_weight
+        self.confidence_threshold = confidence_threshold
+        self.review_margin = review_margin
+        self.min_occurrences = min_occurrences
 
         # Create case-insensitive lookup for abbreviations
         self._abbrev_lookup = {k.upper(): v for k, v in self.abbreviations.items()}
@@ -347,3 +356,124 @@ class EntityLinker:
             return non_abbrev[0]
 
         return sorted_names[0]
+
+    # Phase 2: Confidence Score Filtering and Recalculation
+
+    def filter_by_confidence(self, entities: List[Dict]) -> List[Dict]:
+        """
+        Filter entities by confidence threshold
+
+        Args:
+            entities: List of entity dictionaries with "confidence" field
+
+        Returns:
+            Filtered list of entities above confidence threshold
+        """
+        filtered = []
+        for entity in entities:
+            confidence = entity.get("confidence", 0.0)
+            if confidence >= self.confidence_threshold:
+                filtered.append(entity)
+
+        return filtered
+
+    def recalculate_confidence(self, entities: List[Dict]) -> List[Dict]:
+        """
+        Recalculate confidence scores based on contextual factors
+
+        Factors considered:
+        - Occurrence frequency (how many times entity appears)
+        - Relationship count (how many connections entity has)
+        - Isolated node penalty (entities with no relationships)
+
+        Args:
+            entities: List of entity dictionaries
+
+        Returns:
+            List of entities with updated confidence scores
+        """
+        recalculated = []
+
+        for entity in entities:
+            original_confidence = entity.get("confidence", 0.5)
+            occurrences = entity.get("occurrences", 1)
+            relationship_count = entity.get("relationship_count", 0)
+
+            # Base score
+            new_confidence = original_confidence
+
+            # Frequency boost (logarithmic scale to avoid over-boosting)
+            if occurrences > 1:
+                frequency_boost = min(0.2, np.log(occurrences) * 0.05)
+                new_confidence += frequency_boost
+
+            # Relationship boost
+            if relationship_count > 0:
+                relationship_boost = min(0.2, relationship_count * 0.02)
+                new_confidence += relationship_boost
+            else:
+                # Isolated node penalty
+                new_confidence -= 0.1
+
+            # Clamp to [0, 1] range
+            new_confidence = max(0.0, min(1.0, new_confidence))
+
+            # Update entity
+            updated_entity = entity.copy()
+            updated_entity["confidence"] = new_confidence
+            recalculated.append(updated_entity)
+
+        return recalculated
+
+    def flag_for_review(self, entities: List[Dict]) -> List[Dict]:
+        """
+        Flag entities that need human review
+
+        Entities are flagged if:
+        - Confidence is borderline (within review_margin of threshold)
+        - Entity is isolated (no relationships)
+        - Entity has low occurrence count
+
+        Args:
+            entities: List of entity dictionaries
+
+        Returns:
+            List of entities with review flags and reasons
+        """
+        flagged = []
+
+        for entity in entities:
+            entity_copy = entity.copy()
+            confidence = entity.get("confidence", 0.5)
+            relationship_count = entity.get("relationship_count")  # None if not present
+            occurrences = entity.get("occurrences")  # None if not present
+
+            needs_review = False
+            review_reasons = []
+
+            # Check if borderline confidence
+            lower_bound = self.confidence_threshold - self.review_margin
+            upper_bound = self.confidence_threshold + self.review_margin
+
+            if lower_bound <= confidence <= upper_bound:
+                needs_review = True
+                review_reasons.append(f"Borderline confidence ({confidence:.2f})")
+
+            # Check if isolated node (only if relationship_count is explicitly set)
+            if relationship_count is not None and relationship_count == 0:
+                needs_review = True
+                review_reasons.append("Isolated node (no relationships)")
+
+            # Check if low occurrence (only if occurrences is explicitly set)
+            if occurrences is not None and occurrences < self.min_occurrences:
+                needs_review = True
+                review_reasons.append(f"Low occurrence (appears {occurrences} times)")
+
+            # Add review flags
+            entity_copy["needs_review"] = needs_review
+            if needs_review:
+                entity_copy["review_reason"] = "; ".join(review_reasons)
+
+            flagged.append(entity_copy)
+
+        return flagged
