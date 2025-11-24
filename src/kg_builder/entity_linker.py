@@ -5,6 +5,16 @@ Phase 1 Implementation:
 1. Entity name normalization (abbreviations, case, whitespace)
 2. Similarity-based entity linking (string + embedding)
 3. Canonical name determination
+
+Phase 2 Implementation:
+1. Confidence score filtering
+2. Confidence recalculation (frequency/relationship boosts)
+3. Review flagging (borderline/isolated/low-occurrence)
+
+Phase 3 Implementation:
+1. Section recognition and normalization
+2. Section-based importance weighting
+3. Section-aware confidence adjustment
 """
 from typing import Dict, List, Optional, Callable
 from difflib import SequenceMatcher
@@ -34,7 +44,9 @@ class EntityLinker:
         hybrid_weight: float = 0.5,
         confidence_threshold: float = 0.3,
         review_margin: float = 0.1,
-        min_occurrences: int = 1
+        min_occurrences: int = 1,
+        section_weights: Optional[Dict[str, float]] = None,
+        section_aware_filtering: bool = False
     ):
         """
         Initialize EntityLinker
@@ -50,6 +62,8 @@ class EntityLinker:
             confidence_threshold: Minimum confidence score (0-1) for keeping entities
             review_margin: Margin around threshold for flagging borderline entities
             min_occurrences: Minimum number of occurrences to avoid review flag
+            section_weights: Custom weights for paper sections (Phase 3)
+            section_aware_filtering: If True, apply section weights before filtering (Phase 3)
         """
         self.abbreviations = abbreviations or {}
         self.preserve_case = preserve_case
@@ -61,12 +75,23 @@ class EntityLinker:
         self.confidence_threshold = confidence_threshold
         self.review_margin = review_margin
         self.min_occurrences = min_occurrences
+        self.section_aware_filtering = section_aware_filtering
 
         # Create case-insensitive lookup for abbreviations
         self._abbrev_lookup = {k.upper(): v for k, v in self.abbreviations.items()}
 
         # Embedding cache
         self._embedding_cache: Dict[str, List[float]] = {}
+
+        # Phase 3: Section weights for importance scoring
+        self.section_weights = section_weights or {
+            "abstract": 1.5,      # High importance - key concepts
+            "introduction": 1.1,  # Moderate importance
+            "methods": 1.3,       # High technical confidence
+            "results": 1.2,       # Important findings
+            "conclusion": 1.4,    # High importance - final takeaways
+            "other": 1.0          # Base weight
+        }
 
     def normalize(self, name: str) -> str:
         """
@@ -385,6 +410,10 @@ class EntityLinker:
         - Occurrence frequency (how many times entity appears)
         - Relationship count (how many connections entity has)
         - Isolated node penalty (entities with no relationships)
+        - Section-based confidence boost (Phase 3):
+          * Methods: +0.15 (high technical confidence)
+          * Abstract: +0.10 (key concepts)
+          * Conclusion: +0.12 (important takeaways)
 
         Args:
             entities: List of entity dictionaries
@@ -398,6 +427,7 @@ class EntityLinker:
             original_confidence = entity.get("confidence", 0.5)
             occurrences = entity.get("occurrences", 1)
             relationship_count = entity.get("relationship_count", 0)
+            section = entity.get("section")
 
             # Base score
             new_confidence = original_confidence
@@ -414,6 +444,22 @@ class EntityLinker:
             else:
                 # Isolated node penalty
                 new_confidence -= 0.1
+
+            # Phase 3: Section-based confidence adjustment
+            if section:
+                normalized_section = self.recognize_section(section)
+
+                # Methods section: boost technical confidence
+                if normalized_section == "methods":
+                    new_confidence += 0.15
+
+                # Abstract section: boost for key concepts
+                elif normalized_section == "abstract":
+                    new_confidence += 0.10
+
+                # Conclusion section: boost for important takeaways
+                elif normalized_section == "conclusion":
+                    new_confidence += 0.12
 
             # Clamp to [0, 1] range
             new_confidence = max(0.0, min(1.0, new_confidence))
@@ -477,3 +523,123 @@ class EntityLinker:
             flagged.append(entity_copy)
 
         return flagged
+
+    # Phase 3: Section-aware Extraction
+
+    def recognize_section(self, section_name: Optional[str]) -> str:
+        """
+        Recognize and normalize section names
+
+        Handles:
+        - Standard section names (Abstract, Introduction, Methods, Results, Conclusion)
+        - Case-insensitive matching
+        - Numbered sections (e.g., "1. Introduction")
+        - Common variants (e.g., "Background" -> "introduction")
+
+        Args:
+            section_name: Raw section name from document
+
+        Returns:
+            Normalized section name (lowercase)
+        """
+        if not section_name or not section_name.strip():
+            return "other"
+
+        # Remove leading/trailing whitespace
+        normalized = section_name.strip()
+
+        # Remove numbering (e.g., "1. Introduction" -> "Introduction")
+        import re
+        normalized = re.sub(r'^[\d\.\s]+', '', normalized).strip()
+
+        # Convert to lowercase for matching
+        lower_section = normalized.lower()
+
+        # Section mapping with variants
+        section_mappings = {
+            # Abstract
+            "abstract": "abstract",
+
+            # Introduction variants
+            "introduction": "introduction",
+            "background": "introduction",
+            "related work": "introduction",
+            "literature review": "introduction",
+
+            # Methods variants
+            "methods": "methods",
+            "methodology": "methods",
+            "approach": "methods",
+            "experimental setup": "methods",
+            "implementation": "methods",
+
+            # Results variants
+            "results": "results",
+            "experiments": "results",
+            "evaluation": "results",
+            "results and discussion": "results",
+            "findings": "results",
+
+            # Conclusion variants
+            "conclusion": "conclusion",
+            "conclusions": "conclusion",
+            "summary": "conclusion",
+            "future work": "conclusion",
+            "discussion": "conclusion",
+        }
+
+        # Exact match
+        if lower_section in section_mappings:
+            return section_mappings[lower_section]
+
+        # Partial match (check if any key is in the section name)
+        for key, value in section_mappings.items():
+            if key in lower_section:
+                return value
+
+        return "other"
+
+    def get_section_weight(self, section: str) -> float:
+        """
+        Get importance weight for a section
+
+        Args:
+            section: Normalized section name
+
+        Returns:
+            Section weight multiplier
+        """
+        # Normalize section name
+        normalized_section = self.recognize_section(section)
+
+        # Return weight from mapping
+        return self.section_weights.get(normalized_section, 1.0)
+
+    def apply_section_weight(self, entity: Dict) -> Dict:
+        """
+        Apply section-based importance weighting to an entity
+
+        Calculates importance_score = confidence * section_weight
+
+        Args:
+            entity: Entity dictionary with "section" field
+
+        Returns:
+            Entity with added "importance_score" field
+        """
+        entity_copy = entity.copy()
+
+        # Get section and confidence
+        section = entity.get("section")
+        confidence = entity.get("confidence", 0.5)
+
+        # Get section weight
+        section_weight = self.get_section_weight(section) if section else 1.0
+
+        # Calculate importance score
+        importance_score = confidence * section_weight
+
+        # Add to entity
+        entity_copy["importance_score"] = importance_score
+
+        return entity_copy
