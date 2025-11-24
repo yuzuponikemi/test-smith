@@ -346,6 +346,92 @@ cat ingestion_diagnostic_*.log
 
 ## Development
 
+### Test-Driven Development (TDD) Policy
+
+**Core Principle:** All new features and significant refactorings MUST follow Test-Driven Development.
+
+**TDD Workflow:**
+1. **Write Test First** - Define expected behavior with failing tests
+2. **Implement Minimum Code** - Write just enough code to pass tests
+3. **Refactor** - Improve code quality while keeping tests green
+4. **Repeat** - Iterate until feature is complete
+
+**Test Organization:**
+```
+tests/
+├── unit/                    # Unit tests (isolated components)
+│   ├── kg_builder/         # Knowledge graph builder tests
+│   │   ├── test_entity_linker.py
+│   │   ├── test_extractor.py
+│   │   └── test_validator.py
+│   ├── nodes/              # Node tests
+│   └── graphs/             # Graph tests
+├── integration/             # Integration tests (multiple components)
+│   ├── test_kg_pipeline.py
+│   └── test_graph_workflows.py
+└── e2e/                     # End-to-end tests (full system)
+    └── test_research_workflows.py
+```
+
+**Testing Standards:**
+- **Coverage Target:** Minimum 80% for new code
+- **Test Naming:** `test_<function>_<scenario>_<expected_result>`
+- **Fixtures:** Use pytest fixtures for common test data
+- **Mocking:** Mock external dependencies (LLMs, APIs, databases)
+- **Assertions:** Clear, descriptive assertion messages
+
+**Running Tests:**
+```bash
+# Run all tests
+pytest
+
+# Run specific test file
+pytest tests/unit/kg_builder/test_entity_linker.py
+
+# Run with coverage report
+pytest --cov=src --cov-report=html
+
+# Run specific test function
+pytest tests/unit/kg_builder/test_entity_linker.py::test_normalize_entity_name
+
+# Run tests matching pattern
+pytest -k "entity_linker"
+
+# Verbose output
+pytest -v
+```
+
+**Example TDD Cycle:**
+```python
+# 1. Write failing test
+def test_normalize_entity_name_handles_abbreviations():
+    linker = EntityLinker()
+    result = linker.normalize("GNN")
+    assert result == "Graph Neural Network"
+
+# 2. Run test (should fail)
+# $ pytest tests/unit/kg_builder/test_entity_linker.py::test_normalize_entity_name_handles_abbreviations
+
+# 3. Implement minimum code to pass
+class EntityLinker:
+    def normalize(self, name: str) -> str:
+        abbreviations = {"GNN": "Graph Neural Network"}
+        return abbreviations.get(name, name)
+
+# 4. Run test (should pass)
+# 5. Refactor and add more test cases
+```
+
+**CI/CD Integration:**
+- Tests run automatically on every push
+- PRs cannot be merged if tests fail
+- Coverage reports generated for each PR
+
+**When to Skip TDD:**
+- Quick prototypes/spikes (mark as prototype)
+- Documentation-only changes
+- Emergency hotfixes (add tests immediately after)
+
 ### Project Structure
 
 ```
