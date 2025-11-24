@@ -214,4 +214,4 @@ plotly
 
 scikit-learn
 structlog==25.1.0
-python-json-logger==3.4.1
+python-json-logger==3.3.0
