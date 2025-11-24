@@ -8,16 +8,16 @@ def analyzer_node(state):
 
     # Get strategic context
     original_query = state.get("query", "")
-    allocation_strategy = state.get("allocation_strategy", "No strategy provided")
-    web_queries = state.get("web_queries", [])
-    rag_queries = state.get("rag_queries", [])
+    allocation_strategy = state.get("allocation_strategy", "No strategy provided") or "No strategy provided"
+    web_queries = state.get("web_queries", []) or []
+    rag_queries = state.get("rag_queries", []) or []
 
     # Get results separately to maintain source context
-    web_results = state.get("search_results", [])
-    rag_results = state.get("rag_results", [])
+    web_results = state.get("search_results", []) or []
+    rag_results = state.get("rag_results", []) or []
 
     # Get code execution results if available
-    code_results = state.get("code_execution_results", [])
+    code_results = state.get("code_execution_results", []) or []
 
     print(f"  Analyzing {len(web_results)} web results, {len(rag_results)} RAG results, {len(code_results)} code results")
     print(f"  Strategy: {allocation_strategy[:100]}...")

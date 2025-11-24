@@ -231,6 +231,36 @@ python main.py run "Follow-up question" --thread-id abc-123
 python main.py --version
 ```
 
+### Running Tests
+
+Test-Smith includes a comprehensive test suite with unit tests for nodes, graphs, and integration tests.
+
+```bash
+# Run all tests
+pytest
+
+# Run only unit tests
+pytest tests/unit -v
+
+# Run specific test file
+pytest tests/unit/test_nodes/test_planner_node.py -v
+
+# Run tests with coverage report (requires pytest-cov)
+pytest --cov=src --cov-report=html
+
+# Run tests excluding slow/API-dependent tests
+pytest -m "not slow and not requires_api"
+```
+
+**Test Structure:**
+- `tests/unit/test_nodes/` - Unit tests for individual nodes
+- `tests/unit/test_graphs/` - Graph compilation and structure tests
+- `tests/integration/` - End-to-end workflow tests (coming soon)
+- `tests/conftest.py` - Shared fixtures and mock LLM implementations
+
+**GitHub Actions:**
+Tests run automatically on pull requests. View test results in the Actions tab.
+
 ### Knowledge Base Management
 
 #### Ingesting Documents
@@ -333,8 +363,16 @@ Restart PostgreSQL after changes: sudo systemctl restart postgresql
 ```
 test-smith/
 ├── main.py                          # Entry point and CLI
+├── pytest.ini                       # Pytest configuration
 ├── chroma_explorer.ipynb            # Analysis notebook
 ├── PREPROCESSOR_QUICKSTART.md       # Quick start guide
+├── tests/                           # Test suite
+│   ├── conftest.py                 # Shared fixtures and mocks
+│   ├── unit/                        # Unit tests
+│   │   ├── test_nodes/             # Node unit tests
+│   │   ├── test_graphs/            # Graph tests
+│   │   └── test_preprocessor/      # Preprocessor tests
+│   └── integration/                 # Integration tests
 ├── scripts/                         # Organized utility scripts
 │   ├── ingest/                      # Knowledge base ingestion
 │   │   ├── ingest.py               # Basic document ingestion
