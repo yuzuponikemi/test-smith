@@ -4,12 +4,14 @@ Knowledge Graph Builder Package
 This package provides tools for extracting and building knowledge graphs
 from research documents (papers, articles, etc.).
 
-Phase 1 Focus: Entity Normalization and Linking
-- Normalize entity names (abbreviations, case, aliases)
-- Link similar entities based on embeddings
-- Determine canonical names
+Phases:
+- Phase 1: Entity Normalization and Linking
+- Phase 2: Confidence Score Filtering and Recalculation
+- Phase 3: Section-aware Extraction
+- Phase 4: Enhanced Relationship Extraction
 """
 
 from src.kg_builder.entity_linker import EntityLinker
+from src.kg_builder.relationship_extractor import RelationshipExtractor, RelationshipType
 
-__all__ = ["EntityLinker"]
+__all__ = ["EntityLinker", "RelationshipExtractor", "RelationshipType"]

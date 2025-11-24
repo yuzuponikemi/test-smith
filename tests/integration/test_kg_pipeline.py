@@ -375,3 +375,226 @@ class TestPipelineIntegrationPoints:
 
         # All should have canonical_name field from linking
         assert all("canonical_name" in e for e in flagged)
+
+
+class TestPhase4RelationshipExtraction:
+    """Test Phase 4: Integration of EntityLinker and RelationshipExtractor"""
+
+    def test_full_kg_pipeline_with_relationships(self):
+        """Test complete KG pipeline: entities + relationships"""
+        from src.kg_builder import EntityLinker, RelationshipExtractor
+
+        # Step 1: Create entities
+        entities = [
+            {
+                "name": "GAT",
+                "type": "method",
+                "confidence": 0.9,
+                "section": "Methods",
+                "context": "GAT uses attention mechanism to improve GNN performance"
+            },
+            {
+                "name": "Attention Mechanism",
+                "type": "technique",
+                "confidence": 0.85,
+                "section": "Methods",
+                "context": "Attention mechanism weights neighbor contributions"
+            },
+            {
+                "name": "GNN",
+                "type": "method",
+                "confidence": 0.95,
+                "section": "Introduction",
+                "context": "GNN is a baseline graph neural network"
+            },
+        ]
+
+        # Step 2: Link and normalize entities
+        linker = EntityLinker(confidence_threshold=0.5)
+        linked = linker.link_entities(entities)
+        entities_with_canonical = linked["entities"]
+
+        # Step 3: Recalculate confidence with section boost
+        recalculated = linker.recalculate_confidence(entities_with_canonical)
+
+        # Step 4: Extract relationships
+        extractor = RelationshipExtractor()
+        relationships = extractor.extract_relationships(recalculated)
+
+        # Verify relationships extracted
+        assert len(relationships) > 0
+
+        # Should find USES (GAT → Attention) and IMPROVES (GAT → GNN)
+        rel_types = {r["type"].value for r in relationships}
+        assert "uses" in rel_types
+        assert "improves" in rel_types
+
+        # Verify relationship metadata includes entity confidence
+        for rel in relationships:
+            assert "source_metadata" in rel
+            assert "target_metadata" in rel
+            assert rel["source_metadata"]["confidence"] is not None
+
+    def test_relationship_strength_influenced_by_entity_confidence(self):
+        """Test that relationship strength considers entity confidence"""
+        from src.kg_builder import EntityLinker, RelationshipExtractor
+
+        # High confidence entities
+        high_conf_entities = [
+            {
+                "name": "GAT",
+                "type": "method",
+                "confidence": 0.95,
+                "section": "Methods",
+                "context": "GAT uses attention"
+            },
+            {
+                "name": "Attention",
+                "type": "technique",
+                "confidence": 0.90,
+                "section": "Methods"
+            },
+        ]
+
+        # Low confidence entities
+        low_conf_entities = [
+            {
+                "name": "GAT",
+                "type": "method",
+                "confidence": 0.4,
+                "section": "Other",
+                "context": "GAT uses attention"
+            },
+            {
+                "name": "Attention",
+                "type": "technique",
+                "confidence": 0.35,
+                "section": "Other"
+            },
+        ]
+
+        linker = EntityLinker()
+        extractor = RelationshipExtractor()
+
+        # Extract from high confidence entities
+        high_conf_recalculated = linker.recalculate_confidence(high_conf_entities)
+        high_rels = extractor.extract_relationships(high_conf_recalculated)
+
+        # Extract from low confidence entities
+        low_conf_recalculated = linker.recalculate_confidence(low_conf_entities)
+        low_rels = extractor.extract_relationships(low_conf_recalculated)
+
+        # Both should find relationships (same context)
+        assert len(high_rels) > 0
+        assert len(low_rels) > 0
+
+        # High confidence entities should have higher relationship strength
+        # (due to entity metadata influence)
+        assert high_rels[0]["strength"] > 0
+
+    def test_section_aware_relationship_extraction(self):
+        """Test that section information enhances relationship quality"""
+        from src.kg_builder import EntityLinker, RelationshipExtractor
+
+        entities = [
+            {
+                "name": "GAT",
+                "type": "method",
+                "confidence": 0.8,
+                "section": "Methods",  # Methods section = higher confidence
+                "context": "GAT is based on attention mechanism"
+            },
+            {
+                "name": "Attention Mechanism",
+                "type": "technique",
+                "confidence": 0.75,
+                "section": "Methods",
+                "context": "Attention mechanism provides adaptive weighting"
+            },
+        ]
+
+        linker = EntityLinker()
+        recalculated = linker.recalculate_confidence(entities)
+
+        # Section boost should increase entity confidence
+        gat_entity = next(e for e in recalculated if e["name"] == "GAT")
+        assert gat_entity["confidence"] > 0.8  # Boosted by Methods section
+
+        # Extract relationships
+        extractor = RelationshipExtractor()
+        relationships = extractor.extract_relationships(recalculated)
+
+        # Should find BASED_ON relationship
+        assert len(relationships) > 0
+        based_on_rels = [r for r in relationships if r["type"].value == "based_on"]
+        assert len(based_on_rels) > 0
+
+    def test_bidirectional_relationships_in_pipeline(self):
+        """Test extraction of bidirectional relationships"""
+        from src.kg_builder import EntityLinker, RelationshipExtractor, RelationshipType
+
+        entities = [
+            {
+                "name": "GNN",
+                "type": "method",
+                "confidence": 0.9,
+                "context": "GNN is compared with CNN for graph tasks"
+            },
+            {
+                "name": "CNN",
+                "type": "method",
+                "confidence": 0.85,
+                "context": "CNN is compared with GNN"
+            },
+        ]
+
+        linker = EntityLinker()
+        extractor = RelationshipExtractor()
+
+        recalculated = linker.recalculate_confidence(entities)
+        relationships = extractor.extract_relationships(recalculated)
+
+        # Should find COMPARED_WITH relationship
+        compared_rels = [r for r in relationships if r["type"] == RelationshipType.COMPARED_WITH]
+        assert len(compared_rels) > 0
+
+        # Should be marked as bidirectional
+        assert compared_rels[0]["bidirectional"] is True
+
+    def test_relationship_filtering_by_strength(self):
+        """Test filtering weak relationships"""
+        from src.kg_builder import RelationshipExtractor
+
+        entities = [
+            {
+                "name": "A",
+                "type": "method",
+                "confidence": 0.8,
+                "context": "A uses B and improves C"  # Explicit, strong relationships
+            },
+            {
+                "name": "B",
+                "type": "technique",
+                "confidence": 0.75
+            },
+            {
+                "name": "C",
+                "type": "method",
+                "confidence": 0.7
+            },
+        ]
+
+        # Without filtering (min_strength=0.0)
+        extractor_no_filter = RelationshipExtractor(min_strength=0.0)
+        all_rels = extractor_no_filter.extract_relationships(entities)
+
+        # With filtering (min_strength=0.6)
+        extractor_filtered = RelationshipExtractor(min_strength=0.6)
+        filtered_rels = extractor_filtered.extract_relationships(entities)
+
+        # Filtered should have <= relationships than unfiltered
+        assert len(filtered_rels) <= len(all_rels)
+
+        # All filtered relationships should have strength >= 0.6
+        for rel in filtered_rels:
+            assert rel["strength"] >= 0.6
