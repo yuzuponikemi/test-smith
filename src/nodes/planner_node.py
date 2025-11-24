@@ -2,6 +2,12 @@ from src.models import get_planner_model
 from src.prompts.planner_prompt import STRATEGIC_PLANNER_PROMPT
 from src.schemas import StrategicPlan
 from src.utils.logging_utils import print_node_header
+from src.utils.structured_logging import (
+    log_node_execution,
+    log_kb_status,
+    log_query_allocation,
+    log_performance
+)
 from langchain_chroma import Chroma
 from langchain_ollama import OllamaEmbeddings
 import os
@@ -90,64 +96,83 @@ def planner(state):
     feedback = state.get("reason", "")
     loop_count = state.get("loop_count", 0)
 
-    # Step 1: Check what's in the knowledge base
-    print("  Checking knowledge base contents...")
-    kb_info = check_kb_contents()
-    print(f"  KB Status: {kb_info['summary']}")
+    with log_node_execution("planner", state) as logger:
+        # Step 1: Check what's in the knowledge base
+        logger.info("kb_check_start")
 
-    # Step 2: Get strategic plan from LLM
-    model = get_planner_model()
+        with log_performance(logger, "kb_contents_check"):
+            kb_info = check_kb_contents()
 
-    # Use structured output for reliable parsing
-    structured_llm = model.with_structured_output(StrategicPlan)
+        log_kb_status(logger, kb_info)
 
-    prompt = STRATEGIC_PLANNER_PROMPT.format(
-        query=query,
-        feedback=feedback,
-        kb_summary=kb_info['summary'],
-        kb_available=kb_info['available']
-    )
+        # Step 2: Get strategic plan from LLM
+        model = get_planner_model()
 
-    try:
-        plan = structured_llm.invoke(prompt)
+        # Use structured output for reliable parsing
+        structured_llm = model.with_structured_output(StrategicPlan)
 
-        print(f"\n  Strategy: {plan.strategy}")
-        print(f"  RAG Queries ({len(plan.rag_queries)}): {plan.rag_queries}")
-        print(f"  Web Queries ({len(plan.web_queries)}): {plan.web_queries}\n")
+        prompt = STRATEGIC_PLANNER_PROMPT.format(
+            query=query,
+            feedback=feedback,
+            kb_summary=kb_info['summary'],
+            kb_available=kb_info['available']
+        )
 
-        return {
-            "rag_queries": plan.rag_queries,
-            "web_queries": plan.web_queries,
-            "allocation_strategy": plan.strategy,
-            "loop_count": loop_count + 1
-        }
+        try:
+            logger.info("llm_invoke_start", has_feedback=bool(feedback))
 
-    except Exception as e:
-        print(f"  Warning: Structured output failed, using fallback parsing: {e}")
+            with log_performance(logger, "strategic_planning"):
+                plan = structured_llm.invoke(prompt)
 
-        # Fallback: Try manual parsing
-        response = model.invoke(prompt)
-        content = response.content
+            # Log allocation results
+            log_query_allocation(logger, plan.rag_queries, plan.web_queries, plan.strategy)
 
-        # Try to extract JSON from response
-        json_match = re.search(r'\{[\s\S]*\}', content)
-        if json_match:
-            try:
-                plan_dict = json.loads(json_match.group(0))
-                return {
-                    "rag_queries": plan_dict.get("rag_queries", []),
-                    "web_queries": plan_dict.get("web_queries", [query]),
-                    "allocation_strategy": plan_dict.get("strategy", "Fallback allocation"),
-                    "loop_count": loop_count + 1
-                }
-            except json.JSONDecodeError:
-                pass
+            # Also print for visual feedback
+            print(f"\n  Strategy: {plan.strategy}")
+            print(f"  RAG Queries ({len(plan.rag_queries)}): {plan.rag_queries}")
+            print(f"  Web Queries ({len(plan.web_queries)}): {plan.web_queries}\n")
 
-        # Final fallback: Use original query for both
-        print("  Using fallback: sending query to both sources")
-        return {
-            "rag_queries": [query] if kb_info['available'] else [],
-            "web_queries": [query],
-            "allocation_strategy": "Fallback: using original query for both sources",
-            "loop_count": loop_count + 1
-        }
+            return {
+                "rag_queries": plan.rag_queries,
+                "web_queries": plan.web_queries,
+                "allocation_strategy": plan.strategy,
+                "loop_count": loop_count + 1
+            }
+
+        except Exception as e:
+            logger.warning("structured_output_failed",
+                           error_type=type(e).__name__,
+                           error_message=str(e))
+            print(f"  Warning: Structured output failed, using fallback parsing: {e}")
+
+            # Fallback: Try manual parsing
+            response = model.invoke(prompt)
+            content = response.content
+
+            # Try to extract JSON from response
+            json_match = re.search(r'\{[\s\S]*\}', content)
+            if json_match:
+                try:
+                    plan_dict = json.loads(json_match.group(0))
+                    logger.info("fallback_json_parse_success")
+
+                    return {
+                        "rag_queries": plan_dict.get("rag_queries", []),
+                        "web_queries": plan_dict.get("web_queries", [query]),
+                        "allocation_strategy": plan_dict.get("strategy", "Fallback allocation"),
+                        "loop_count": loop_count + 1
+                    }
+                except json.JSONDecodeError:
+                    logger.warning("fallback_json_parse_failed")
+
+            # Final fallback: Use original query for both
+            logger.info("using_ultimate_fallback",
+                        kb_available=kb_info['available'])
+            print("  Using fallback: sending query to both sources")
+
+            return {
+                "rag_queries": [query] if kb_info['available'] else [],
+                "web_queries": [query],
+                "allocation_strategy": "Fallback: using original query for both sources",
+                "loop_count": loop_count + 1
+            }

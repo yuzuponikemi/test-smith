@@ -60,6 +60,8 @@ jobs:
           python -m pip install --upgrade pip
           # Use lightweight CI requirements to avoid heavy ML packages
           pip install -r requirements-ci.txt
+          # Install pytest for running tests
+          pip install pytest pytest-mock
 
       - name: Create .env file
         run: |
@@ -93,6 +95,18 @@ jobs:
 
           print('✓ Environment variables configured correctly')
           "
+
+      - name: Run unit tests with pytest
+        run: |
+          echo "Running unit tests..."
+          pytest tests/unit -v --tb=short -m "not slow and not requires_api"
+          echo "✓ Unit tests passed"
+
+      - name: Run graph tests with pytest
+        run: |
+          echo "Running graph compilation and structure tests..."
+          pytest tests/unit/test_graphs -v --tb=short
+          echo "✓ Graph tests passed"
 
       - name: Test graph imports and compilation
         if: ${{ github.event.inputs.run_full_suite != 'false' }}
