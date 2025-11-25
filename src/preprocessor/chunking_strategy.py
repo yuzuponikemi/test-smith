@@ -8,15 +8,15 @@ Different document types benefit from different chunking approaches:
 - Academic papers: Section-based chunking
 """
 
-from typing import List, Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
-from langchain_text_splitters import (
-    RecursiveCharacterTextSplitter,
-    MarkdownHeaderTextSplitter,
-    CharacterTextSplitter
-)
+from typing import Optional
+
 from langchain.schema import Document
+from langchain_text_splitters import (
+    MarkdownHeaderTextSplitter,
+    RecursiveCharacterTextSplitter,
+)
 
 
 class ChunkingMethod(Enum):
@@ -36,9 +36,9 @@ class ChunkingConfig:
     chunk_size: int
     chunk_overlap: int
     min_chunk_size: int = 100  # Minimum chunk size to keep
-    separators: Optional[List[str]] = None
-    headers_to_split_on: Optional[List[tuple]] = None
-    metadata: Dict = None
+    separators: Optional[list[str]] = None
+    headers_to_split_on: Optional[list[tuple]] = None
+    metadata: dict = None
 
     def __post_init__(self):
         if self.metadata is None:
@@ -282,9 +282,9 @@ class ChunkingStrategy:
         return config
 
     def chunk_documents(self,
-                       documents: List[Document],
+                       documents: list[Document],
                        config: ChunkingConfig,
-                       source: str = "") -> List[Document]:
+                       source: str = "") -> list[Document]:
         """Apply chunking strategy to documents"""
 
         if not documents:
@@ -337,8 +337,8 @@ class ChunkingStrategy:
         return chunks
 
     def _chunk_with_markdown_headers(self,
-                                    documents: List[Document],
-                                    config: ChunkingConfig) -> List[Document]:
+                                    documents: list[Document],
+                                    config: ChunkingConfig) -> list[Document]:
         """Chunk using markdown headers then recursively split large chunks"""
 
         if not config.headers_to_split_on:
@@ -381,8 +381,8 @@ class ChunkingStrategy:
         return final_chunks
 
     def _chunk_hybrid(self,
-                     documents: List[Document],
-                     config: ChunkingConfig) -> List[Document]:
+                     documents: list[Document],
+                     config: ChunkingConfig) -> list[Document]:
         """Hybrid approach: try header splitting, fall back to recursive"""
 
         try:
@@ -391,8 +391,8 @@ class ChunkingStrategy:
             return self._chunk_recursive(documents, config)
 
     def _chunk_code_aware(self,
-                         documents: List[Document],
-                         config: ChunkingConfig) -> List[Document]:
+                         documents: list[Document],
+                         config: ChunkingConfig) -> list[Document]:
         """Code-aware chunking that respects code structure"""
 
         # Use language-specific separators or defaults
@@ -416,8 +416,8 @@ class ChunkingStrategy:
         return chunks
 
     def _chunk_recursive(self,
-                        documents: List[Document],
-                        config: ChunkingConfig) -> List[Document]:
+                        documents: list[Document],
+                        config: ChunkingConfig) -> list[Document]:
         """Standard recursive chunking"""
 
         text_splitter = RecursiveCharacterTextSplitter(
@@ -428,7 +428,7 @@ class ChunkingStrategy:
 
         return text_splitter.split_documents(documents)
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """Get chunking statistics"""
         return self.stats.copy()
 
@@ -443,7 +443,7 @@ class ChunkingStrategy:
         print(f"Small chunks filtered: {self.stats['filtered_small_chunks']}")
 
         if self.stats['chunks_by_method']:
-            print(f"\nChunks by method:")
+            print("\nChunks by method:")
             for method, count in self.stats['chunks_by_method'].items():
                 percentage = (count / self.stats['total_chunks'] * 100) if self.stats['total_chunks'] > 0 else 0
                 print(f"  {method}: {count} ({percentage:.1f}%)")

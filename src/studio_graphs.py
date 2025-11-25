@@ -8,6 +8,7 @@ Uses the existing graph registry to ensure consistency.
 """
 
 from dotenv import load_dotenv
+
 from src.graphs import get_graph
 
 # Load environment variables for LangGraph Studio

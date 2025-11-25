@@ -1,7 +1,8 @@
 from src.models import get_reflection_model
-from src.utils.logging_utils import print_node_header
 from src.prompts.reflection_prompt import REFLECTION_PROMPT
 from src.schemas import ReflectionCritique
+from src.utils.logging_utils import print_node_header
+
 
 def reflection_node(state):
     """

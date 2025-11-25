@@ -29,7 +29,7 @@ def root_cause_synthesizer_node(state: dict) -> dict:
     ranked_hypotheses = state.get("ranked_hypotheses", [])
     causal_graph_data = state.get("causal_graph_data", {})
 
-    print(f"  Synthesizing root cause analysis report...")
+    print("  Synthesizing root cause analysis report...")
     print(f"  Report includes {len(ranked_hypotheses)} ranked hypotheses")
 
     # Get model

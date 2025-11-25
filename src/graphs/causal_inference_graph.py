@@ -18,22 +18,24 @@ Use cases:
 - System failure analysis
 """
 
-from langgraph.graph import StateGraph, END
-from typing import TypedDict, Annotated, Literal
 import operator
+from typing import Annotated, Literal, TypedDict
 
-from .base_graph import BaseGraphBuilder
+from langgraph.graph import END, StateGraph
+
+from src.nodes.brainstormer_node import brainstormer_node
+from src.nodes.causal_checker_node import causal_checker_node
+from src.nodes.causal_graph_builder_node import causal_graph_builder_node
+from src.nodes.evidence_planner_node import evidence_planner_node
+from src.nodes.hypothesis_validator_node import hypothesis_validator_node
 
 # Import nodes
 from src.nodes.issue_analyzer_node import issue_analyzer_node
-from src.nodes.brainstormer_node import brainstormer_node
-from src.nodes.evidence_planner_node import evidence_planner_node
-from src.nodes.searcher_node import searcher
 from src.nodes.rag_retriever_node import rag_retriever
-from src.nodes.causal_checker_node import causal_checker_node
-from src.nodes.hypothesis_validator_node import hypothesis_validator_node
-from src.nodes.causal_graph_builder_node import causal_graph_builder_node
 from src.nodes.root_cause_synthesizer_node import root_cause_synthesizer_node
+from src.nodes.searcher_node import searcher
+
+from .base_graph import BaseGraphBuilder
 
 
 class CausalInferenceState(TypedDict):

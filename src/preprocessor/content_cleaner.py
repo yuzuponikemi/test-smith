@@ -10,10 +10,10 @@ Handles:
 
 import hashlib
 import re
-from typing import List, Set, Dict, Tuple
 from collections import Counter
-from langchain.schema import Document
 from difflib import SequenceMatcher
+
+from langchain.schema import Document
 
 
 class ContentCleaner:
@@ -40,9 +40,9 @@ class ContentCleaner:
         }
 
     def clean_and_deduplicate(self,
-                              chunks: List[Document],
+                              chunks: list[Document],
                               remove_near_duplicates: bool = True,
-                              remove_boilerplate: bool = True) -> List[Document]:
+                              remove_boilerplate: bool = True) -> list[Document]:
         """
         Clean and deduplicate chunks
 
@@ -80,10 +80,10 @@ class ContentCleaner:
 
         return chunks
 
-    def _remove_exact_duplicates(self, chunks: List[Document]) -> List[Document]:
+    def _remove_exact_duplicates(self, chunks: list[Document]) -> list[Document]:
         """Remove chunks with identical content"""
 
-        seen_hashes: Set[str] = set()
+        seen_hashes: set[str] = set()
         unique_chunks = []
 
         for chunk in chunks:
@@ -98,7 +98,7 @@ class ContentCleaner:
 
         return unique_chunks
 
-    def _remove_near_duplicates(self, chunks: List[Document]) -> List[Document]:
+    def _remove_near_duplicates(self, chunks: list[Document]) -> list[Document]:
         """Remove chunks that are very similar (near-duplicates)"""
 
         if len(chunks) <= 1:
@@ -128,7 +128,7 @@ class ContentCleaner:
 
         return unique_chunks
 
-    def _remove_boilerplate(self, chunks: List[Document]) -> List[Document]:
+    def _remove_boilerplate(self, chunks: list[Document]) -> list[Document]:
         """Remove common boilerplate patterns"""
 
         # Identify boilerplate: text that appears too frequently
@@ -154,7 +154,7 @@ class ContentCleaner:
 
         return cleaned_chunks
 
-    def _filter_small_chunks(self, chunks: List[Document]) -> List[Document]:
+    def _filter_small_chunks(self, chunks: list[Document]) -> list[Document]:
         """Remove chunks that are too small to be useful"""
 
         filtered_chunks = []
@@ -169,7 +169,7 @@ class ContentCleaner:
 
         return filtered_chunks
 
-    def _normalize_chunks(self, chunks: List[Document]) -> List[Document]:
+    def _normalize_chunks(self, chunks: list[Document]) -> list[Document]:
         """Normalize whitespace and formatting in chunks"""
 
         for chunk in chunks:
@@ -199,7 +199,7 @@ class ContentCleaner:
         # Use SequenceMatcher for fuzzy matching
         return SequenceMatcher(None, text1, text2).ratio()
 
-    def detect_common_patterns(self, chunks: List[Document]) -> Dict[str, int]:
+    def detect_common_patterns(self, chunks: list[Document]) -> dict[str, int]:
         """Detect common patterns in chunks (for debugging)"""
 
         # Common patterns to detect
@@ -214,7 +214,7 @@ class ContentCleaner:
             'urls': r'https?://',
         }
 
-        pattern_counts = {name: 0 for name in patterns.keys()}
+        pattern_counts = dict.fromkeys(patterns.keys(), 0)
 
         for chunk in chunks:
             content = chunk.page_content
@@ -224,7 +224,7 @@ class ContentCleaner:
 
         return pattern_counts
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """Get cleaning statistics"""
         stats = self.stats.copy()
 
@@ -251,7 +251,7 @@ class ContentCleaner:
         print(f"Total removed: {stats['total_input_chunks'] - stats['total_output_chunks']}")
         print(f"Removal rate: {stats['removal_rate']:.1%}")
 
-        print(f"\nRemoval breakdown:")
+        print("\nRemoval breakdown:")
         print(f"  Exact duplicates: {stats['exact_duplicates_removed']}")
         print(f"  Near duplicates: {stats['near_duplicates_removed']}")
         print(f"  Boilerplate: {stats['boilerplate_removed']}")
@@ -260,10 +260,10 @@ class ContentCleaner:
         print("="*80)
 
 
-def clean_documents(chunks: List[Document],
+def clean_documents(chunks: list[Document],
                    min_length: int = 100,
                    similarity_threshold: float = 0.95,
-                   remove_near_duplicates: bool = True) -> List[Document]:
+                   remove_near_duplicates: bool = True) -> list[Document]:
     """
     Convenience function to clean and deduplicate documents
 

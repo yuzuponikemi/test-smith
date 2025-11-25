@@ -13,9 +13,11 @@ Expected Behavior:
 """
 
 import os
+
 from dotenv import load_dotenv
-from src.graph import workflow
 from langgraph.checkpoint.sqlite import SqliteSaver
+
+from src.graph import workflow
 
 load_dotenv()
 

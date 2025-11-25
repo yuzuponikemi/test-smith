@@ -15,27 +15,21 @@ Usage:
     python ingest_with_preprocessor.py --min-quality 0.5 --skip-analysis
 """
 
-import os
-import logging
-from datetime import datetime
-from typing import List, Dict
 import argparse
+import logging
+import os
+from datetime import datetime
 
-from langchain_unstructured import UnstructuredLoader
 from langchain_chroma import Chroma
 from langchain_community.vectorstores.utils import filter_complex_metadata
+from langchain_unstructured import UnstructuredLoader
 
-from src.preprocessor import (
-    DocumentAnalyzer,
-    ChunkingStrategy,
-    ContentCleaner,
-    QualityMetrics
-)
+from src.preprocessor import ChunkingStrategy, ContentCleaner, DocumentAnalyzer, QualityMetrics
 from src.utils.embedding_utils import (
+    DEFAULT_EMBEDDING_MODEL,
     get_embeddings,
     get_model_config,
     store_embedding_metadata,
-    DEFAULT_EMBEDDING_MODEL
 )
 
 # Configuration
@@ -209,7 +203,7 @@ class PreprocessedIngestion:
                     logger.info(f"    Chunk size: {config.chunk_size}, Overlap: {config.chunk_overlap}")
                 else:
                     # Default config
-                    from src.preprocessor.chunking_strategy import ChunkingMethod, ChunkingConfig
+                    from src.preprocessor.chunking_strategy import ChunkingConfig, ChunkingMethod
                     config = ChunkingConfig(
                         method=ChunkingMethod.RECURSIVE,
                         chunk_size=1000,
@@ -295,20 +289,20 @@ class PreprocessedIngestion:
         logger.info(f"\n✓ Full log saved to: {log_filename}")
         logger.info("="*80)
 
-    def print_final_report(self, failed_files: List[str], metrics: Dict):
+    def print_final_report(self, failed_files: list[str], metrics: dict):
         """Print final ingestion report"""
 
         logger.info("\n" + "="*80)
         logger.info("FINAL INGESTION REPORT")
         logger.info("="*80)
 
-        logger.info(f"\n📊 Processing Summary:")
+        logger.info("\n📊 Processing Summary:")
         logger.info(f"  Files analyzed: {self.stats['files_analyzed']}")
         logger.info(f"  Files processed: {self.stats['files_processed']}")
         logger.info(f"  Files skipped (low quality): {self.stats['files_skipped_low_quality']}")
         logger.info(f"  Files failed: {self.stats['files_failed']}")
 
-        logger.info(f"\n📦 Chunk Summary:")
+        logger.info("\n📦 Chunk Summary:")
         logger.info(f"  Chunks created: {self.stats['total_chunks_before_cleaning']}")
         logger.info(f"  Chunks after cleaning: {self.stats['total_chunks_after_cleaning']}")
         logger.info(f"  Chunks ingested: {self.stats['total_chunks_ingested']}")
@@ -325,13 +319,13 @@ class PreprocessedIngestion:
             for f in failed_files:
                 logger.warning(f"  - {f}")
 
-        logger.info(f"\n📈 Quality Assessment:")
+        logger.info("\n📈 Quality Assessment:")
         logger.info(f"  Overall quality: {metrics.get('quality_grade', 'Unknown')}")
         logger.info(f"  Quality score: {metrics.get('quality_score', 0):.2f}/1.00")
 
         recommendations = self.quality_metrics.get_recommendations()
         if recommendations:
-            logger.info(f"\n💡 Recommendations:")
+            logger.info("\n💡 Recommendations:")
             for rec in recommendations:
                 logger.info(f"  - {rec}")
 

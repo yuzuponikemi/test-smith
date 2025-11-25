@@ -21,17 +21,17 @@ Usage:
 """
 
 import re
-from typing import Dict, Any, Optional
-from langchain_core.language_models import BaseChatModel
-from langchain_core.prompts import ChatPromptTemplate
-from src.models import get_evaluation_model
+from typing import Any
 
+from langchain_core.prompts import ChatPromptTemplate
+
+from src.models import get_evaluation_model
 
 # ============================================================================
 # HEURISTIC EVALUATORS (Rule-Based)
 # ============================================================================
 
-def evaluate_response_length(run: Any, example: Any) -> Dict[str, Any]:
+def evaluate_response_length(run: Any, example: Any) -> dict[str, Any]:
     """
     Evaluate if response length is appropriate for query complexity.
 
@@ -77,7 +77,7 @@ def evaluate_response_length(run: Any, example: Any) -> Dict[str, Any]:
     }
 
 
-def evaluate_execution_time(run: Any, example: Any) -> Dict[str, Any]:
+def evaluate_execution_time(run: Any, example: Any) -> dict[str, Any]:
     """
     Evaluate if execution time meets expected performance thresholds.
 
@@ -129,7 +129,7 @@ def evaluate_execution_time(run: Any, example: Any) -> Dict[str, Any]:
     }
 
 
-def evaluate_rag_usage(run: Any, example: Any) -> Dict[str, Any]:
+def evaluate_rag_usage(run: Any, example: Any) -> dict[str, Any]:
     """
     Evaluate if RAG/knowledge base was used appropriately.
 
@@ -204,7 +204,7 @@ def evaluate_rag_usage(run: Any, example: Any) -> Dict[str, Any]:
     }
 
 
-def evaluate_no_errors(run: Any, example: Any) -> Dict[str, Any]:
+def evaluate_no_errors(run: Any, example: Any) -> dict[str, Any]:
     """
     Check if execution completed without errors.
 
@@ -293,7 +293,7 @@ Reasoning: <brief explanation>""")
 
     chain = prompt | llm
 
-    def evaluator(run: Any, example: Any) -> Dict[str, Any]:
+    def evaluator(run: Any, example: Any) -> dict[str, Any]:
         """LLM-as-judge evaluator"""
         actual_output = run.outputs.get("report", "")
         reference_output = example.outputs.get("reference_output", "")
@@ -405,7 +405,7 @@ evaluate_structure = create_llm_evaluator(
 # SPECIALIZED EVALUATORS
 # ============================================================================
 
-def evaluate_graph_selection(run: Any, example: Any) -> Dict[str, Any]:
+def evaluate_graph_selection(run: Any, example: Any) -> dict[str, Any]:
     """
     Evaluate if the correct graph type was selected for the query.
 
@@ -457,7 +457,7 @@ def evaluate_graph_selection(run: Any, example: Any) -> Dict[str, Any]:
     }
 
 
-def evaluate_citation_quality(run: Any, example: Any) -> Dict[str, Any]:
+def evaluate_citation_quality(run: Any, example: Any) -> dict[str, Any]:
     """
     Evaluate quality of source citations and attribution.
 

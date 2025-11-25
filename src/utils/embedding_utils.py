@@ -21,9 +21,6 @@ Usage:
     embeddings = get_embeddings_for_collection("chroma_db", "my_collection")
 """
 
-import os
-import json
-from typing import Optional
 from langchain_ollama import OllamaEmbeddings
 
 # Default embedding model configuration

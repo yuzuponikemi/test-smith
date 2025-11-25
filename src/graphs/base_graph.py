@@ -7,10 +7,11 @@ This module provides:
 - Utilities for state management and graph composition
 """
 
-from abc import ABC, abstractmethod
-from typing import TypedDict, Annotated, Any, Dict
-from langgraph.graph import StateGraph
 import operator
+from abc import ABC, abstractmethod
+from typing import Annotated, Any, TypedDict
+
+from langgraph.graph import StateGraph
 
 
 class BaseAgentState(TypedDict):
@@ -57,7 +58,7 @@ class BaseGraphBuilder(ABC):
         """
         pass
 
-    def get_metadata(self) -> Dict[str, Any]:
+    def get_metadata(self) -> dict[str, Any]:
         """
         Return metadata about this graph workflow.
 
@@ -111,7 +112,7 @@ class ExtendedAgentState(BaseAgentState):
     loop_count: int
 
 
-def create_simple_state(additional_fields: Dict[str, type] = None) -> type:
+def create_simple_state(additional_fields: dict[str, type] = None) -> type:
     """
     Utility function to create a custom state class by extending BaseAgentState.
 

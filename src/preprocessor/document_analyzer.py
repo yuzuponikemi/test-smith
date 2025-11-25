@@ -10,10 +10,9 @@ Analyzes documents to determine:
 
 import os
 import re
-from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
 from pathlib import Path
-import hashlib
+from typing import Optional
 
 
 @dataclass
@@ -27,9 +26,9 @@ class DocumentAnalysis:
     language: str
     structure_type: str  # 'markdown', 'pdf', 'plain_text', 'code', 'structured'
     quality_score: float  # 0-1, higher is better
-    issues: List[str]
-    recommendations: List[str]
-    metadata: Dict
+    issues: list[str]
+    recommendations: list[str]
+    metadata: dict
     programming_language: Optional[str] = None  # For code files: 'python', 'javascript', etc.
 
 
@@ -87,7 +86,7 @@ class DocumentAnalyzer:
     }
 
     def __init__(self):
-        self.analyzed_documents: List[DocumentAnalysis] = []
+        self.analyzed_documents: list[DocumentAnalysis] = []
 
     def analyze_file(self, filepath: str) -> DocumentAnalysis:
         """Analyze a single document file"""
@@ -203,7 +202,7 @@ class DocumentAnalyzer:
         self.analyzed_documents.append(analysis)
         return analysis
 
-    def analyze_directory(self, directory: str) -> List[DocumentAnalysis]:
+    def analyze_directory(self, directory: str) -> list[DocumentAnalysis]:
         """Analyze all documents in a directory"""
 
         analyses = []
@@ -226,7 +225,7 @@ class DocumentAnalyzer:
 
         return analyses
 
-    def get_summary(self) -> Dict:
+    def get_summary(self) -> dict:
         """Get summary statistics of analyzed documents"""
 
         if not self.analyzed_documents:
@@ -263,7 +262,7 @@ class DocumentAnalyzer:
             'structure_types': self._count_by_attribute('structure_type'),
         }
 
-    def get_problematic_files(self, threshold: float = 0.5) -> List[DocumentAnalysis]:
+    def get_problematic_files(self, threshold: float = 0.5) -> list[DocumentAnalysis]:
         """Get files with quality score below threshold"""
         return [d for d in self.analyzed_documents if d.quality_score < threshold]
 
@@ -289,7 +288,7 @@ class DocumentAnalyzer:
             return ""
         else:
             # Text files
-            with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(filepath, encoding='utf-8', errors='ignore') as f:
                 return f.read()
 
     def _detect_language(self, sample: str) -> str:
@@ -332,7 +331,7 @@ class DocumentAnalyzer:
 
         return 'plain_text'
 
-    def _analyze_code_content(self, content: str, programming_language: str) -> Dict:
+    def _analyze_code_content(self, content: str, programming_language: str) -> dict:
         """Analyze code-specific characteristics"""
         code_metadata = {
             'function_count': 0,
@@ -420,7 +419,7 @@ class DocumentAnalyzer:
             return False
 
         headers = re.findall(r'^(#{1,6})\s', content, re.MULTILINE)
-        unique_levels = set(len(h) for h in headers)
+        unique_levels = {len(h) for h in headers}
 
         return len(unique_levels) >= 2 and len(headers) >= 3
 
@@ -434,7 +433,7 @@ class DocumentAnalyzer:
 
         return any(pattern in content for pattern in suspicious_patterns)
 
-    def _count_by_attribute(self, attr: str) -> Dict[str, int]:
+    def _count_by_attribute(self, attr: str) -> dict[str, int]:
         """Count documents by a specific attribute"""
         counts = {}
         for doc in self.analyzed_documents:
@@ -451,26 +450,26 @@ class DocumentAnalyzer:
         summary = self.get_summary()
 
         print(f"\nTotal Files Analyzed: {summary['total_files']}")
-        print(f"\nQuality Distribution:")
+        print("\nQuality Distribution:")
         print(f"  High Quality (≥0.7):   {summary['high_quality']} files")
         print(f"  Medium Quality (0.4-0.7): {summary['medium_quality']} files")
         print(f"  Low Quality (<0.4):    {summary['low_quality']} files")
         print(f"  Average Quality Score: {summary['avg_quality_score']:.2f}")
 
-        print(f"\nContent Statistics:")
+        print("\nContent Statistics:")
         print(f"  Total Size: {summary['total_size_bytes']:,} bytes ({summary['total_size_bytes']/1024/1024:.2f} MB)")
         print(f"  Estimated Content: {summary['total_content_chars']:,} characters")
 
-        print(f"\nFile Types:")
+        print("\nFile Types:")
         for ftype, count in summary['file_types'].items():
             print(f"  {ftype}: {count}")
 
-        print(f"\nLanguages Detected:")
+        print("\nLanguages Detected:")
         for lang, count in summary['languages'].items():
             print(f"  {lang}: {count}")
 
         if summary['common_issues']:
-            print(f"\nMost Common Issues:")
+            print("\nMost Common Issues:")
             for issue, count in summary['common_issues'].items():
                 print(f"  {issue}: {count} files")
 
@@ -483,7 +482,7 @@ class DocumentAnalyzer:
                 for issue in doc.issues:
                     print(f"    ❌ {issue}")
                 if doc.recommendations:
-                    print(f"    💡 Recommendations:")
+                    print("    💡 Recommendations:")
                     for rec in doc.recommendations:
                         print(f"       - {rec}")
 

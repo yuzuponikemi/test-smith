@@ -22,11 +22,11 @@ Usage:
     formatter.finalize()
 """
 
-import sys
 import re
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+import sys
 from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any, Optional
 
 
 # ANSI color codes for terminal output
@@ -67,7 +67,7 @@ class StreamingState:
     """Track streaming state across node executions"""
 
     # Progress tracking
-    nodes_executed: List[str] = field(default_factory=list)
+    nodes_executed: list[str] = field(default_factory=list)
     total_expected_nodes: int = 10  # Will be adjusted based on graph type
 
     # Current phase tracking
@@ -77,8 +77,8 @@ class StreamingState:
     completed_subtasks: int = 0
 
     # Findings accumulation
-    key_findings: List[str] = field(default_factory=list)
-    sources_consulted: List[str] = field(default_factory=list)
+    key_findings: list[str] = field(default_factory=list)
+    sources_consulted: list[str] = field(default_factory=list)
 
     # Timing
     start_time: datetime = field(default_factory=datetime.now)
@@ -194,7 +194,7 @@ class StreamingFormatter:
 
         return min(base_progress, 100)
 
-    def _extract_key_findings(self, node_name: str, value: Dict[str, Any]) -> List[str]:
+    def _extract_key_findings(self, node_name: str, value: dict[str, Any]) -> list[str]:
         """Extract key findings from node output"""
         findings = []
 
@@ -251,7 +251,7 @@ class StreamingFormatter:
 
         return findings
 
-    def _extract_sources(self, node_name: str, value: Dict[str, Any]) -> List[str]:
+    def _extract_sources(self, node_name: str, value: dict[str, Any]) -> list[str]:
         """Extract source information from node output"""
         sources = []
 
@@ -270,7 +270,7 @@ class StreamingFormatter:
 
         return list(set(sources))  # Remove duplicates
 
-    def _update_phase(self, node_name: str, value: Dict[str, Any]):
+    def _update_phase(self, node_name: str, value: dict[str, Any]):
         """Update current phase based on node execution"""
 
         # Map nodes to phases
@@ -307,7 +307,7 @@ class StreamingFormatter:
                     self.state.completed_subtasks += 1
                 self.state.current_subtask = subtask_id
 
-    def process_node_output(self, node_name: str, value: Dict[str, Any]):
+    def process_node_output(self, node_name: str, value: dict[str, Any]):
         """
         Process output from a node and display progressive update.
 
@@ -336,7 +336,7 @@ class StreamingFormatter:
         # Display update
         self._display_update(node_name, new_findings, new_sources)
 
-    def _display_update(self, node_name: str, new_findings: List[str], new_sources: List[str]):
+    def _display_update(self, node_name: str, new_findings: list[str], new_sources: list[str]):
         """Display a streaming update to the user"""
 
         # Calculate progress
@@ -420,7 +420,7 @@ def create_streaming_callback(formatter: StreamingFormatter):
 
         formatter.finalize()
     """
-    def callback(chunk: Dict[str, Any]):
+    def callback(chunk: dict[str, Any]):
         for node_name, value in chunk.items():
             formatter.process_node_output(node_name, value)
 

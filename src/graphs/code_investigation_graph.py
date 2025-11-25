@@ -18,20 +18,21 @@ Use cases:
 - Code refactoring impact analysis
 """
 
-from langgraph.graph import StateGraph, END
-from typing import TypedDict, Annotated, Literal
 import operator
+from typing import Annotated, Literal, TypedDict
 
-from .base_graph import BaseGraphBuilder
+from langgraph.graph import END, StateGraph
 
 # Import existing nodes
-from src.nodes.code_assistant_node import code_retriever, code_query_generator
+from src.nodes.code_assistant_node import code_retriever
+from src.nodes.code_flow_tracker_node import code_flow_tracker_node
+from src.nodes.code_investigation_synthesizer_node import code_investigation_synthesizer_node
 
 # Import new nodes (to be created)
 from src.nodes.code_query_analyzer_node import code_query_analyzer_node
 from src.nodes.dependency_analyzer_node import dependency_analyzer_node
-from src.nodes.code_flow_tracker_node import code_flow_tracker_node
-from src.nodes.code_investigation_synthesizer_node import code_investigation_synthesizer_node
+
+from .base_graph import BaseGraphBuilder
 
 
 class CodeInvestigationState(TypedDict):

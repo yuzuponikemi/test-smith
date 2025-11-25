@@ -6,10 +6,14 @@ revised to add new subtasks, adjust priorities, or change scope based on discove
 """
 
 from src.models import get_evaluation_model
-from src.utils.logging_utils import print_node_header
 from src.prompts.plan_revisor_prompt import PLAN_REVISOR_PROMPT
-from src.schemas import PlanRevision, SubTask
-from src.utils.recursion_budget import calculate_recursion_budget, log_budget_status, increment_execution_count
+from src.schemas import PlanRevision
+from src.utils.logging_utils import print_node_header
+from src.utils.recursion_budget import (
+    calculate_recursion_budget,
+    increment_execution_count,
+    log_budget_status,
+)
 
 
 def plan_revisor(state):
@@ -57,7 +61,7 @@ def plan_revisor(state):
     if not budget["recommendations"]["allow_plan_revision"]:
         print(f"  🚫 PLAN REVISION DISABLED: Recursion budget {budget['status']}")
         print(f"     Current: {budget['current_count']}/{budget['limit']}")
-        print(f"     Skipping revision to conserve budget for remaining subtasks")
+        print("     Skipping revision to conserve budget for remaining subtasks")
         return {}
 
     # Get current state
@@ -162,7 +166,7 @@ def plan_revisor(state):
             return {}
 
         # === REVISION NEEDED ===
-        print(f"\n  🔄 APPLYING PLAN REVISION")
+        print("\n  🔄 APPLYING PLAN REVISION")
 
         # Limit new subtasks based on recursion budget (Phase 4.1)
         max_new_allowed = budget["recommendations"]["max_new_subtasks"]
@@ -218,7 +222,7 @@ def plan_revisor(state):
         new_revision_count = revision_count + 1
         new_total_subtasks = len(updated_subtasks)
 
-        print(f"\n  ✓ Plan revised successfully")
+        print("\n  ✓ Plan revised successfully")
         print(f"  New total subtasks: {new_total_subtasks}")
         print(f"  Revisions used: {new_revision_count}/{max_revisions}")
         print(f"  Impact: {revision.estimated_impact[:150]}...")

@@ -3,6 +3,7 @@
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.utils.logging_utils import cleanup_old_files
@@ -19,9 +20,9 @@ if __name__ == "__main__":
     deleted = cleanup_old_files(days=args.days, dry_run=args.dry_run)
 
     if args.dry_run:
-        print(f"\nWould delete:")
+        print("\nWould delete:")
     else:
-        print(f"\nDeleted:")
+        print("\nDeleted:")
 
     print(f"  - {deleted['logs']} log files")
     print(f"  - {deleted['reports']} report files")

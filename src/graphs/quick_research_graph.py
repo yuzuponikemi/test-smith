@@ -14,20 +14,22 @@ Use cases:
 - Time-sensitive research needs
 """
 
-from langgraph.graph import StateGraph, END
-from typing import TypedDict, Annotated, Literal
 import operator
+from typing import Annotated, Literal, TypedDict
 
-from .base_graph import BaseGraphBuilder
+from langgraph.graph import END, StateGraph
+
+from src.nodes.analyzer_node import analyzer_node
+from src.nodes.evaluator_node import evaluator_node
 
 # Import reusable nodes
 from src.nodes.planner_node import planner
-from src.nodes.searcher_node import searcher
 from src.nodes.rag_retriever_node import rag_retriever
-from src.nodes.analyzer_node import analyzer_node
-from src.nodes.synthesizer_node import synthesizer_node
-from src.nodes.evaluator_node import evaluator_node
 from src.nodes.reflection_node import reflection_node
+from src.nodes.searcher_node import searcher
+from src.nodes.synthesizer_node import synthesizer_node
+
+from .base_graph import BaseGraphBuilder
 
 
 class QuickResearchState(TypedDict):

@@ -14,16 +14,15 @@ Usage:
     python switch_model_provider.py status
 """
 
-import sys
 import os
-from pathlib import Path
+import sys
 
 
 def read_env_file(env_path: str = ".env") -> dict:
     """Read .env file into a dictionary."""
     env_vars = {}
     if os.path.exists(env_path):
-        with open(env_path, 'r') as f:
+        with open(env_path) as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith('#') and '=' in line:

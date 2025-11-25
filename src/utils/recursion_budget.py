@@ -125,8 +125,8 @@ def log_budget_status(budget_analysis, context=""):
 
     recommendations = budget_analysis["recommendations"]
     if not recommendations["allow_drill_down"]:
-        print(f"  🚫 Drill-down DISABLED due to budget constraints")
+        print("  🚫 Drill-down DISABLED due to budget constraints")
     if not recommendations["allow_plan_revision"]:
-        print(f"  🚫 Plan revision DISABLED due to budget constraints")
+        print("  🚫 Plan revision DISABLED due to budget constraints")
     elif recommendations["max_new_subtasks"] < 5:
         print(f"  ⚠️  Max new subtasks limited to: {recommendations['max_new_subtasks']}")

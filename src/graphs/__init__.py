@@ -18,10 +18,11 @@ Usage:
 """
 
 from typing import Dict, Optional
-from .base_graph import BaseGraphBuilder, BaseAgentState, ExtendedAgentState
+
+from .base_graph import BaseAgentState, BaseGraphBuilder, ExtendedAgentState
 
 # Global registry of available graphs
-_GRAPH_REGISTRY: Dict[str, BaseGraphBuilder] = {}
+_GRAPH_REGISTRY: dict[str, BaseGraphBuilder] = {}
 
 
 def register_graph(name: str, builder: BaseGraphBuilder):
@@ -64,7 +65,7 @@ def get_graph(name: str) -> BaseGraphBuilder:
     return _GRAPH_REGISTRY[name]
 
 
-def list_graphs() -> Dict[str, dict]:
+def list_graphs() -> dict[str, dict]:
     """
     List all registered graphs with their metadata.
 
@@ -142,7 +143,7 @@ def _auto_register_graphs():
         register_graph("code_execution", CodeExecutionGraphBuilder())
     except ImportError as e:
         print(f"[GraphRegistry] Warning: Could not load code_execution graph: {e}")
-        
+
     try:
         from .code_investigation_graph import CodeInvestigationGraphBuilder
         register_graph("code_investigation", CodeInvestigationGraphBuilder())

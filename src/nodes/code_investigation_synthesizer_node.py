@@ -8,12 +8,11 @@ This node synthesizes all analysis results into a comprehensive report:
 - Recommendations and insights
 """
 
-import json
 from langchain_core.prompts import PromptTemplate
 
-from src.utils.logging_utils import print_node_header
-from src.prompts.code_investigation_prompts import CODE_INVESTIGATION_SYNTHESIZER_PROMPT
 from src.models import get_synthesizer_model
+from src.prompts.code_investigation_prompts import CODE_INVESTIGATION_SYNTHESIZER_PROMPT
+from src.utils.logging_utils import print_node_header
 
 
 def code_investigation_synthesizer_node(state):
@@ -85,10 +84,7 @@ def code_investigation_synthesizer_node(state):
         })
 
         # Extract content
-        if hasattr(response, 'content'):
-            report = response.content
-        else:
-            report = str(response)
+        report = response.content if hasattr(response, 'content') else str(response)
 
         print(f"  Generated report ({len(report)} chars)")
 

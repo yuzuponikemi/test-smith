@@ -5,8 +5,9 @@ High-quality search API optimized for LLM applications.
 Requires API key (free tier: 1000 searches/month)
 """
 
-from typing import List
+
 from langchain_community.tools import TavilySearchResults
+
 from .base_provider import BaseSearchProvider, SearchResult
 
 
@@ -21,7 +22,7 @@ class TavilyProvider(BaseSearchProvider):
     def requires_api_key(self) -> bool:
         return True
 
-    def search(self, query: str, max_results: int = 5) -> List[SearchResult]:
+    def search(self, query: str, max_results: int = 5) -> list[SearchResult]:
         """
         Execute search using Tavily API
 
@@ -73,7 +74,7 @@ class TavilyProvider(BaseSearchProvider):
             error_msg = str(e)
             if "432" in error_msg or "Client Error" in error_msg:
                 raise Exception(
-                    f"Tavily API error: API key may be invalid, expired, or out of credits. "
-                    f"Visit https://tavily.com/ to check your account."
+                    "Tavily API error: API key may be invalid, expired, or out of credits. "
+                    "Visit https://tavily.com/ to check your account."
                 ) from e
             raise

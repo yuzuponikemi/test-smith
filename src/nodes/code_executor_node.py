@@ -21,14 +21,13 @@ Design philosophy:
 - Reusable across different LLM applications via MCP protocol
 """
 
-import sys
 import io
-import time
 import subprocess
 import tempfile
-import os
+import time
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
-from contextlib import redirect_stdout, redirect_stderr
+
 from src.models import get_code_executor_model
 from src.prompts.code_executor_prompt import CODE_EXECUTOR_PROMPT
 from src.utils.logging_utils import print_node_header

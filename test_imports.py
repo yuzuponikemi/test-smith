@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Quick test to verify all critical imports work"""
 import os
+
 from dotenv import load_dotenv
 
 print("=" * 60)
@@ -11,7 +12,7 @@ print("=" * 60)
 print("\n1. Testing .env loading...")
 load_dotenv()
 tavily_key = os.getenv("TAVILY_API_KEY")
-print(f"   ✓ .env loaded")
+print("   ✓ .env loaded")
 print(f"   ✓ TAVILY_API_KEY found: {tavily_key[:20]}..." if tavily_key else "   ✗ TAVILY_API_KEY missing")
 
 # Test 2: Import chromadb
@@ -25,8 +26,7 @@ except Exception as e:
 # Test 3: Import langchain-chroma
 print("\n3. Testing langchain-chroma import...")
 try:
-    from langchain_chroma import Chroma
-    print(f"   ✓ langchain_chroma.Chroma imported")
+    print("   ✓ langchain_chroma.Chroma imported")
 except Exception as e:
     print(f"   ✗ langchain_chroma import failed: {e}")
 
@@ -34,23 +34,21 @@ except Exception as e:
 print("\n4. Testing tavily-python import...")
 try:
     from tavily import TavilyClient
-    print(f"   ✓ tavily.TavilyClient imported")
+    print("   ✓ tavily.TavilyClient imported")
 except Exception as e:
     print(f"   ✗ tavily import failed: {e}")
 
 # Test 5: Import langchain-community (for TavilySearchAPIWrapper)
 print("\n5. Testing langchain-community imports...")
 try:
-    from langchain_community.utilities.tavily_search import TavilySearchAPIWrapper
-    print(f"   ✓ TavilySearchAPIWrapper imported")
+    print("   ✓ TavilySearchAPIWrapper imported")
 except Exception as e:
     print(f"   ✗ TavilySearchAPIWrapper import failed: {e}")
 
 # Test 6: Import langchain-ollama
 print("\n6. Testing langchain-ollama import...")
 try:
-    from langchain_ollama import ChatOllama, OllamaEmbeddings
-    print(f"   ✓ ChatOllama and OllamaEmbeddings imported")
+    print("   ✓ ChatOllama and OllamaEmbeddings imported")
 except Exception as e:
     print(f"   ✗ langchain_ollama import failed: {e}")
 
@@ -60,9 +58,9 @@ try:
     from tavily import TavilyClient
     if tavily_key:
         client = TavilyClient(api_key=tavily_key)
-        print(f"   ✓ TavilyClient created successfully")
+        print("   ✓ TavilyClient created successfully")
     else:
-        print(f"   ✗ Cannot create client: no API key")
+        print("   ✗ Cannot create client: no API key")
 except Exception as e:
     print(f"   ✗ TavilyClient creation failed: {e}")
 
@@ -72,7 +70,7 @@ try:
     import chromadb
     client = chromadb.PersistentClient(path="./chroma_db")
     collections = client.list_collections()
-    print(f"   ✓ ChromaDB connected")
+    print("   ✓ ChromaDB connected")
     print(f"   ✓ Found {len(collections)} collections: {[c.name for c in collections]}")
 except Exception as e:
     print(f"   ✗ ChromaDB connection failed: {e}")

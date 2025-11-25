@@ -9,10 +9,10 @@ codebase collection.
 from langchain_chroma import Chroma
 from langchain_core.prompts import PromptTemplate
 
-from src.utils.logging_utils import print_node_header
-from src.utils.embedding_utils import get_embeddings_for_collection
-from src.prompts.code_assistant_prompt import CODE_ASSISTANT_PROMPT
 from src.models import get_code_assistant_model
+from src.prompts.code_assistant_prompt import CODE_ASSISTANT_PROMPT
+from src.utils.embedding_utils import get_embeddings_for_collection
+from src.utils.logging_utils import print_node_header
 
 
 def code_retriever(state):
@@ -62,7 +62,7 @@ def code_retriever(state):
                     # Extract metadata
                     rel_path = doc.metadata.get('relative_path', doc.metadata.get('source', 'Unknown'))
                     prog_lang = doc.metadata.get('programming_language', 'unknown')
-                    filename = doc.metadata.get('filename', '')
+                    doc.metadata.get('filename', '')
 
                     doc_string += f"[Result {i}]\n"
                     doc_string += f"File: {rel_path}\n"
@@ -79,7 +79,7 @@ def code_retriever(state):
                 print(f"    Retrieved {len(documents)} code chunks")
             else:
                 all_results.append(f"No code found for query: {query}\n")
-                print(f"    No results found")
+                print("    No results found")
 
         except Exception as e:
             print(f"    Error searching for '{query}': {e}")
@@ -132,10 +132,7 @@ def code_assistant(state):
         })
 
         # Extract content from response
-        if hasattr(response, 'content'):
-            result = response.content
-        else:
-            result = str(response)
+        result = response.content if hasattr(response, 'content') else str(response)
 
         print(f"  Generated response ({len(result)} chars)")
 

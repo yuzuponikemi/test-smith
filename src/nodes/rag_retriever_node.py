@@ -1,7 +1,7 @@
 from langchain_chroma import Chroma
 
-from src.utils.logging_utils import print_node_header
 from src.utils.embedding_utils import get_embeddings_for_collection
+from src.utils.logging_utils import print_node_header
 
 
 def rag_retriever(state):

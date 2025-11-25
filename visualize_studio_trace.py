@@ -5,9 +5,10 @@ This script runs the code_execution graph and displays
 the execution trace in a Studio-like format.
 """
 
-import json
 from datetime import datetime
+
 from src.studio_graphs import code_execution
+
 
 def simulate_studio_execution(query: str):
     """Run graph and display Studio-like trace"""
@@ -16,7 +17,7 @@ def simulate_studio_execution(query: str):
     print("🎬 LangGraph Studio - Execution Trace")
     print("="*80)
     print(f"\n📝 Query: {query}")
-    print(f"🔧 Graph: code_execution")
+    print("🔧 Graph: code_execution")
     print(f"⏰ Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("\n" + "-"*80)
 
@@ -51,7 +52,7 @@ def simulate_studio_execution(query: str):
                 results = node_output['code_execution_results']
                 if results:
                     result = results[0]
-                    print(f"  Code Execution:")
+                    print("  Code Execution:")
                     print(f"    Success: {result.get('success', False)}")
                     print(f"    Output: {result.get('output', '')[:100]}...")
                     print(f"    Mode: {result.get('execution_mode', 'unknown')}")

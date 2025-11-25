@@ -216,7 +216,7 @@ def generate_html_visualization(graph_data: dict, output_path: str = "causal_gra
         f.write(html_content)
 
     print(f"✓ Visualization saved to {output_path}")
-    print(f"  Open in browser to view the interactive graph")
+    print("  Open in browser to view the interactive graph")
 
 
 def main():
@@ -233,7 +233,7 @@ def main():
         sys.exit(1)
 
     # Load graph data
-    with open(input_path, 'r') as f:
+    with open(input_path) as f:
         graph_data = json.load(f)
 
     # Generate visualization

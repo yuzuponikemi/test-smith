@@ -17,9 +17,9 @@ Usage:
     python scripts/testing/test_code_investigation.py --test dependency
 """
 
+import argparse
 import os
 import sys
-import argparse
 import time
 from datetime import datetime
 
@@ -27,6 +27,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
@@ -42,7 +43,7 @@ def ingest_repository():
     repo_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
     print(f"Repository: {repo_path}")
-    print(f"Collection: codebase_collection")
+    print("Collection: codebase_collection")
 
     # Clear existing collection first
     try:
@@ -209,7 +210,7 @@ def run_test_queries(test_filter=None):
         except Exception as e:
             elapsed = time.time() - start_time
             print(f"\nError: {e}")
-            print(f"Result: FAIL (error)")
+            print("Result: FAIL (error)")
 
             results.append({
                 "name": test["name"],
@@ -229,7 +230,7 @@ def print_summary(ingest_stats, test_results):
     print("=" * 80)
 
     if ingest_stats:
-        print(f"\nIngestion:")
+        print("\nIngestion:")
         print(f"  Files processed: {ingest_stats.get('files_processed', 0)}")
         print(f"  Total chunks: {ingest_stats.get('total_chunks', 0)}")
         print(f"  Languages: {', '.join(ingest_stats.get('languages', {}).keys())}")

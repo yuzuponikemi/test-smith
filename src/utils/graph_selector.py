@@ -151,10 +151,7 @@ def detect_simple_query(query: str) -> bool:
 
     # Single sentence questions
     sentences = query.split('.')
-    if len(sentences) <= 1 and len(query) < 100:
-        return True
-
-    return False
+    return bool(len(sentences) <= 1 and len(query) < 100)
 
 
 def auto_select_graph(query: str, default: str = "deep_research") -> GraphType:
