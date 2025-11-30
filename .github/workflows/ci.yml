@@ -60,7 +60,7 @@ jobs:
           fi
 
       - name: Commit updated requirements.txt
-        if: steps.check-requirements.outputs.changed == 'true'
+        if: steps.check-requirements.outputs.changed == 'true' && github.event_name == 'push'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
