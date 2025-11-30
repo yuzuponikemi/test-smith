@@ -40,11 +40,11 @@ jobs:
       - name: Install uv (fast dependency compiler)
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Compile requirements.txt from requirements.in
         run: |
-          $HOME/.cargo/bin/uv pip compile requirements.in -o requirements.txt.new
+          uv pip compile requirements.in -o requirements.txt.new
 
       - name: Check for requirements.txt changes
         id: check-requirements
