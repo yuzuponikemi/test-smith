@@ -15,7 +15,7 @@ Use cases:
 """
 
 import operator
-from typing import Annotated, Literal, TypedDict
+from typing import Annotated, Any, Literal, TypedDict
 
 from langgraph.graph import END, StateGraph
 
@@ -101,7 +101,7 @@ class QuickResearchGraphBuilder(BaseGraphBuilder):
         """Return the state class for this graph"""
         return QuickResearchState
 
-    def build(self) -> StateGraph:
+    def build(self) -> Any:
         """Build and compile the Quick Research workflow"""
         workflow = StateGraph(QuickResearchState)
 

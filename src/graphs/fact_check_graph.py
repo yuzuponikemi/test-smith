@@ -16,7 +16,7 @@ Use cases:
 """
 
 import operator
-from typing import Annotated, TypedDict
+from typing import Annotated, Any, TypedDict
 
 from langgraph.graph import END, StateGraph
 
@@ -62,7 +62,7 @@ class FactCheckGraphBuilder(BaseGraphBuilder):
         """Return the state class for this graph"""
         return FactCheckState
 
-    def build(self) -> StateGraph:
+    def build(self) -> Any:
         """Build and compile the Fact Check workflow"""
         workflow = StateGraph(FactCheckState)
 

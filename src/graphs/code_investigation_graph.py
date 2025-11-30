@@ -19,7 +19,7 @@ Use cases:
 """
 
 import operator
-from typing import Annotated, Literal, TypedDict
+from typing import Annotated, Any, Literal, TypedDict
 
 from langgraph.graph import END, StateGraph
 
@@ -113,7 +113,7 @@ class CodeInvestigationGraphBuilder(BaseGraphBuilder):
         """Return the state class for this graph"""
         return CodeInvestigationState
 
-    def build(self) -> StateGraph:
+    def build(self) -> Any:
         """Build and compile the Code Investigation workflow"""
         workflow = StateGraph(CodeInvestigationState)
 

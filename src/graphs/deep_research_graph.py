@@ -17,7 +17,7 @@ Use cases:
 import builtins
 import operator
 import sys
-from typing import Annotated, TypedDict
+from typing import Annotated, Any, TypedDict
 
 from langgraph.graph import END, StateGraph
 
@@ -192,7 +192,7 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         """Return the state class for this graph"""
         return DeepResearchState
 
-    def build(self) -> StateGraph:
+    def build(self) -> Any:
         """Build and compile the Deep Research workflow"""
         workflow = StateGraph(DeepResearchState)
 

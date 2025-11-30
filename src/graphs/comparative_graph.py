@@ -17,7 +17,7 @@ Use cases:
 """
 
 import operator
-from typing import Annotated, Literal, TypedDict
+from typing import Annotated, Any, Literal, TypedDict
 
 from langgraph.graph import END, StateGraph
 
@@ -83,7 +83,7 @@ class ComparativeResearchGraphBuilder(BaseGraphBuilder):
         """Return the state class for this graph"""
         return ComparativeResearchState
 
-    def build(self) -> StateGraph:
+    def build(self) -> Any:
         """Build and compile the Comparative Research workflow"""
         workflow = StateGraph(ComparativeResearchState)
 
