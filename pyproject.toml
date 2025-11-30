@@ -158,13 +158,21 @@ module = [
     "langchain_google_genai.*",
     "langchain_ollama.*",
     "langchain_chroma.*",
+    "langchain_core.*",
+    "langchain_text_splitters.*",
     "langgraph.*",
     "chromadb.*",
     "tavily.*",
     "ollama.*",
     "unstructured.*",
+    "numpy.*",
+    "dotenv.*",
+    "pytest.*",
+    "_pytest.*",
+    "pydantic.*",
 ]
 ignore_missing_imports = true
+ignore_errors = true
 
 # ============================================================================
 # Coverage Configuration
