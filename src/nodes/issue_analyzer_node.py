@@ -5,9 +5,9 @@ Part of the Causal Inference Graph workflow for root cause analysis.
 """
 
 from src.models import get_issue_analyzer_model
-from src.utils.logging_utils import print_node_header
 from src.prompts.issue_analyzer_prompt import ISSUE_ANALYZER_PROMPT
 from src.schemas import IssueAnalysis
+from src.utils.logging_utils import print_node_header
 
 
 def issue_analyzer_node(state: dict) -> dict:

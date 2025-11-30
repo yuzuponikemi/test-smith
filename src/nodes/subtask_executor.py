@@ -1,4 +1,6 @@
 from src.utils.logging_utils import print_node_header
+
+
 def subtask_executor(state):
     """
     Prepares state for executing a single subtask
@@ -24,7 +26,7 @@ def subtask_executor(state):
     # Phase 3: Show depth and parent-child relationships
     depth = current_subtask.get("depth", 0)
     parent_id = current_subtask.get("parent_id", None)
-    indent = "  " + "  " * depth  # Indent based on depth
+    "  " + "  " * depth  # Indent based on depth
 
     print(f"\n  ━━━ Subtask {current_index + 1}/{len(subtasks)} ━━━")
     print(f"  ID: {current_subtask['subtask_id']}")
@@ -42,7 +44,7 @@ def subtask_executor(state):
     # The Strategic Planner will receive this focused query
     subtask_query = f"{current_subtask['description']}\n\nFocus Area: {current_subtask['focus_area']}"
 
-    print(f"\n  Subtask Query for Strategic Planner:")
+    print("\n  Subtask Query for Strategic Planner:")
     print(f"  \"{subtask_query[:150]}...\"\n")
 
     return {

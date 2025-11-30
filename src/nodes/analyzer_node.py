@@ -1,6 +1,7 @@
 from src.models import get_analyzer_model
-from src.utils.logging_utils import print_node_header
 from src.prompts.analyzer_prompt import ANALYZER_PROMPT
+from src.utils.logging_utils import print_node_header
+
 
 def analyzer_node(state):
     print_node_header("ANALYZER")

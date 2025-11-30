@@ -31,52 +31,50 @@ Usage:
 import argparse
 import json
 import time
-from pathlib import Path
-from typing import List, Dict, Any, Optional
 from datetime import datetime
-import sys
+from pathlib import Path
+from typing import Any, Optional
 
 # IMPORTANT: Load .env BEFORE any imports that read environment variables
 from dotenv import load_dotenv
+
 load_dotenv()
 
+from langchain_core.runnables import RunnableLambda
+from langgraph.checkpoint.sqlite import SqliteSaver
 from langsmith import Client
 from langsmith.evaluation import evaluate
-from langchain_core.runnables import RunnableLambda
-
-# Import graph system (these depend on MODEL_PROVIDER being set)
-from src.graphs import get_graph, list_graphs, get_default_graph
-from langgraph.checkpoint.sqlite import SqliteSaver
 
 # Import evaluators
 from evaluation.evaluators import (
     ALL_EVALUATORS,
-    get_evaluators_for_example,
     HEURISTIC_EVALUATORS,
-    LLM_EVALUATORS
+    LLM_EVALUATORS,
 )
 
+# Import graph system (these depend on MODEL_PROVIDER being set)
+from src.graphs import get_default_graph, get_graph
 
 # ============================================================================
 # DATASET MANAGEMENT
 # ============================================================================
 
-def load_dataset(dataset_path: str = "evaluation/datasets/research_test_cases.json") -> Dict:
+def load_dataset(dataset_path: str = "evaluation/datasets/research_test_cases.json") -> dict:
     """Load test dataset from JSON file."""
     path = Path(dataset_path)
     if not path.exists():
         raise FileNotFoundError(f"Dataset not found: {dataset_path}")
 
-    with open(path, 'r') as f:
+    with open(path) as f:
         return json.load(f)
 
 
 def filter_examples(
-    dataset: Dict,
+    dataset: dict,
     category: Optional[str] = None,
     complexity: Optional[str] = None,
     limit: Optional[int] = None
-) -> List[Dict]:
+) -> list[dict]:
     """
     Filter test examples based on criteria.
 
@@ -105,8 +103,8 @@ def filter_examples(
 
 def upload_dataset_to_langsmith(
     client: Client,
-    dataset: Dict,
-    examples: List[Dict],
+    dataset: dict,
+    examples: list[dict],
     dataset_name: Optional[str] = None
 ) -> str:
     """
@@ -126,7 +124,7 @@ def upload_dataset_to_langsmith(
 
     # Check if dataset exists
     try:
-        existing_dataset = client.read_dataset(dataset_name=name)
+        client.read_dataset(dataset_name=name)
         print(f"✓ Dataset '{name}' already exists in LangSmith")
         return name
     except:
@@ -186,7 +184,7 @@ def create_agent_wrapper(graph_name: str):
     """
     builder = get_graph(graph_name)
 
-    def run_agent(inputs: Dict[str, Any]) -> Dict[str, Any]:
+    def run_agent(inputs: dict[str, Any]) -> dict[str, Any]:
         """
         Run the agent with given inputs and return outputs.
 
@@ -197,7 +195,7 @@ def create_agent_wrapper(graph_name: str):
             Dict with 'report' and other state fields
         """
         query = inputs.get("query", "")
-        metadata = inputs.get("metadata", {})
+        inputs.get("metadata", {})
 
         # Build and configure graph
         with SqliteSaver.from_conn_string(":memory:") as memory:
@@ -215,7 +213,7 @@ def create_agent_wrapper(graph_name: str):
 
             try:
                 for output in app.stream({"query": query, "loop_count": 0}, config=config):
-                    for key, value in output.items():
+                    for _key, value in output.items():
                         final_state.update(value)
 
                 execution_time = time.time() - start_time
@@ -245,8 +243,8 @@ def create_agent_wrapper(graph_name: str):
 def run_evaluation(
     graph_name: str,
     dataset_name: str,
-    examples: List[Dict],
-    evaluators: List,
+    examples: list[dict],
+    evaluators: list,
     experiment_name: Optional[str] = None,
     dry_run: bool = False,
     max_concurrency: int = 1
@@ -383,10 +381,10 @@ def generate_summary_report(results: Any, output_path: str = "evaluation/results
 # ============================================================================
 
 def compare_graphs(
-    graph_names: List[str],
+    graph_names: list[str],
     dataset_name: str,
-    examples: List[Dict],
-    evaluators: List,
+    examples: list[dict],
+    evaluators: list,
     max_concurrency: int = 1
 ):
     """

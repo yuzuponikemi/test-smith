@@ -1,6 +1,11 @@
-from src.utils.recursion_budget import calculate_recursion_budget, log_budget_status, increment_execution_count
-
 from src.utils.logging_utils import print_node_header
+from src.utils.recursion_budget import (
+    calculate_recursion_budget,
+    increment_execution_count,
+    log_budget_status,
+)
+
+
 def drill_down_generator(state):
     """
     Drill-Down Generator - Creates child subtasks when deeper exploration is needed
@@ -36,7 +41,7 @@ def drill_down_generator(state):
     if not budget["recommendations"]["allow_drill_down"]:
         print(f"  🚫 DRILL-DOWN DISABLED: Recursion budget {budget['status']}")
         print(f"     Current: {budget['current_count']}/{budget['limit']}")
-        print(f"     Skipping drill-down to conserve budget for remaining subtasks")
+        print("     Skipping drill-down to conserve budget for remaining subtasks")
         return {}
 
     # Check if drill-down is needed

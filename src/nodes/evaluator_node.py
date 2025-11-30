@@ -1,7 +1,8 @@
 from src.models import get_evaluation_model
-from src.utils.logging_utils import print_node_header
 from src.prompts.evaluator_prompt import EVALUATOR_PROMPT
 from src.schemas import Evaluation
+from src.utils.logging_utils import print_node_header
+
 
 def evaluator_node(state):
     print_node_header("EVALUATOR")

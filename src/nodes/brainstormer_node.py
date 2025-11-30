@@ -5,9 +5,9 @@ Part of the Causal Inference Graph workflow for root cause analysis.
 """
 
 from src.models import get_brainstormer_model
-from src.utils.logging_utils import print_node_header
 from src.prompts.brainstormer_prompt import BRAINSTORMER_PROMPT
 from src.schemas import HypothesisList
+from src.utils.logging_utils import print_node_header
 
 
 def brainstormer_node(state: dict) -> dict:

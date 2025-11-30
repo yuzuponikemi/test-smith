@@ -1,12 +1,15 @@
+import json
+import os
+import re
+
+from langchain_chroma import Chroma
+from langchain_ollama import OllamaEmbeddings
+
 from src.models import get_planner_model
 from src.prompts.planner_prompt import STRATEGIC_PLANNER_PROMPT
 from src.schemas import StrategicPlan
 from src.utils.logging_utils import print_node_header
-from langchain_chroma import Chroma
-from langchain_ollama import OllamaEmbeddings
-import os
-import re
-import json
+
 
 def check_kb_contents():
     """

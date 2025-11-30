@@ -5,7 +5,7 @@ Defines the abstract interface that all search providers must implement.
 """
 
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional
+from typing import Any, Optional
 
 
 class SearchResult:
@@ -17,7 +17,7 @@ class SearchResult:
         self.content = content
         self.score = score
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary format compatible with existing code"""
         return {
             "title": self.title,
@@ -46,7 +46,7 @@ class BaseSearchProvider(ABC):
         pass
 
     @abstractmethod
-    def search(self, query: str, max_results: int = 5) -> List[SearchResult]:
+    def search(self, query: str, max_results: int = 5) -> list[SearchResult]:
         """
         Execute search query
 
@@ -74,7 +74,7 @@ class BaseSearchProvider(ABC):
 
         try:
             # Perform a simple test search
-            results = self.search("test", max_results=1)
+            self.search("test", max_results=1)
             self._is_available = True
             return True
         except Exception as e:

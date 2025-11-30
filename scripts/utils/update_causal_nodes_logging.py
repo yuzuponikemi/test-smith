@@ -33,7 +33,7 @@ def update_node(file_path: str):
         return False
 
     # Read file
-    with open(path, 'r') as f:
+    with open(path) as f:
         content = f.read()
 
     original_content = content

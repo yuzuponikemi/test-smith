@@ -14,39 +14,41 @@ Use cases:
 - Queries benefiting from subtask decomposition
 """
 
-from langgraph.graph import StateGraph, END
-from typing import TypedDict, Annotated, Literal
+import builtins
 import operator
 import sys
-import builtins
+from typing import Annotated, TypedDict
 
-from .base_graph import BaseGraphBuilder
+from langgraph.graph import END, StateGraph
 
-# Import existing nodes
-from src.nodes.planner_node import planner
-from src.nodes.searcher_node import searcher
-from src.nodes.rag_retriever_node import rag_retriever
 from src.nodes.analyzer_node import analyzer_node
-from src.nodes.synthesizer_node import synthesizer_node
-from src.nodes.evaluator_node import evaluator_node
-
-# Hierarchical nodes (Phase 1)
-from src.nodes.master_planner_node import master_planner
-from src.nodes.subtask_router import subtask_router
-from src.nodes.subtask_executor import subtask_executor
-from src.nodes.subtask_result_aggregator import save_subtask_result
 
 # Hierarchical nodes (Phase 2)
 from src.nodes.depth_evaluator_node import depth_evaluator
 
 # Hierarchical nodes (Phase 3)
 from src.nodes.drill_down_generator import drill_down_generator
+from src.nodes.evaluator_node import evaluator_node
+
+# Hierarchical nodes (Phase 1)
+from src.nodes.master_planner_node import master_planner
 
 # Hierarchical nodes (Phase 4 - Dynamic Replanning)
 from src.nodes.plan_revisor_node import plan_revisor
 
+# Import existing nodes
+from src.nodes.planner_node import planner
+from src.nodes.rag_retriever_node import rag_retriever
+
 # Reflection node (Meta-reasoning & Self-Critique)
 from src.nodes.reflection_node import reflection_node
+from src.nodes.searcher_node import searcher
+from src.nodes.subtask_executor import subtask_executor
+from src.nodes.subtask_result_aggregator import save_subtask_result
+from src.nodes.subtask_router import subtask_router
+from src.nodes.synthesizer_node import synthesizer_node
+
+from .base_graph import BaseGraphBuilder
 
 
 # Override print for Studio compatibility (prevents BrokenPipeError)

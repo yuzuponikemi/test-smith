@@ -1,7 +1,8 @@
+
 from src.models import get_synthesizer_model
+from src.prompts.synthesizer_prompt import HIERARCHICAL_SYNTHESIZER_PROMPT, SYNTHESIZER_PROMPT
 from src.utils.logging_utils import print_node_header
-from src.prompts.synthesizer_prompt import SYNTHESIZER_PROMPT, HIERARCHICAL_SYNTHESIZER_PROMPT
-import json
+
 
 def synthesizer_node(state):
     print_node_header("SYNTHESIZER")
@@ -16,7 +17,7 @@ def synthesizer_node(state):
         master_plan = state.get("master_plan", {})
         subtask_results = state.get("subtask_results", {})
 
-        print(f"  Mode: HIERARCHICAL")
+        print("  Mode: HIERARCHICAL")
         print(f"  Subtasks completed: {len(subtask_results)}")
 
         # Format subtask information for prompt
@@ -62,7 +63,7 @@ def synthesizer_node(state):
 
     else:
         # Simple mode: Use existing synthesis (unchanged)
-        print(f"  Mode: SIMPLE")
+        print("  Mode: SIMPLE")
 
         allocation_strategy = state.get("allocation_strategy", "")
         web_queries = state.get("web_queries", [])

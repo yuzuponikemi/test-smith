@@ -26,33 +26,28 @@ Usage:
     python scripts/ingest/ingest_codebase.py . --skip-dirs node_modules,dist,.git
 """
 
-import os
-import sys
-import logging
 import argparse
 import fnmatch
+import logging
+import os
+import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Optional, Set
+from typing import Optional
 
-from langchain_chroma import Chroma
 from langchain.schema import Document
+from langchain_chroma import Chroma
 from langchain_community.vectorstores.utils import filter_complex_metadata
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from src.preprocessor import (
-    DocumentAnalyzer,
-    ChunkingStrategy,
-    ContentCleaner,
-    QualityMetrics
-)
+from src.preprocessor import ChunkingStrategy, ContentCleaner, DocumentAnalyzer, QualityMetrics
 from src.utils.embedding_utils import (
+    DEFAULT_EMBEDDING_MODEL,
     get_embeddings,
     get_model_config,
     store_embedding_metadata,
-    DEFAULT_EMBEDDING_MODEL
 )
 
 # Configuration
@@ -95,14 +90,14 @@ class GitignoreParser:
 
     def __init__(self, repo_root: str):
         self.repo_root = repo_root
-        self.patterns: List[str] = []
+        self.patterns: list[str] = []
         self._load_gitignore()
 
     def _load_gitignore(self):
         """Load patterns from .gitignore file"""
         gitignore_path = os.path.join(self.repo_root, '.gitignore')
         if os.path.exists(gitignore_path):
-            with open(gitignore_path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(gitignore_path, encoding='utf-8', errors='ignore') as f:
                 for line in f:
                     line = line.strip()
                     # Skip comments and empty lines
@@ -138,7 +133,7 @@ class CodebaseIngestion:
                  repo_path: str,
                  chroma_db_dir: str = CHROMA_DB_DIR,
                  collection_name: str = DEFAULT_COLLECTION_NAME,
-                 skip_dirs: Optional[Set[str]] = None,
+                 skip_dirs: Optional[set[str]] = None,
                  min_quality_score: float = 0.0,
                  embedding_model: str = DEFAULT_EMBEDDING_MODEL):
         """
@@ -184,7 +179,7 @@ class CodebaseIngestion:
             'languages': {},
         }
 
-    def discover_files(self) -> List[str]:
+    def discover_files(self) -> list[str]:
         """Discover all relevant files in the repository"""
         files = []
         priority_files = []
@@ -285,7 +280,7 @@ class CodebaseIngestion:
 
                 # Read file content
                 try:
-                    with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+                    with open(filepath, encoding='utf-8', errors='ignore') as f:
                         content = f.read()
                 except Exception as e:
                     logger.warning(f"Could not read {rel_path}: {e}")
@@ -404,7 +399,7 @@ class CodebaseIngestion:
 
         logger.info(f"\nLog saved to: {log_filename}")
 
-    def print_final_report(self, failed_files: List[str], metrics: Dict):
+    def print_final_report(self, failed_files: list[str], metrics: dict):
         """Print final ingestion report"""
 
         logger.info("\n" + "="*80)
@@ -414,18 +409,18 @@ class CodebaseIngestion:
         logger.info(f"\nRepository: {self.repo_name}")
         logger.info(f"Collection: {self.collection_name}")
 
-        logger.info(f"\nFile Statistics:")
+        logger.info("\nFile Statistics:")
         logger.info(f"  Found: {self.stats['files_found']}")
         logger.info(f"  Analyzed: {self.stats['files_analyzed']}")
         logger.info(f"  Processed: {self.stats['files_processed']}")
         logger.info(f"  Skipped: {self.stats['files_skipped']}")
         logger.info(f"  Failed: {self.stats['files_failed']}")
 
-        logger.info(f"\nLanguage Distribution:")
+        logger.info("\nLanguage Distribution:")
         for lang, count in sorted(self.stats['languages'].items(), key=lambda x: -x[1]):
             logger.info(f"  {lang}: {count} files")
 
-        logger.info(f"\nChunk Statistics:")
+        logger.info("\nChunk Statistics:")
         logger.info(f"  Total chunks: {self.stats['total_chunks']}")
         logger.info(f"  Quality grade: {metrics.get('quality_grade', 'Unknown')}")
 
@@ -489,7 +484,7 @@ def main():
     # Parse skip dirs
     skip_dirs = set()
     if args.skip_dirs:
-        skip_dirs = set(d.strip() for d in args.skip_dirs.split(','))
+        skip_dirs = {d.strip() for d in args.skip_dirs.split(',')}
 
     # Validate repo path
     if not os.path.isdir(args.repo_path):

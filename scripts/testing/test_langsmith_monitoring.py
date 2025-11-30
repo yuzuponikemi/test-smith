@@ -5,10 +5,10 @@ This test is designed for easy LangSmith Studio v2 monitoring.
 Watch budget controls in action!
 """
 
-import os
 from dotenv import load_dotenv
-from src.graph import workflow
 from langgraph.checkpoint.sqlite import SqliteSaver
+
+from src.graph import workflow
 
 load_dotenv()
 
@@ -70,7 +70,7 @@ def test_with_langsmith_monitoring():
 
         if result:
             execution_mode = result.get("execution_mode", "unknown")
-            print(f"\n📊 Summary:")
+            print("\n📊 Summary:")
             print(f"   Execution Mode: {execution_mode}")
 
             if execution_mode == "hierarchical":
@@ -79,8 +79,8 @@ def test_with_langsmith_monitoring():
                 print(f"   Node Executions: {result.get('node_execution_count', 0)}/{result.get('recursion_limit', 150)}")
                 print(f"   Budget Usage: {(result.get('node_execution_count', 0) / result.get('recursion_limit', 150) * 100):.1f}%")
 
-            print(f"\n🎉 Check LangSmith for detailed trace visualization!")
-            print(f"   https://smith.langchain.com/")
+            print("\n🎉 Check LangSmith for detailed trace visualization!")
+            print("   https://smith.langchain.com/")
 
 if __name__ == "__main__":
     test_with_langsmith_monitoring()

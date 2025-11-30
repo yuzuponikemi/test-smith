@@ -6,13 +6,14 @@ Checks the health and configuration of all search providers.
 Useful for diagnosing search issues and verifying API keys.
 """
 
-import sys
 import os
+import sys
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from dotenv import load_dotenv
+
 from src.utils.search_providers import SearchProviderManager
 
 

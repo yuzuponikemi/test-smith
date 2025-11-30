@@ -1,7 +1,9 @@
 """Test which Gemini models are available"""
 
 import os
+
 from dotenv import load_dotenv
+
 load_dotenv()
 
 # Try to list available models

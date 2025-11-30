@@ -10,11 +10,12 @@ This node analyzes retrieved code to trace:
 
 import json
 import re
+
 from langchain_core.prompts import PromptTemplate
 
-from src.utils.logging_utils import print_node_header
-from src.prompts.code_investigation_prompts import CODE_FLOW_TRACKER_PROMPT
 from src.models import get_analyzer_model
+from src.prompts.code_investigation_prompts import CODE_FLOW_TRACKER_PROMPT
+from src.utils.logging_utils import print_node_header
 
 
 def code_flow_tracker_node(state):
@@ -63,10 +64,7 @@ def code_flow_tracker_node(state):
         })
 
         # Extract content
-        if hasattr(response, 'content'):
-            result = response.content
-        else:
-            result = str(response)
+        result = response.content if hasattr(response, 'content') else str(response)
 
         # Parse JSON from response
         json_match = re.search(r'\{[\s\S]*\}', result)
@@ -185,7 +183,7 @@ def _analyze_flow_basic(code_context: str, target_elements: list) -> dict:
 
     # Find variable assignments
     py_assignments = re.findall(r'^(\s*)(\w+)\s*=\s*(.+)$', code_context, re.MULTILINE)
-    for indent, var_name, value in py_assignments[:20]:  # Limit to 20
+    for _indent, var_name, _value in py_assignments[:20]:  # Limit to 20
         variable_usage.append({
             "name": var_name,
             "defined_in": "unknown",

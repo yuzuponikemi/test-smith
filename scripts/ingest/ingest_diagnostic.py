@@ -5,17 +5,17 @@ This script provides detailed logging, validation, and quality checks
 during the document ingestion process to help debug embedding issues.
 """
 
-import os
-import logging
 import hashlib
+import logging
+import os
 from datetime import datetime
-from typing import List, Dict, Tuple
+
 import numpy as np
-from langchain_unstructured import UnstructuredLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain_community.vectorstores.utils import filter_complex_metadata
+from langchain_ollama import OllamaEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_unstructured import UnstructuredLoader
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Configuration
@@ -53,7 +53,7 @@ class EmbeddingQualityChecker:
         }
         self.similarities = []
 
-    def add_embedding(self, embedding: List[float], doc_text: str = None):
+    def add_embedding(self, embedding: list[float], doc_text: str = None):
         """Store embedding sample for analysis"""
         emb_array = np.array(embedding)
 
@@ -72,7 +72,7 @@ class EmbeddingQualityChecker:
         self.embedding_stats['min'].append(float(np.min(emb_array)))
         self.embedding_stats['max'].append(float(np.max(emb_array)))
 
-    def check_similarity(self, emb1: List[float], emb2: List[float]) -> float:
+    def check_similarity(self, emb1: list[float], emb2: list[float]) -> float:
         """Calculate cosine similarity between two embeddings"""
         sim = cosine_similarity([emb1], [emb2])[0][0]
         self.similarities.append(float(sim))
@@ -90,7 +90,7 @@ class EmbeddingQualityChecker:
 
         # Overall statistics
         report.append(f"\nTotal embeddings analyzed: {len(self.embedding_stats['mean'])}")
-        report.append(f"\nAcross all embeddings:")
+        report.append("\nAcross all embeddings:")
         report.append(f"  Mean of means: {np.mean(self.embedding_stats['mean']):.6f}")
         report.append(f"  Mean of stds:  {np.mean(self.embedding_stats['std']):.6f}")
         report.append(f"  Overall min:   {np.min(self.embedding_stats['min']):.6f}")
@@ -104,7 +104,7 @@ class EmbeddingQualityChecker:
 
         # Similarity analysis
         if len(self.similarities) > 0:
-            report.append(f"\nPairwise similarities (consecutive chunks):")
+            report.append("\nPairwise similarities (consecutive chunks):")
             report.append(f"  Mean similarity: {np.mean(self.similarities):.4f}")
             report.append(f"  Min similarity:  {np.min(self.similarities):.4f}")
             report.append(f"  Max similarity:  {np.max(self.similarities):.4f}")
@@ -115,7 +115,7 @@ class EmbeddingQualityChecker:
                 report.append("   This is unusually high!")
 
         # Sample embeddings
-        report.append(f"\nSample embeddings (first 10 dimensions):")
+        report.append("\nSample embeddings (first 10 dimensions):")
         for i, sample in enumerate(self.embedding_samples[:3]):
             report.append(f"\n  Sample {i+1}:")
             report.append(f"    Text: {sample['text_preview']}")
@@ -136,7 +136,7 @@ class ChunkAnalyzer:
         self.chunk_hashes = set()
         self.duplicate_count = 0
 
-    def analyze_chunks(self, chunks: List, source: str) -> Dict:
+    def analyze_chunks(self, chunks: list, source: str) -> dict:
         """Analyze chunks from a document"""
         analysis = {
             'count': len(chunks),
@@ -189,7 +189,7 @@ class ChunkAnalyzer:
         report.append(f"Total unique chunks: {len(self.chunk_hashes)}")
         report.append(f"Total duplicates: {self.duplicate_count}")
 
-        report.append(f"\nChunk size statistics:")
+        report.append("\nChunk size statistics:")
         report.append(f"  Mean: {np.mean(self.chunk_sizes):.1f} chars")
         report.append(f"  Median: {np.median(self.chunk_sizes):.1f} chars")
         report.append(f"  Min: {np.min(self.chunk_sizes)} chars")
@@ -202,7 +202,7 @@ class ChunkAnalyzer:
             report.append("   Chunking may not be working correctly!")
 
         # Per-source breakdown
-        report.append(f"\nPer-source breakdown:")
+        report.append("\nPer-source breakdown:")
         for source, analysis in sorted(self.chunks_by_source.items()):
             report.append(f"\n  {os.path.basename(source)}:")
             report.append(f"    Total chunks: {analysis['count']}")
@@ -273,7 +273,7 @@ def test_embedding_model(embeddings: OllamaEmbeddings) -> bool:
 
 def process_document(filepath: str, text_splitter, embeddings,
                      chunk_analyzer: ChunkAnalyzer,
-                     quality_checker: EmbeddingQualityChecker) -> Tuple[List, bool]:
+                     quality_checker: EmbeddingQualityChecker) -> tuple[list, bool]:
     """Process a single document with detailed diagnostics"""
 
     filename = os.path.basename(filepath)
@@ -479,7 +479,7 @@ def main():
     logger.info("INGESTION COMPLETE")
     logger.info("="*80)
 
-    logger.info(f"\nSummary:")
+    logger.info("\nSummary:")
     logger.info(f"  Total files processed: {len(files)}")
     logger.info(f"  Successfully ingested: {total_docs_ingested}")
     logger.info(f"  Failed: {len(failed_files)}")
@@ -487,7 +487,7 @@ def main():
     logger.info(f"  Vector store location: {CHROMA_DB_DIR}")
 
     if failed_files:
-        logger.warning(f"\nFailed files:")
+        logger.warning("\nFailed files:")
         for f in failed_files:
             logger.warning(f"  - {f}")
 

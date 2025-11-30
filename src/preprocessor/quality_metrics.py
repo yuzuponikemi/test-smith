@@ -8,9 +8,9 @@ Calculates metrics to assess the quality of preprocessed data:
 - Coverage metrics
 """
 
-import numpy as np
-from typing import List, Dict
 from collections import Counter
+
+import numpy as np
 from langchain.schema import Document
 
 
@@ -20,7 +20,7 @@ class QualityMetrics:
     def __init__(self):
         self.metrics = {}
 
-    def calculate_metrics(self, chunks: List[Document]) -> Dict:
+    def calculate_metrics(self, chunks: list[Document]) -> dict:
         """Calculate comprehensive quality metrics"""
 
         if not chunks:
@@ -69,7 +69,7 @@ class QualityMetrics:
 
         return self.metrics
 
-    def _calculate_size_distribution(self, chunk_lengths: List[int]) -> Dict[str, int]:
+    def _calculate_size_distribution(self, chunk_lengths: list[int]) -> dict[str, int]:
         """Calculate distribution of chunk sizes"""
 
         distribution = {
@@ -94,11 +94,11 @@ class QualityMetrics:
 
         return distribution
 
-    def _calculate_diversity(self, chunks: List[Document]) -> Dict:
+    def _calculate_diversity(self, chunks: list[Document]) -> dict:
         """Calculate content diversity metrics"""
 
         # Unique content ratio
-        unique_contents = set(chunk.page_content for chunk in chunks)
+        unique_contents = {chunk.page_content for chunk in chunks}
         uniqueness_ratio = len(unique_contents) / len(chunks) if chunks else 0
 
         # Vocabulary diversity (unique words)
@@ -123,7 +123,7 @@ class QualityMetrics:
             'top_common_words': common_words[:10],
         }
 
-    def _find_common_words(self, chunks: List[Document], min_length: int = 4) -> List[tuple]:
+    def _find_common_words(self, chunks: list[Document], min_length: int = 4) -> list[tuple]:
         """Find most common words across chunks"""
 
         word_counter = Counter()
@@ -137,7 +137,7 @@ class QualityMetrics:
         # Return top 20 most common words
         return word_counter.most_common(20)
 
-    def _calculate_metadata_coverage(self, chunks: List[Document]) -> Dict:
+    def _calculate_metadata_coverage(self, chunks: list[Document]) -> dict:
         """Calculate metadata coverage"""
 
         # Count how many chunks have various metadata fields
@@ -157,8 +157,8 @@ class QualityMetrics:
         }
 
     def _calculate_quality_score(self,
-                                 size_metrics: Dict,
-                                 diversity_metrics: Dict,
+                                 size_metrics: dict,
+                                 diversity_metrics: dict,
                                  num_chunks: int) -> float:
         """
         Calculate overall quality score (0-1)
@@ -241,7 +241,7 @@ class QualityMetrics:
 
         print(f"\n📊 Overall Quality: {m['quality_grade']} ({m['quality_score']:.2f}/1.00)")
 
-        print(f"\n📏 Chunk Size Statistics:")
+        print("\n📏 Chunk Size Statistics:")
         print(f"  Total Chunks: {m['total_chunks']}")
         print(f"  Mean Size: {m['mean_chunk_size']:.1f} characters")
         print(f"  Median Size: {m['median_chunk_size']:.1f} characters")
@@ -249,31 +249,31 @@ class QualityMetrics:
         print(f"  Range: {m['min_chunk_size']} - {m['max_chunk_size']} characters")
         print(f"  Mean Words: {m['mean_word_count']:.1f} words/chunk")
 
-        print(f"\n📈 Size Distribution:")
+        print("\n📈 Size Distribution:")
         dist = m['size_distribution']
         total = m['total_chunks']
         for category, count in dist.items():
             percentage = (count / total * 100) if total > 0 else 0
             print(f"  {category:>12}: {count:>5} ({percentage:>5.1f}%)")
 
-        print(f"\n🎨 Content Diversity:")
+        print("\n🎨 Content Diversity:")
         print(f"  Uniqueness Ratio: {m['uniqueness_ratio']:.2%}")
         print(f"  Vocabulary Diversity: {m['vocabulary_diversity']:.2%}")
         print(f"  Total Vocabulary: {m['total_vocabulary_size']} unique words")
         print(f"  Avg Words/Chunk: {m['avg_words_per_chunk']:.1f}")
 
         if m['top_common_words']:
-            print(f"\n  Top 10 Common Words:")
+            print("\n  Top 10 Common Words:")
             for word, count in m['top_common_words'][:10]:
                 print(f"    '{word}': {count}")
 
-        print(f"\n📋 Metadata Coverage:")
+        print("\n📋 Metadata Coverage:")
         print(f"  Chunks with source: {m['chunks_with_source']}/{m['total_chunks']}")
         print(f"  Chunks with chunking_method: {m['chunks_with_chunking_method']}/{m['total_chunks']}")
         print(f"  Metadata fields: {', '.join(m['metadata_keys'])}")
 
         # Recommendations
-        print(f"\n💡 Recommendations:")
+        print("\n💡 Recommendations:")
 
         if m['median_chunk_size'] < 300:
             print("  ⚠️  Chunks are quite small - consider increasing chunk size or filtering more aggressively")
@@ -295,7 +295,7 @@ class QualityMetrics:
 
         print("\n" + "="*80)
 
-    def get_recommendations(self) -> List[str]:
+    def get_recommendations(self) -> list[str]:
         """Get actionable recommendations based on metrics"""
 
         if not self.metrics:

@@ -1,17 +1,24 @@
 import argparse
 import json
 import uuid
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
 from dotenv import load_dotenv
+
 load_dotenv()
 
 from langgraph.checkpoint.sqlite import SqliteSaver
-from src.utils.logging_utils import setup_execution_logger, save_report, get_recent_reports, get_recent_logs
-from src.utils.streaming_output import StreamingFormatter
 
 # Import new graph registry system (depends on MODEL_PROVIDER being set)
-from src.graphs import get_graph, list_graphs, get_default_graph
+from src.graphs import get_default_graph, get_graph, list_graphs
+from src.utils.logging_utils import (
+    get_recent_logs,
+    get_recent_reports,
+    save_report,
+    setup_execution_logger,
+)
+from src.utils.streaming_output import StreamingFormatter
 
 # Keep backward compatibility - import old graph
 try:
@@ -96,18 +103,18 @@ Examples:
             print(f"   Complexity: {metadata.get('complexity', 'N/A')}")
 
             if args.detailed:
-                print(f"\n   Use Cases:")
+                print("\n   Use Cases:")
                 for use_case in metadata.get('use_cases', []):
                     print(f"   • {use_case}")
 
                 if 'features' in metadata:
-                    print(f"\n   Features:")
+                    print("\n   Features:")
                     for feature in metadata['features']:
                         print(f"   • {feature}")
 
                 if 'performance' in metadata:
                     perf = metadata['performance']
-                    print(f"\n   Performance:")
+                    print("\n   Performance:")
                     for key, value in perf.items():
                         print(f"   • {key}: {value}")
 
@@ -138,7 +145,7 @@ Examples:
             # Show selection reasoning if auto-selected
             if selection_mode == "auto" and not args.no_log:
                 from src.utils.graph_selector import explain_selection
-                print(f"\n[Auto-Selection Reasoning]")
+                print("\n[Auto-Selection Reasoning]")
                 print(explain_selection(args.query, graph_name))
             print()
         except KeyError as e:
@@ -167,7 +174,7 @@ Examples:
                 streaming_formatter = StreamingFormatter(graph_name=graph_name, use_colors=use_colors)
 
             if logger:
-                logger.log(f"Starting Test-Smith execution", "INFO")
+                logger.log("Starting Test-Smith execution", "INFO")
                 logger.log(f"Query: {args.query}")
                 logger.log(f"Thread ID: {thread_id}")
                 if args.stream:

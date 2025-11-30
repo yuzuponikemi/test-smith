@@ -10,11 +10,12 @@ This node parses the user's question about code and determines:
 
 import json
 import re
+
 from langchain_core.prompts import PromptTemplate
 
-from src.utils.logging_utils import print_node_header
-from src.prompts.code_investigation_prompts import CODE_QUERY_ANALYZER_PROMPT
 from src.models import get_planner_model
+from src.prompts.code_investigation_prompts import CODE_QUERY_ANALYZER_PROMPT
+from src.utils.logging_utils import print_node_header
 
 
 def code_query_analyzer_node(state):
@@ -43,10 +44,7 @@ def code_query_analyzer_node(state):
         response = chain.invoke({"query": query})
 
         # Extract content
-        if hasattr(response, 'content'):
-            result = response.content
-        else:
-            result = str(response)
+        result = response.content if hasattr(response, 'content') else str(response)
 
         # Parse JSON from response
         json_match = re.search(r'\{[\s\S]*\}', result)

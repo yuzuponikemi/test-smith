@@ -13,9 +13,9 @@ Output:
     - Falls back to ASCII if PNG generation fails
 """
 
-import os
 from pathlib import Path
-from src.graphs import list_graphs, get_graph
+
+from src.graphs import get_graph, list_graphs
 
 
 def ensure_output_dir(base_dir: str = "graph_visualizations") -> Path:
@@ -51,7 +51,7 @@ def generate_graph_visualization(graph_name: str, builder, output_dir: Path):
             print(f"✓ Generated PNG: {png_path}")
         except Exception as e:
             print(f"  ⚠ PNG generation failed: {e}")
-            print(f"  Trying alternative method...")
+            print("  Trying alternative method...")
 
             # Try alternative PNG method
             try:
@@ -68,7 +68,7 @@ def generate_graph_visualization(graph_name: str, builder, output_dir: Path):
                 with open(mermaid_path, 'w') as f:
                     f.write(mermaid_data)
                 print(f"✓ Saved Mermaid diagram: {mermaid_path}")
-                print(f"  View at: https://mermaid.live/")
+                print("  View at: https://mermaid.live/")
 
         # Also generate ASCII representation
         ascii_path = output_dir / f"{graph_name}_graph.txt"
@@ -153,7 +153,7 @@ def main():
     results = {}
 
     # Generate visualization for each graph
-    for graph_name, metadata in graphs.items():
+    for graph_name, _metadata in graphs.items():
         success = generate_graph_visualization(graph_name, get_graph(graph_name), output_dir)
         results[graph_name] = success
 

@@ -1,10 +1,12 @@
 import os
-from langchain_unstructured import UnstructuredLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_ollama import OllamaEmbeddings
+
 from langchain_chroma import Chroma
+
 # --- 修正点 1: フィルタリング用ユーティリティをインポート ---
 from langchain_community.vectorstores.utils import filter_complex_metadata
+from langchain_ollama import OllamaEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_unstructured import UnstructuredLoader
 
 # Directory containing the documents
 DOCUMENTS_DIR = "documents"

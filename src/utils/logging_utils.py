@@ -20,10 +20,9 @@ Usage:
 """
 
 import os
-import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 
 def get_current_model_info() -> str:
@@ -128,19 +127,19 @@ Start Time: {self.start_time.isoformat()}
         model_info = get_current_model_info()
         self.log(f"\n--- {node_name.upper()} ({model_info}) ---", "NODE")
 
-    def log_node_end(self, node_name: str, output: Dict[str, Any]):
+    def log_node_end(self, node_name: str, output: dict[str, Any]):
         """Log the end of a node execution with its output."""
         # Format output for logging (truncate large values)
         formatted_output = self._format_output(output)
         self.log(f"Output from '{node_name}':\n{formatted_output}", "NODE")
 
-    def log_subtask(self, subtask_id: str, subtask_info: Dict[str, Any]):
+    def log_subtask(self, subtask_id: str, subtask_info: dict[str, Any]):
         """Log subtask information."""
         self.log(f"\n━━━ Subtask: {subtask_id} ━━━", "SUBTASK")
         for key, value in subtask_info.items():
             self.log(f"  {key}: {value}")
 
-    def log_master_plan(self, master_plan: Dict[str, Any]):
+    def log_master_plan(self, master_plan: dict[str, Any]):
         """Log the master plan details."""
         self.log("\n" + "="*80, "MASTER_PLAN")
         self.log(f"Complexity: {'COMPLEX' if master_plan.get('is_complex') else 'SIMPLE'}")
@@ -190,7 +189,7 @@ Log File: {self.log_file}
         self.log(f"Execution completed in {duration:.2f}s", "INFO")
         self.log(f"Full log saved to: {self.log_file}")
 
-    def _format_output(self, output: Dict[str, Any], max_length: int = 200) -> str:
+    def _format_output(self, output: dict[str, Any], max_length: int = 200) -> str:
         """Format output dictionary for logging, truncating long values."""
         formatted = []
         for key, value in output.items():
@@ -226,7 +225,7 @@ def setup_execution_logger(query: str, thread_id: str) -> ExecutionLogger:
 
 
 def save_report(report_content: str, query: str, execution_mode: str = "simple",
-                metadata: Optional[Dict[str, Any]] = None) -> Path:
+                metadata: Optional[dict[str, Any]] = None) -> Path:
     """
     Save the final research report to a markdown file.
 
@@ -263,7 +262,7 @@ def save_report(report_content: str, query: str, execution_mode: str = "simple",
 
 
 def _build_report_with_metadata(content: str, query: str, execution_mode: str,
-                                 metadata: Optional[Dict[str, Any]]) -> str:
+                                 metadata: Optional[dict[str, Any]]) -> str:
     """Build complete report with metadata header."""
 
     header = f"""---
@@ -336,7 +335,7 @@ def get_recent_logs(limit: int = 10) -> list[Path]:
     return logs[:limit]
 
 
-def cleanup_old_files(days: int = 30, dry_run: bool = True) -> Dict[str, int]:
+def cleanup_old_files(days: int = 30, dry_run: bool = True) -> dict[str, int]:
     """
     Clean up old log and report files.
 

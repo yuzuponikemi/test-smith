@@ -1,7 +1,8 @@
 from src.models import get_evaluation_model
-from src.utils.logging_utils import print_node_header
 from src.prompts.depth_evaluator_prompt import DEPTH_EVALUATOR_PROMPT
 from src.schemas import DepthEvaluation
+from src.utils.logging_utils import print_node_header
+
 
 def depth_evaluator(state):
     """
@@ -101,7 +102,7 @@ def depth_evaluator(state):
         }
 
     except Exception as e:
-        print(f"  ⚠ Warning: Depth evaluation failed, defaulting to sufficient")
+        print("  ⚠ Warning: Depth evaluation failed, defaulting to sufficient")
         print(f"  Error: {e}")
 
         # Fallback: mark as sufficient to avoid blocking

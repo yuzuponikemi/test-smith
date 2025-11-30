@@ -3,6 +3,7 @@ from src.prompts.master_planner_prompt import MASTER_PLANNER_PROMPT
 from src.schemas import MasterPlan
 from src.utils.logging_utils import print_node_header
 
+
 def master_planner(state):
     """
     Master Planner - Detects query complexity and creates Master Plan
@@ -72,7 +73,7 @@ def master_planner(state):
         }
 
     except Exception as e:
-        print(f"  ⚠ Warning: Master planning failed, falling back to simple mode")
+        print("  ⚠ Warning: Master planning failed, falling back to simple mode")
         print(f"  Error: {e}")
 
         # Fallback: treat as simple query

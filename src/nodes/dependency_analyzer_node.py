@@ -10,11 +10,12 @@ This node analyzes retrieved code to identify:
 
 import json
 import re
+
 from langchain_core.prompts import PromptTemplate
 
-from src.utils.logging_utils import print_node_header
-from src.prompts.code_investigation_prompts import DEPENDENCY_ANALYZER_PROMPT
 from src.models import get_analyzer_model
+from src.prompts.code_investigation_prompts import DEPENDENCY_ANALYZER_PROMPT
+from src.utils.logging_utils import print_node_header
 
 
 def dependency_analyzer_node(state):
@@ -62,10 +63,7 @@ def dependency_analyzer_node(state):
         })
 
         # Extract content
-        if hasattr(response, 'content'):
-            result = response.content
-        else:
-            result = str(response)
+        result = response.content if hasattr(response, 'content') else str(response)
 
         # Parse JSON from response
         json_match = re.search(r'\{[\s\S]*\}', result)

@@ -6,10 +6,11 @@ Handles provider selection, health checking, and error recovery.
 """
 
 import os
-from typing import List, Dict, Any, Optional
-from .base_provider import BaseSearchProvider, SearchResult
-from .tavily_provider import TavilyProvider
+from typing import Any, Optional
+
+from .base_provider import BaseSearchProvider
 from .duckduckgo_provider import DuckDuckGoProvider
+from .tavily_provider import TavilyProvider
 
 
 class SearchProviderManager:
@@ -24,7 +25,7 @@ class SearchProviderManager:
         BRAVE_API_KEY: API key for Brave Search (optional)
     """
 
-    def __init__(self, priority: Optional[List[str]] = None):
+    def __init__(self, priority: Optional[list[str]] = None):
         """
         Initialize provider manager
 
@@ -32,7 +33,7 @@ class SearchProviderManager:
             priority: List of provider names in priority order.
                      If None, reads from SEARCH_PROVIDER_PRIORITY env var.
         """
-        self.providers: Dict[str, BaseSearchProvider] = {}
+        self.providers: dict[str, BaseSearchProvider] = {}
         self._initialize_providers()
 
         # Set priority order
@@ -57,7 +58,7 @@ class SearchProviderManager:
         # brave_key = os.environ.get("BRAVE_API_KEY")
         # self.providers["brave"] = BraveProvider(api_key=brave_key)
 
-    def get_available_providers(self) -> List[str]:
+    def get_available_providers(self) -> list[str]:
         """
         Get list of properly configured providers
 
@@ -77,7 +78,7 @@ class SearchProviderManager:
 
     def search(
         self, query: str, max_results: int = 5, attempt_all: bool = True
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Execute search with automatic fallback
 
@@ -133,7 +134,7 @@ class SearchProviderManager:
             f"All search providers failed ({providers_str}). Last error: {str(last_error)}"
         )
 
-    def health_check_all(self) -> Dict[str, bool]:
+    def health_check_all(self) -> dict[str, bool]:
         """
         Check health of all providers
 

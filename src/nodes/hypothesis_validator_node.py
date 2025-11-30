@@ -5,9 +5,9 @@ Part of the Causal Inference Graph workflow for root cause analysis.
 """
 
 from src.models import get_hypothesis_validator_model
-from src.utils.logging_utils import print_node_header
 from src.prompts.hypothesis_validator_prompt import HYPOTHESIS_VALIDATOR_PROMPT
 from src.schemas import HypothesisRanking
+from src.utils.logging_utils import print_node_header
 
 
 def hypothesis_validator_node(state: dict) -> dict:
@@ -58,7 +58,7 @@ def hypothesis_validator_node(state: dict) -> dict:
     ranking: HypothesisRanking = structured_model.invoke(prompt)
 
     print(f"  Ranked {len(ranking.ranked_hypotheses)} hypotheses")
-    print(f"  Top 3 most likely:")
+    print("  Top 3 most likely:")
     for i, h in enumerate(ranking.ranked_hypotheses[:3], 1):
         print(f"    {i}. {h.hypothesis_id}: {h.description[:50]}... (likelihood: {h.likelihood:.2f})")
 

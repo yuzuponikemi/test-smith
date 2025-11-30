@@ -5,12 +5,12 @@ Part of the Causal Inference Graph workflow for root cause analysis.
 Reuses the strategic planning approach from the research graph.
 """
 
-import os
 from pathlib import Path
+
 from src.models import get_evidence_planner_model
-from src.utils.logging_utils import print_node_header
 from src.prompts.evidence_planner_prompt import EVIDENCE_PLANNER_PROMPT
 from src.schemas import StrategicPlan
+from src.utils.logging_utils import print_node_header
 
 
 def check_kb_contents() -> str:

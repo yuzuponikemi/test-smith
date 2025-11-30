@@ -14,20 +14,22 @@ Use cases:
 - Complex problem-solving with computational steps
 """
 
-from langgraph.graph import StateGraph, END
-from typing import TypedDict, Annotated, Literal
 import operator
+from typing import Annotated, Literal, TypedDict
 
-from .base_graph import BaseGraphBuilder
+from langgraph.graph import END, StateGraph
+
+from src.nodes.analyzer_node import analyzer_node
+from src.nodes.code_executor_node import code_executor
+from src.nodes.evaluator_node import evaluator_node
 
 # Import reusable nodes
 from src.nodes.planner_node import planner
-from src.nodes.searcher_node import searcher
 from src.nodes.rag_retriever_node import rag_retriever
-from src.nodes.analyzer_node import analyzer_node
+from src.nodes.searcher_node import searcher
 from src.nodes.synthesizer_node import synthesizer_node
-from src.nodes.evaluator_node import evaluator_node
-from src.nodes.code_executor_node import code_executor
+
+from .base_graph import BaseGraphBuilder
 
 
 class CodeExecutionState(TypedDict):
@@ -85,7 +87,7 @@ def continuation_router(state: CodeExecutionState) -> Literal["synthesizer", "pl
 
     # Force exit after max loops
     if loop_count >= 2:
-        print(f"  Max loops reached → synthesize")
+        print("  Max loops reached → synthesize")
         return "synthesizer"
 
     # Check evaluation

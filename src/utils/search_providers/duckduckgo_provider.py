@@ -5,8 +5,9 @@ Free search provider with no API key required.
 Uses DuckDuckGo's instant answer API.
 """
 
-from typing import List
+
 from langchain_community.tools import DuckDuckGoSearchResults
+
 from .base_provider import BaseSearchProvider, SearchResult
 
 
@@ -21,7 +22,7 @@ class DuckDuckGoProvider(BaseSearchProvider):
     def requires_api_key(self) -> bool:
         return False
 
-    def search(self, query: str, max_results: int = 5) -> List[SearchResult]:
+    def search(self, query: str, max_results: int = 5) -> list[SearchResult]:
         """
         Execute search using DuckDuckGo
 
