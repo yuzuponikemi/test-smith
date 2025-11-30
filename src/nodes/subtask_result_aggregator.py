@@ -37,5 +37,5 @@ def save_subtask_result(state):
     return {
         "subtask_results": subtask_results,
         "current_subtask_index": new_index,
-        "current_subtask_id": ""  # Clear for next subtask
+        "current_subtask_id": "",  # Clear for next subtask
     }

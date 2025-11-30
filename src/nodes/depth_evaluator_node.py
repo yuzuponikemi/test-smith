@@ -43,7 +43,7 @@ def depth_evaluator(state):
                 "depth_quality": "adequate",
                 "drill_down_needed": False,
                 "drill_down_areas": [],
-                "reasoning": "Could not find subtask details, marking as sufficient to continue."
+                "reasoning": "Could not find subtask details, marking as sufficient to continue.",
             }
         }
 
@@ -74,7 +74,7 @@ def depth_evaluator(state):
         current_depth=current_depth,
         max_depth=max_depth,
         recursion_status=recursion_status,
-        analyzed_data=latest_analysis
+        analyzed_data=latest_analysis,
     )
 
     # Get LLM evaluation with structured output
@@ -97,9 +97,7 @@ def depth_evaluator(state):
         print(f"  Reasoning: {depth_eval.reasoning[:150]}...")
 
         # Convert to dict for state
-        return {
-            "depth_evaluation": depth_eval.dict()
-        }
+        return {"depth_evaluation": depth_eval.dict()}
 
     except Exception as e:
         print("  ⚠ Warning: Depth evaluation failed, defaulting to sufficient")
@@ -112,6 +110,6 @@ def depth_evaluator(state):
                 "depth_quality": "adequate",
                 "drill_down_needed": False,
                 "drill_down_areas": [],
-                "reasoning": f"Depth evaluation failed with error, marked as sufficient. Error: {str(e)[:100]}"
+                "reasoning": f"Depth evaluation failed with error, marked as sufficient. Error: {str(e)[:100]}",
             }
         }

@@ -1,4 +1,3 @@
-
 from src.models import get_synthesizer_model
 from src.prompts.synthesizer_prompt import HIERARCHICAL_SYNTHESIZER_PROMPT, SYNTHESIZER_PROMPT
 from src.utils.logging_utils import print_node_header
@@ -39,8 +38,7 @@ def synthesizer_node(state):
         for subtask_id, result in subtask_results.items():
             # Find the subtask details
             subtask_details = next(
-                (s for s in master_plan.get("subtasks", []) if s["subtask_id"] == subtask_id),
-                None
+                (s for s in master_plan.get("subtasks", []) if s["subtask_id"] == subtask_id), None
             )
             if subtask_details:
                 subtask_results_formatted.append(
@@ -58,7 +56,7 @@ def synthesizer_node(state):
             subtask_count=subtask_count,
             subtask_list=subtask_list_str,
             complexity_reasoning=complexity_reasoning,
-            subtask_results_formatted=subtask_results_str
+            subtask_results_formatted=subtask_results_str,
         )
 
     else:
@@ -88,19 +86,22 @@ def synthesizer_node(state):
                 code_results_str += f"- Success: {result.get('success', False)}\n"
                 code_results_str += f"- Output: {result.get('output', 'N/A')}\n"
                 code_results_str += f"- Execution Mode: {result.get('execution_mode', 'N/A')}\n"
-                if result.get('code'):
+                if result.get("code"):
                     code_results_str += f"- Code:\n```python\n{result['code']}\n```\n"
                 code_results_str += "\n"
             code_results_str += "**IMPORTANT:** Use the actual output values from the code execution results above in your final answer. Do not use placeholders like '[insert value]'.\n"
 
-        prompt = SYNTHESIZER_PROMPT.format(
-            original_query=original_query,
-            allocation_strategy=allocation_strategy,
-            web_queries=web_queries,
-            rag_queries=rag_queries,
-            analyzed_data=analyzed_data,
-            loop_count=loop_count
-        ) + code_results_str
+        prompt = (
+            SYNTHESIZER_PROMPT.format(
+                original_query=original_query,
+                allocation_strategy=allocation_strategy,
+                web_queries=web_queries,
+                rag_queries=rag_queries,
+                analyzed_data=analyzed_data,
+                loop_count=loop_count,
+            )
+            + code_results_str
+        )
 
     message = model.invoke(prompt)
     print("  ✓ Report generated successfully\n")

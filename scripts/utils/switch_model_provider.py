@@ -25,28 +25,28 @@ def read_env_file(env_path: str = ".env") -> dict:
         with open(env_path) as f:
             for line in f:
                 line = line.strip()
-                if line and not line.startswith('#') and '=' in line:
-                    key, value = line.split('=', 1)
+                if line and not line.startswith("#") and "=" in line:
+                    key, value = line.split("=", 1)
                     env_vars[key.strip()] = value.strip().strip('"')
     return env_vars
 
 
 def write_env_file(env_vars: dict, env_path: str = ".env"):
     """Write dictionary to .env file."""
-    with open(env_path, 'w') as f:
+    with open(env_path, "w") as f:
         for key, value in env_vars.items():
             f.write(f'{key}="{value}"\n')
 
 
 def switch_provider(provider: str):
     """Switch MODEL_PROVIDER in .env file."""
-    if provider not in ['ollama', 'gemini']:
+    if provider not in ["ollama", "gemini"]:
         print(f"❌ Error: Invalid provider '{provider}'")
         print("   Valid options: 'ollama' or 'gemini'")
         sys.exit(1)
 
     env_vars = read_env_file()
-    current_provider = env_vars.get('MODEL_PROVIDER', 'ollama')
+    current_provider = env_vars.get("MODEL_PROVIDER", "ollama")
 
     if current_provider == provider:
         print(f"ℹ️  Already using {provider}")
@@ -54,7 +54,7 @@ def switch_provider(provider: str):
         return
 
     # Update provider
-    env_vars['MODEL_PROVIDER'] = provider
+    env_vars["MODEL_PROVIDER"] = provider
     write_env_file(env_vars)
 
     print(f"✅ Switched to {provider}")
@@ -66,7 +66,7 @@ def switch_provider(provider: str):
 
 def print_provider_info(provider: str):
     """Print information about the selected provider."""
-    if provider == 'gemini':
+    if provider == "gemini":
         print("\n📊 Gemini Configuration:")
         print("   - Model: gemini-1.5-flash (default)")
         print("   - Speed: Very fast")
@@ -84,10 +84,10 @@ def verify_configuration(provider: str, env_vars: dict):
     """Verify required configuration for provider."""
     print("\n🔍 Verifying configuration...")
 
-    if provider == 'gemini':
-        if not env_vars.get('GOOGLE_API_KEY'):
+    if provider == "gemini":
+        if not env_vars.get("GOOGLE_API_KEY"):
             print("   ⚠️  Warning: GOOGLE_API_KEY not found in .env")
-            print("   Add it with: GOOGLE_API_KEY=\"your-api-key-here\"")
+            print('   Add it with: GOOGLE_API_KEY="your-api-key-here"')
         else:
             print("   ✓ GOOGLE_API_KEY configured")
 
@@ -95,12 +95,13 @@ def verify_configuration(provider: str, env_vars: dict):
         # Check if Ollama is running
         try:
             import requests
+
             response = requests.get("http://localhost:11434/api/tags", timeout=2)
             if response.status_code == 200:
                 print("   ✓ Ollama is running")
-                models = response.json().get('models', [])
-                model_names = [m['name'] for m in models]
-                required = ['llama3', 'command-r', 'nomic-embed-text']
+                models = response.json().get("models", [])
+                model_names = [m["name"] for m in models]
+                required = ["llama3", "command-r", "nomic-embed-text"]
                 for model in required:
                     if any(model in name for name in model_names):
                         print(f"   ✓ {model} available")
@@ -108,22 +109,22 @@ def verify_configuration(provider: str, env_vars: dict):
                         print(f"   ⚠️  {model} not found (install: ollama pull {model})")
             else:
                 print("   ⚠️  Ollama not responding")
-        except:
+        except Exception:
             print("   ⚠️  Cannot connect to Ollama (is it running?)")
 
 
 def show_status():
     """Show current model provider status."""
     env_vars = read_env_file()
-    current_provider = env_vars.get('MODEL_PROVIDER', 'ollama')
+    current_provider = env_vars.get("MODEL_PROVIDER", "ollama")
 
-    print("="*60)
+    print("=" * 60)
     print("MODEL PROVIDER STATUS")
-    print("="*60)
+    print("=" * 60)
     print(f"\n📍 Current Provider: {current_provider}")
     print_provider_info(current_provider)
     verify_configuration(current_provider, env_vars)
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
 
 
 def show_help():
@@ -178,11 +179,11 @@ def main():
 
     command = sys.argv[1].lower()
 
-    if command in ['help', '--help', '-h']:
+    if command in ["help", "--help", "-h"]:
         show_help()
-    elif command == 'status':
+    elif command == "status":
         show_status()
-    elif command in ['gemini', 'ollama']:
+    elif command in ["gemini", "ollama"]:
         switch_provider(command)
     else:
         print(f"❌ Unknown command: {command}")

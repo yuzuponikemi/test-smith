@@ -16,7 +16,7 @@ Use cases:
 """
 
 import operator
-from typing import Annotated, TypedDict
+from typing import Annotated, Any, TypedDict
 
 from langgraph.graph import END, StateGraph
 
@@ -62,7 +62,7 @@ class FactCheckGraphBuilder(BaseGraphBuilder):
         """Return the state class for this graph"""
         return FactCheckState
 
-    def build(self) -> StateGraph:
+    def build(self) -> Any:
         """Build and compile the Fact Check workflow"""
         workflow = StateGraph(FactCheckState)
 
@@ -135,7 +135,7 @@ class FactCheckGraphBuilder(BaseGraphBuilder):
                 "Check statement accuracy",
                 "Cross-reference information across sources",
                 "Detect contradictions or inconsistencies",
-                "Provide evidence-based assessments with citations"
+                "Provide evidence-based assessments with citations",
             ],
             "complexity": "medium",
             "supports_streaming": True,
@@ -146,7 +146,7 @@ class FactCheckGraphBuilder(BaseGraphBuilder):
                 "Confidence scoring (0.0-1.0)",
                 "Citation tracking",
                 "Contradiction detection",
-                "Single-pass execution for speed"
+                "Single-pass execution for speed",
             ],
             "output_format": {
                 "sections": [
@@ -154,12 +154,8 @@ class FactCheckGraphBuilder(BaseGraphBuilder):
                     "Supporting evidence with citations",
                     "Contradicting evidence with citations",
                     "Confidence assessment",
-                    "Limitations and caveats"
+                    "Limitations and caveats",
                 ]
             },
-            "performance": {
-                "avg_execution_time": "30-45 seconds",
-                "max_iterations": 1,
-                "nodes": 5
-            }
+            "performance": {"avg_execution_time": "30-45 seconds", "max_iterations": 1, "nodes": 5},
         }

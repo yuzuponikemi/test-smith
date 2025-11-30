@@ -15,7 +15,7 @@ Use cases:
 """
 
 import operator
-from typing import Annotated, Literal, TypedDict
+from typing import Annotated, Any, Literal, TypedDict
 
 from langgraph.graph import END, StateGraph
 
@@ -80,7 +80,9 @@ def quick_router(state: QuickResearchState) -> Literal["synthesizer", "planner"]
 
     # Check reflection feedback first (higher priority for quality)
     if should_continue_research:
-        print(f"  Quick mode: Reflection identified critical gaps (quality: {reflection_quality}) → refine")
+        print(
+            f"  Quick mode: Reflection identified critical gaps (quality: {reflection_quality}) → refine"
+        )
         return "planner"
 
     # Check evaluation
@@ -99,7 +101,7 @@ class QuickResearchGraphBuilder(BaseGraphBuilder):
         """Return the state class for this graph"""
         return QuickResearchState
 
-    def build(self) -> StateGraph:
+    def build(self) -> Any:
         """Build and compile the Quick Research workflow"""
         workflow = StateGraph(QuickResearchState)
 
@@ -131,12 +133,7 @@ class QuickResearchGraphBuilder(BaseGraphBuilder):
 
         # Reflection → Router (synthesize or refine based on reflection + evaluation)
         workflow.add_conditional_edges(
-            "reflection",
-            quick_router,
-            {
-                "synthesizer": "synthesizer",
-                "planner": "planner"
-            }
+            "reflection", quick_router, {"synthesizer": "synthesizer", "planner": "planner"}
         )
 
         # Synthesizer → END
@@ -167,9 +164,7 @@ class QuickResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_edge("analyzer", "evaluator")
         workflow.add_edge("evaluator", "reflection")
         workflow.add_conditional_edges(
-            "reflection",
-            quick_router,
-            {"synthesizer": "synthesizer", "planner": "planner"}
+            "reflection", quick_router, {"synthesizer": "synthesizer", "planner": "planner"}
         )
         workflow.add_edge("synthesizer", END)
 
@@ -187,7 +182,7 @@ class QuickResearchGraphBuilder(BaseGraphBuilder):
                 "Quick fact lookups",
                 "Queries that don't require deep exploration",
                 "Time-sensitive research needs",
-                "General knowledge questions"
+                "General knowledge questions",
             ],
             "complexity": "low",
             "supports_streaming": True,
@@ -197,11 +192,7 @@ class QuickResearchGraphBuilder(BaseGraphBuilder):
                 "Fast results with minimal overhead",
                 "Maximum 2 refinement iterations",
                 "Meta-reasoning reflection & self-critique",
-                "Parallel RAG and web search"
+                "Parallel RAG and web search",
             ],
-            "performance": {
-                "avg_execution_time": "30-60 seconds",
-                "max_iterations": 2,
-                "nodes": 6
-            }
+            "performance": {"avg_execution_time": "30-60 seconds", "max_iterations": 2, "nodes": 6},
         }

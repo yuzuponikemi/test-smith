@@ -11,8 +11,6 @@ import operator
 from abc import ABC, abstractmethod
 from typing import Annotated, Any, TypedDict
 
-from langgraph.graph import StateGraph
-
 
 class BaseAgentState(TypedDict):
     """
@@ -20,6 +18,7 @@ class BaseAgentState(TypedDict):
 
     Individual graphs can extend this by adding their own fields.
     """
+
     query: str  # Original user query
     report: str  # Final output report
 
@@ -49,7 +48,7 @@ class BaseGraphBuilder(ABC):
         pass
 
     @abstractmethod
-    def build(self) -> StateGraph:
+    def build(self) -> Any:
         """
         Build and return the compiled LangGraph workflow.
 
@@ -75,7 +74,7 @@ class BaseGraphBuilder(ABC):
             "supports_streaming": True,
         }
 
-    def get_uncompiled_graph(self) -> StateGraph:
+    def get_uncompiled_graph(self) -> Any:
         """
         Return the uncompiled StateGraph for external compilation.
 
@@ -96,6 +95,7 @@ class ExtendedAgentState(BaseAgentState):
     This is a convenience class that includes frequently-used fields.
     Graphs can use this instead of BaseAgentState to avoid redefining common fields.
     """
+
     # Query processing
     web_queries: list[str]
     rag_queries: list[str]
@@ -132,7 +132,6 @@ def create_simple_state(additional_fields: dict[str, type] = None) -> type:
         additional_fields = {}
 
     # Create new TypedDict class dynamically
-    return TypedDict(
-        "CustomAgentState",
-        {**BaseAgentState.__annotations__, **additional_fields}
+    return TypedDict(  # type: ignore[operator]
+        "CustomAgentState", {**BaseAgentState.__annotations__, **additional_fields}
     )

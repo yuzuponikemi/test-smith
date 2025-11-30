@@ -18,6 +18,7 @@ from typing import Optional
 @dataclass
 class DocumentAnalysis:
     """Results of document analysis"""
+
     filepath: str
     filename: str
     file_size: int
@@ -41,48 +42,105 @@ class DocumentAnalyzer:
     TINY_FILE_THRESHOLD = 200  # bytes
 
     # File type detection
-    TEXT_EXTENSIONS = {'.txt', '.md', '.markdown'}
-    PDF_EXTENSIONS = {'.pdf'}
+    TEXT_EXTENSIONS = {".txt", ".md", ".markdown"}
+    PDF_EXTENSIONS = {".pdf"}
     CODE_EXTENSIONS = {
-        '.py', '.js', '.ts', '.tsx', '.jsx', '.java', '.go', '.rs', '.rb',
-        '.cpp', '.c', '.h', '.hpp', '.cs', '.php', '.swift', '.kt', '.scala',
-        '.vue', '.svelte', '.html', '.css', '.scss', '.sass', '.less',
-        '.json', '.yaml', '.yml', '.toml', '.xml', '.sql', '.sh', '.bash',
-        '.dockerfile', '.makefile', '.cmake', '.gradle', '.pom',
+        ".py",
+        ".js",
+        ".ts",
+        ".tsx",
+        ".jsx",
+        ".java",
+        ".go",
+        ".rs",
+        ".rb",
+        ".cpp",
+        ".c",
+        ".h",
+        ".hpp",
+        ".cs",
+        ".php",
+        ".swift",
+        ".kt",
+        ".scala",
+        ".vue",
+        ".svelte",
+        ".html",
+        ".css",
+        ".scss",
+        ".sass",
+        ".less",
+        ".json",
+        ".yaml",
+        ".yml",
+        ".toml",
+        ".xml",
+        ".sql",
+        ".sh",
+        ".bash",
+        ".dockerfile",
+        ".makefile",
+        ".cmake",
+        ".gradle",
+        ".pom",
         # C#/Windows Forms specific
-        '.csproj', '.sln', '.resx', '.xaml', '.config', '.settings'
+        ".csproj",
+        ".sln",
+        ".resx",
+        ".xaml",
+        ".config",
+        ".settings",
     }
     SUPPORTED_EXTENSIONS = TEXT_EXTENSIONS | PDF_EXTENSIONS | CODE_EXTENSIONS
 
     # Programming language detection
     LANGUAGE_MAP = {
-        '.py': 'python', '.pyw': 'python',
-        '.js': 'javascript', '.jsx': 'javascript', '.mjs': 'javascript',
-        '.ts': 'typescript', '.tsx': 'typescript',
-        '.java': 'java',
-        '.go': 'golang',
-        '.rs': 'rust',
-        '.rb': 'ruby',
-        '.cpp': 'cpp', '.cc': 'cpp', '.cxx': 'cpp', '.c': 'c', '.h': 'c', '.hpp': 'cpp',
-        '.cs': 'csharp',
-        '.php': 'php',
-        '.swift': 'swift',
-        '.kt': 'kotlin', '.kts': 'kotlin',
-        '.scala': 'scala',
-        '.vue': 'vue',
-        '.svelte': 'svelte',
-        '.html': 'html', '.htm': 'html',
-        '.css': 'css', '.scss': 'scss', '.sass': 'sass', '.less': 'less',
-        '.json': 'json',
-        '.yaml': 'yaml', '.yml': 'yaml',
-        '.toml': 'toml',
-        '.xml': 'xml',
-        '.sql': 'sql',
-        '.sh': 'shell', '.bash': 'shell',
+        ".py": "python",
+        ".pyw": "python",
+        ".js": "javascript",
+        ".jsx": "javascript",
+        ".mjs": "javascript",
+        ".ts": "typescript",
+        ".tsx": "typescript",
+        ".java": "java",
+        ".go": "golang",
+        ".rs": "rust",
+        ".rb": "ruby",
+        ".cpp": "cpp",
+        ".cc": "cpp",
+        ".cxx": "cpp",
+        ".c": "c",
+        ".h": "c",
+        ".hpp": "cpp",
+        ".cs": "csharp",
+        ".php": "php",
+        ".swift": "swift",
+        ".kt": "kotlin",
+        ".kts": "kotlin",
+        ".scala": "scala",
+        ".vue": "vue",
+        ".svelte": "svelte",
+        ".html": "html",
+        ".htm": "html",
+        ".css": "css",
+        ".scss": "scss",
+        ".sass": "sass",
+        ".less": "less",
+        ".json": "json",
+        ".yaml": "yaml",
+        ".yml": "yaml",
+        ".toml": "toml",
+        ".xml": "xml",
+        ".sql": "sql",
+        ".sh": "shell",
+        ".bash": "shell",
         # C#/Windows Forms specific
-        '.csproj': 'csharp_project', '.sln': 'solution',
-        '.resx': 'resx', '.xaml': 'xaml',
-        '.config': 'xml_config', '.settings': 'xml_config',
+        ".csproj": "csharp_project",
+        ".sln": "solution",
+        ".resx": "resx",
+        ".xaml": "xaml",
+        ".config": "xml_config",
+        ".settings": "xml_config",
     }
 
     def __init__(self):
@@ -134,11 +192,11 @@ class DocumentAnalyzer:
             recommendations.append("File may not provide useful semantic information")
 
         # Check for common issues
-        if filename.startswith('.'):
+        if filename.startswith("."):
             issues.append("Hidden file (starts with .)")
             recommendations.append("Consider excluding hidden files")
 
-        if 'placeholder' in filename.lower() or 'test' in filename.lower():
+        if "placeholder" in filename.lower() or "test" in filename.lower():
             issues.append("Appears to be a placeholder or test file")
             quality_score -= 0.4
             recommendations.append("Remove placeholder files before production ingestion")
@@ -150,39 +208,41 @@ class DocumentAnalyzer:
             recommendations.append("Check file encoding (should be UTF-8)")
 
         # Structure-specific recommendations
-        if structure_type == 'markdown':
+        if structure_type == "markdown":
             if self._has_complex_structure(content):
-                recommendations.append("Use MarkdownHeaderTextSplitter for better semantic chunking")
+                recommendations.append(
+                    "Use MarkdownHeaderTextSplitter for better semantic chunking"
+                )
             else:
                 recommendations.append("Simple markdown - RecursiveCharacterTextSplitter is fine")
 
-        elif structure_type == 'pdf':
+        elif structure_type == "pdf":
             if file_size > 1024 * 1024:  # > 1MB
                 recommendations.append("Large PDF - use batch processing to avoid memory issues")
             recommendations.append("PDFs may have headers/footers - consider custom cleaning")
 
-        elif structure_type == 'code':
+        elif structure_type == "code":
             recommendations.append(f"Code file ({programming_language}) - use code-aware chunking")
-            if programming_language in ('python', 'javascript', 'typescript', 'csharp'):
+            if programming_language in ("python", "javascript", "typescript", "csharp"):
                 recommendations.append("Consider splitting by function/class boundaries")
-            if programming_language == 'csharp':
+            if programming_language == "csharp":
                 recommendations.append("C# code will be split by namespace/class/method boundaries")
 
         # Ensure quality score is in [0, 1]
         quality_score = max(0.0, min(1.0, quality_score))
 
         metadata = {
-            'has_japanese': language == 'japanese' or 'mixed',
-            'has_code_blocks': bool(re.search(r'```', content)) if content else False,
-            'has_tables': bool(re.search(r'\|.*\|', content)) if content else False,
-            'line_count': content.count('\n') if content else 0,
+            "has_japanese": language == "japanese" or "mixed",
+            "has_code_blocks": bool(re.search(r"```", content)) if content else False,
+            "has_tables": bool(re.search(r"\|.*\|", content)) if content else False,
+            "line_count": content.count("\n") if content else 0,
         }
 
         # Add code-specific metadata
         if programming_language and content:
             code_metadata = self._analyze_code_content(content, programming_language)
             metadata.update(code_metadata)
-            metadata['programming_language'] = programming_language
+            metadata["programming_language"] = programming_language
 
         analysis = DocumentAnalysis(
             filepath=filepath,
@@ -196,7 +256,7 @@ class DocumentAnalyzer:
             issues=issues,
             recommendations=recommendations,
             metadata=metadata,
-            programming_language=programming_language
+            programming_language=programming_language,
         )
 
         self.analyzed_documents.append(analysis)
@@ -229,10 +289,7 @@ class DocumentAnalyzer:
         """Get summary statistics of analyzed documents"""
 
         if not self.analyzed_documents:
-            return {
-                'total_files': 0,
-                'message': 'No documents analyzed yet'
-            }
+            return {"total_files": 0, "message": "No documents analyzed yet"}
 
         total = len(self.analyzed_documents)
         high_quality = sum(1 for d in self.analyzed_documents if d.quality_score >= 0.7)
@@ -242,40 +299,42 @@ class DocumentAnalyzer:
         total_size = sum(d.file_size for d in self.analyzed_documents)
         total_content = sum(d.estimated_content_length for d in self.analyzed_documents)
 
-        issues_by_type = {}
+        issues_by_type: dict[str, int] = {}
         for doc in self.analyzed_documents:
             for issue in doc.issues:
                 issues_by_type[issue] = issues_by_type.get(issue, 0) + 1
 
         return {
-            'total_files': total,
-            'high_quality': high_quality,
-            'medium_quality': medium_quality,
-            'low_quality': low_quality,
-            'total_size_bytes': total_size,
-            'total_content_chars': total_content,
-            'avg_quality_score': sum(d.quality_score for d in self.analyzed_documents) / total,
-            'files_with_issues': sum(1 for d in self.analyzed_documents if d.issues),
-            'common_issues': dict(sorted(issues_by_type.items(), key=lambda x: x[1], reverse=True)[:5]),
-            'file_types': self._count_by_attribute('file_type'),
-            'languages': self._count_by_attribute('language'),
-            'structure_types': self._count_by_attribute('structure_type'),
+            "total_files": total,
+            "high_quality": high_quality,
+            "medium_quality": medium_quality,
+            "low_quality": low_quality,
+            "total_size_bytes": total_size,
+            "total_content_chars": total_content,
+            "avg_quality_score": sum(d.quality_score for d in self.analyzed_documents) / total,
+            "files_with_issues": sum(1 for d in self.analyzed_documents if d.issues),
+            "common_issues": dict(
+                sorted(issues_by_type.items(), key=lambda x: x[1], reverse=True)[:5]
+            ),
+            "file_types": self._count_by_attribute("file_type"),
+            "languages": self._count_by_attribute("language"),
+            "structure_types": self._count_by_attribute("structure_type"),
         }
 
     def get_problematic_files(self, threshold: float = 0.5) -> list[DocumentAnalysis]:
         """Get files with quality score below threshold"""
         return [d for d in self.analyzed_documents if d.quality_score < threshold]
 
-    def _detect_file_type(self, filepath: str, file_ext: str) -> str:
+    def _detect_file_type(self, _filepath: str, file_ext: str) -> str:
         """Detect file type"""
         if file_ext in self.PDF_EXTENSIONS:
-            return 'pdf'
+            return "pdf"
         elif file_ext in self.CODE_EXTENSIONS:
-            return 'code'
+            return "code"
         elif file_ext in self.TEXT_EXTENSIONS:
-            return 'text'
+            return "text"
         else:
-            return 'unknown'
+            return "unknown"
 
     def _detect_programming_language(self, file_ext: str) -> Optional[str]:
         """Detect programming language from file extension"""
@@ -283,133 +342,191 @@ class DocumentAnalyzer:
 
     def _read_file_content(self, filepath: str, file_type: str) -> str:
         """Read file content based on type"""
-        if file_type == 'pdf':
+        if file_type == "pdf":
             # For PDF, just return empty - we'll analyze after UnstructuredLoader
             return ""
         else:
             # Text files
-            with open(filepath, encoding='utf-8', errors='ignore') as f:
+            with open(filepath, encoding="utf-8", errors="ignore") as f:
                 return f.read()
 
     def _detect_language(self, sample: str) -> str:
         """Detect primary language (simple heuristic)"""
         if not sample:
-            return 'unknown'
+            return "unknown"
 
         # Count Japanese characters (hiragana, katakana, kanji)
-        japanese_chars = len(re.findall(r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]', sample))
+        japanese_chars = len(re.findall(r"[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]", sample))
         total_chars = len(sample.strip())
 
         if total_chars == 0:
-            return 'unknown'
+            return "unknown"
 
         japanese_ratio = japanese_chars / total_chars
 
         if japanese_ratio > 0.3:
-            return 'japanese' if japanese_ratio > 0.7 else 'mixed'
+            return "japanese" if japanese_ratio > 0.7 else "mixed"
         else:
-            return 'english'
+            return "english"
 
     def _detect_structure(self, content: str, file_ext: str) -> str:
         """Detect document structure type"""
-        if file_ext == '.pdf':
-            return 'pdf'
+        if file_ext == ".pdf":
+            return "pdf"
 
         if file_ext in self.CODE_EXTENSIONS:
-            return 'code'
+            return "code"
 
         if not content:
-            return 'unknown'
+            return "unknown"
 
         # Check for markdown
-        if file_ext in {'.md', '.markdown'}:
-            return 'markdown'
+        if file_ext in {".md", ".markdown"}:
+            return "markdown"
 
         # Check for structured patterns
-        if re.search(r'^#{1,6}\s', content, re.MULTILINE):
-            return 'markdown'
+        if re.search(r"^#{1,6}\s", content, re.MULTILINE):
+            return "markdown"
 
-        return 'plain_text'
+        return "plain_text"
 
     def _analyze_code_content(self, content: str, programming_language: str) -> dict:
         """Analyze code-specific characteristics"""
         code_metadata = {
-            'function_count': 0,
-            'class_count': 0,
-            'import_count': 0,
-            'comment_lines': 0,
-            'code_lines': 0,
-            'docstring_count': 0,
+            "function_count": 0,
+            "class_count": 0,
+            "import_count": 0,
+            "comment_lines": 0,
+            "code_lines": 0,
+            "docstring_count": 0,
         }
 
         if not content:
             return code_metadata
 
-        lines = content.split('\n')
-        code_metadata['code_lines'] = len([l for l in lines if l.strip() and not l.strip().startswith('#') and not l.strip().startswith('//')])
+        lines = content.split("\n")
+        code_metadata["code_lines"] = len(
+            [
+                line
+                for line in lines
+                if line.strip()
+                and not line.strip().startswith("#")
+                and not line.strip().startswith("//")
+            ]
+        )
 
-        if programming_language == 'python':
-            code_metadata['function_count'] = len(re.findall(r'^\s*def\s+\w+', content, re.MULTILINE))
-            code_metadata['class_count'] = len(re.findall(r'^\s*class\s+\w+', content, re.MULTILINE))
-            code_metadata['import_count'] = len(re.findall(r'^(?:from\s+\S+\s+)?import\s+', content, re.MULTILINE))
-            code_metadata['comment_lines'] = len(re.findall(r'^\s*#', content, re.MULTILINE))
-            code_metadata['docstring_count'] = len(re.findall(r'"""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\'', content))
+        if programming_language == "python":
+            code_metadata["function_count"] = len(
+                re.findall(r"^\s*def\s+\w+", content, re.MULTILINE)
+            )
+            code_metadata["class_count"] = len(
+                re.findall(r"^\s*class\s+\w+", content, re.MULTILINE)
+            )
+            code_metadata["import_count"] = len(
+                re.findall(r"^(?:from\s+\S+\s+)?import\s+", content, re.MULTILINE)
+            )
+            code_metadata["comment_lines"] = len(re.findall(r"^\s*#", content, re.MULTILINE))
+            code_metadata["docstring_count"] = len(
+                re.findall(r'"""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\'', content)
+            )
 
-        elif programming_language in ('javascript', 'typescript'):
-            code_metadata['function_count'] = len(re.findall(r'(?:function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*(?:async\s*)?\(|(?:async\s+)?(?:\w+\s*)?=>)', content))
-            code_metadata['class_count'] = len(re.findall(r'^\s*class\s+\w+', content, re.MULTILINE))
-            code_metadata['import_count'] = len(re.findall(r'^import\s+', content, re.MULTILINE))
-            code_metadata['comment_lines'] = len(re.findall(r'^\s*(?://|/\*|\*)', content, re.MULTILINE))
+        elif programming_language in ("javascript", "typescript"):
+            code_metadata["function_count"] = len(
+                re.findall(
+                    r"(?:function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*(?:async\s*)?\(|(?:async\s+)?(?:\w+\s*)?=>)",
+                    content,
+                )
+            )
+            code_metadata["class_count"] = len(
+                re.findall(r"^\s*class\s+\w+", content, re.MULTILINE)
+            )
+            code_metadata["import_count"] = len(re.findall(r"^import\s+", content, re.MULTILINE))
+            code_metadata["comment_lines"] = len(
+                re.findall(r"^\s*(?://|/\*|\*)", content, re.MULTILINE)
+            )
 
-        elif programming_language == 'java':
-            code_metadata['function_count'] = len(re.findall(r'(?:public|private|protected|static|\s)+[\w\<\>\[\]]+\s+\w+\s*\([^\)]*\)\s*(?:\{|throws)', content))
-            code_metadata['class_count'] = len(re.findall(r'^\s*(?:public|private|protected)?\s*class\s+\w+', content, re.MULTILINE))
-            code_metadata['import_count'] = len(re.findall(r'^import\s+', content, re.MULTILINE))
-            code_metadata['comment_lines'] = len(re.findall(r'^\s*(?://|/\*|\*)', content, re.MULTILINE))
+        elif programming_language == "java":
+            code_metadata["function_count"] = len(
+                re.findall(
+                    r"(?:public|private|protected|static|\s)+[\w\<\>\[\]]+\s+\w+\s*\([^\)]*\)\s*(?:\{|throws)",
+                    content,
+                )
+            )
+            code_metadata["class_count"] = len(
+                re.findall(
+                    r"^\s*(?:public|private|protected)?\s*class\s+\w+", content, re.MULTILINE
+                )
+            )
+            code_metadata["import_count"] = len(re.findall(r"^import\s+", content, re.MULTILINE))
+            code_metadata["comment_lines"] = len(
+                re.findall(r"^\s*(?://|/\*|\*)", content, re.MULTILINE)
+            )
 
-        elif programming_language == 'golang':
-            code_metadata['function_count'] = len(re.findall(r'^\s*func\s+', content, re.MULTILINE))
-            code_metadata['class_count'] = len(re.findall(r'^\s*type\s+\w+\s+struct\s*\{', content, re.MULTILINE))
-            code_metadata['import_count'] = len(re.findall(r'^\s*import\s+', content, re.MULTILINE))
-            code_metadata['comment_lines'] = len(re.findall(r'^\s*(?://)', content, re.MULTILINE))
+        elif programming_language == "golang":
+            code_metadata["function_count"] = len(re.findall(r"^\s*func\s+", content, re.MULTILINE))
+            code_metadata["class_count"] = len(
+                re.findall(r"^\s*type\s+\w+\s+struct\s*\{", content, re.MULTILINE)
+            )
+            code_metadata["import_count"] = len(re.findall(r"^\s*import\s+", content, re.MULTILINE))
+            code_metadata["comment_lines"] = len(re.findall(r"^\s*(?://)", content, re.MULTILINE))
 
-        elif programming_language == 'rust':
-            code_metadata['function_count'] = len(re.findall(r'^\s*(?:pub\s+)?fn\s+', content, re.MULTILINE))
-            code_metadata['class_count'] = len(re.findall(r'^\s*(?:pub\s+)?struct\s+\w+', content, re.MULTILINE))
-            code_metadata['import_count'] = len(re.findall(r'^\s*use\s+', content, re.MULTILINE))
-            code_metadata['comment_lines'] = len(re.findall(r'^\s*(?://|/\*)', content, re.MULTILINE))
+        elif programming_language == "rust":
+            code_metadata["function_count"] = len(
+                re.findall(r"^\s*(?:pub\s+)?fn\s+", content, re.MULTILINE)
+            )
+            code_metadata["class_count"] = len(
+                re.findall(r"^\s*(?:pub\s+)?struct\s+\w+", content, re.MULTILINE)
+            )
+            code_metadata["import_count"] = len(re.findall(r"^\s*use\s+", content, re.MULTILINE))
+            code_metadata["comment_lines"] = len(
+                re.findall(r"^\s*(?://|/\*)", content, re.MULTILINE)
+            )
 
-        elif programming_language == 'csharp':
+        elif programming_language == "csharp":
             # C# specific analysis
-            code_metadata['function_count'] = len(re.findall(
-                r'(?:public|private|protected|internal|static|\s)+[\w\<\>\[\],\s]+\s+\w+\s*\([^\)]*\)\s*(?:\{|=>)',
-                content
-            ))
-            code_metadata['class_count'] = len(re.findall(
-                r'^\s*(?:public|private|protected|internal|static|abstract|sealed|partial)?\s*class\s+\w+',
-                content, re.MULTILINE
-            ))
-            code_metadata['import_count'] = len(re.findall(r'^\s*using\s+', content, re.MULTILINE))
-            code_metadata['comment_lines'] = len(re.findall(r'^\s*(?://|/\*|\*|///)', content, re.MULTILINE))
+            code_metadata["function_count"] = len(
+                re.findall(
+                    r"(?:public|private|protected|internal|static|\s)+[\w\<\>\[\],\s]+\s+\w+\s*\([^\)]*\)\s*(?:\{|=>)",
+                    content,
+                )
+            )
+            code_metadata["class_count"] = len(
+                re.findall(
+                    r"^\s*(?:public|private|protected|internal|static|abstract|sealed|partial)?\s*class\s+\w+",
+                    content,
+                    re.MULTILINE,
+                )
+            )
+            code_metadata["import_count"] = len(re.findall(r"^\s*using\s+", content, re.MULTILINE))
+            code_metadata["comment_lines"] = len(
+                re.findall(r"^\s*(?://|/\*|\*|///)", content, re.MULTILINE)
+            )
             # C# specific: namespace, property, and interface counts
-            code_metadata['namespace_count'] = len(re.findall(r'^\s*namespace\s+', content, re.MULTILINE))
-            code_metadata['interface_count'] = len(re.findall(
-                r'^\s*(?:public|private|protected|internal)?\s*interface\s+\w+',
-                content, re.MULTILINE
-            ))
-            code_metadata['property_count'] = len(re.findall(
-                r'(?:public|private|protected|internal|static)\s+[\w\<\>\[\],\s]+\s+\w+\s*\{\s*(?:get|set)',
-                content
-            ))
+            code_metadata["namespace_count"] = len(
+                re.findall(r"^\s*namespace\s+", content, re.MULTILINE)
+            )
+            code_metadata["interface_count"] = len(
+                re.findall(
+                    r"^\s*(?:public|private|protected|internal)?\s*interface\s+\w+",
+                    content,
+                    re.MULTILINE,
+                )
+            )
+            code_metadata["property_count"] = len(
+                re.findall(
+                    r"(?:public|private|protected|internal|static)\s+[\w\<\>\[\],\s]+\s+\w+\s*\{\s*(?:get|set)",
+                    content,
+                )
+            )
             # Windows Forms specific detection
-            code_metadata['is_winforms'] = bool(re.search(
-                r'(?:System\.Windows\.Forms|InitializeComponent|partial class.*Form)',
-                content
-            ))
-            code_metadata['is_designer_file'] = bool(re.search(
-                r'\.Designer\.cs|#region Windows Form Designer generated code',
-                content
-            ))
+            code_metadata["is_winforms"] = bool(
+                re.search(
+                    r"(?:System\.Windows\.Forms|InitializeComponent|partial class.*Form)", content
+                )
+            )
+            code_metadata["is_designer_file"] = bool(
+                re.search(r"\.Designer\.cs|#region Windows Form Designer generated code", content)
+            )
 
         return code_metadata
 
@@ -418,7 +535,7 @@ class DocumentAnalyzer:
         if not content:
             return False
 
-        headers = re.findall(r'^(#{1,6})\s', content, re.MULTILINE)
+        headers = re.findall(r"^(#{1,6})\s", content, re.MULTILINE)
         unique_levels = {len(h) for h in headers}
 
         return len(unique_levels) >= 2 and len(headers) >= 3
@@ -427,15 +544,15 @@ class DocumentAnalyzer:
         """Detect potential encoding issues"""
         # Look for replacement characters or mojibake patterns
         suspicious_patterns = [
-            '\ufffd',  # Replacement character
-            '�',  # Question mark replacement
+            "\ufffd",  # Replacement character
+            "�",  # Question mark replacement
         ]
 
         return any(pattern in content for pattern in suspicious_patterns)
 
     def _count_by_attribute(self, attr: str) -> dict[str, int]:
         """Count documents by a specific attribute"""
-        counts = {}
+        counts: dict[str, int] = {}
         for doc in self.analyzed_documents:
             value = getattr(doc, attr)
             counts[value] = counts.get(value, 0) + 1
@@ -443,9 +560,9 @@ class DocumentAnalyzer:
 
     def print_report(self):
         """Print a detailed analysis report"""
-        print("="*80)
+        print("=" * 80)
         print("DOCUMENT ANALYSIS REPORT")
-        print("="*80)
+        print("=" * 80)
 
         summary = self.get_summary()
 
@@ -457,20 +574,22 @@ class DocumentAnalyzer:
         print(f"  Average Quality Score: {summary['avg_quality_score']:.2f}")
 
         print("\nContent Statistics:")
-        print(f"  Total Size: {summary['total_size_bytes']:,} bytes ({summary['total_size_bytes']/1024/1024:.2f} MB)")
+        print(
+            f"  Total Size: {summary['total_size_bytes']:,} bytes ({summary['total_size_bytes'] / 1024 / 1024:.2f} MB)"
+        )
         print(f"  Estimated Content: {summary['total_content_chars']:,} characters")
 
         print("\nFile Types:")
-        for ftype, count in summary['file_types'].items():
+        for ftype, count in summary["file_types"].items():
             print(f"  {ftype}: {count}")
 
         print("\nLanguages Detected:")
-        for lang, count in summary['languages'].items():
+        for lang, count in summary["languages"].items():
             print(f"  {lang}: {count}")
 
-        if summary['common_issues']:
+        if summary["common_issues"]:
             print("\nMost Common Issues:")
-            for issue, count in summary['common_issues'].items():
+            for issue, count in summary["common_issues"].items():
                 print(f"  {issue}: {count} files")
 
         # Show problematic files
@@ -486,4 +605,4 @@ class DocumentAnalyzer:
                     for rec in doc.recommendations:
                         print(f"       - {rec}")
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)

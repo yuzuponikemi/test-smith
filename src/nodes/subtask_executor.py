@@ -42,10 +42,12 @@ def subtask_executor(state):
 
     # Prepare subtask-specific query
     # The Strategic Planner will receive this focused query
-    subtask_query = f"{current_subtask['description']}\n\nFocus Area: {current_subtask['focus_area']}"
+    subtask_query = (
+        f"{current_subtask['description']}\n\nFocus Area: {current_subtask['focus_area']}"
+    )
 
     print("\n  Subtask Query for Strategic Planner:")
-    print(f"  \"{subtask_query[:150]}...\"\n")
+    print(f'  "{subtask_query[:150]}..."\n')
 
     return {
         "current_subtask_id": current_subtask["subtask_id"],

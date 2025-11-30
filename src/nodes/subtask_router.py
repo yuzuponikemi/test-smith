@@ -29,7 +29,9 @@ def subtask_router(state):
 
     if current_index < total_subtasks:
         subtask_id = master_plan["subtasks"][current_index]["subtask_id"]
-        print(f"  Mode: HIERARCHICAL - executing subtask {current_index + 1}/{total_subtasks} ({subtask_id})")
+        print(
+            f"  Mode: HIERARCHICAL - executing subtask {current_index + 1}/{total_subtasks} ({subtask_id})"
+        )
         return "execute_subtask"
     else:
         print(f"  Mode: HIERARCHICAL - all {total_subtasks} subtasks complete, ready to synthesize")

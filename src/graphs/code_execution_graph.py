@@ -15,7 +15,7 @@ Use cases:
 """
 
 import operator
-from typing import Annotated, Literal, TypedDict
+from typing import Annotated, Any, Literal, TypedDict
 
 from langgraph.graph import END, StateGraph
 
@@ -64,7 +64,7 @@ class CodeExecutionState(TypedDict):
     needs_code_execution: bool  # Whether code execution is needed
 
 
-def code_router(state: CodeExecutionState) -> Literal["code_executor", "evaluator"]:
+def code_router(_state: CodeExecutionState) -> Literal["code_executor", "evaluator"]:
     """
     Router for code execution decision.
 
@@ -106,7 +106,7 @@ class CodeExecutionGraphBuilder(BaseGraphBuilder):
         """Return the state class for this graph"""
         return CodeExecutionState
 
-    def build(self) -> StateGraph:
+    def build(self) -> Any:
         """Build and compile the Code Execution workflow"""
         workflow = StateGraph(CodeExecutionState)
 
@@ -132,12 +132,7 @@ class CodeExecutionGraphBuilder(BaseGraphBuilder):
 
         # Analyzer → Code Router (decides if code execution is needed)
         workflow.add_conditional_edges(
-            "analyzer",
-            code_router,
-            {
-                "code_executor": "code_executor",
-                "evaluator": "evaluator"
-            }
+            "analyzer", code_router, {"code_executor": "code_executor", "evaluator": "evaluator"}
         )
 
         # Code Executor → Evaluator
@@ -145,12 +140,7 @@ class CodeExecutionGraphBuilder(BaseGraphBuilder):
 
         # Evaluator → Continuation Router
         workflow.add_conditional_edges(
-            "evaluator",
-            continuation_router,
-            {
-                "synthesizer": "synthesizer",
-                "planner": "planner"
-            }
+            "evaluator", continuation_router, {"synthesizer": "synthesizer", "planner": "planner"}
         )
 
         # Synthesizer → END
@@ -179,15 +169,11 @@ class CodeExecutionGraphBuilder(BaseGraphBuilder):
         workflow.add_edge("searcher", "analyzer")
         workflow.add_edge("rag_retriever", "analyzer")
         workflow.add_conditional_edges(
-            "analyzer",
-            code_router,
-            {"code_executor": "code_executor", "evaluator": "evaluator"}
+            "analyzer", code_router, {"code_executor": "code_executor", "evaluator": "evaluator"}
         )
         workflow.add_edge("code_executor", "evaluator")
         workflow.add_conditional_edges(
-            "evaluator",
-            continuation_router,
-            {"synthesizer": "synthesizer", "planner": "planner"}
+            "evaluator", continuation_router, {"synthesizer": "synthesizer", "planner": "planner"}
         )
         workflow.add_edge("synthesizer", END)
 
@@ -206,7 +192,7 @@ class CodeExecutionGraphBuilder(BaseGraphBuilder):
                 "Tasks requiring data transformation or analysis",
                 "Complex problem-solving with computational steps",
                 "Mathematical or statistical analysis",
-                "Data validation and verification"
+                "Data validation and verification",
             ],
             "complexity": "medium",
             "supports_streaming": True,
@@ -216,11 +202,11 @@ class CodeExecutionGraphBuilder(BaseGraphBuilder):
                 "Automated code generation",
                 "Safe code execution environment",
                 "Iterative refinement (max 2 iterations)",
-                "Result synthesis with code outputs"
+                "Result synthesis with code outputs",
             ],
             "performance": {
                 "avg_execution_time": "60-120 seconds",
                 "max_iterations": 2,
-                "nodes": 7
-            }
+                "nodes": 7,
+            },
         }

@@ -93,9 +93,20 @@ ignore = [
 ]
 "scripts/**/*.py" = [
     "T201", # print statements are ok in scripts
+    "E402", # Module level import after dotenv load is acceptable in scripts
 ]
 "benchmarks/**/*.py" = [
     "ARG",  # Unused arguments in benchmark fixtures
+]
+"main.py" = [
+    "E402",  # Module level import after dotenv load is intentional
+]
+"evaluation/evaluate_agent.py" = [
+    "E402",  # Module level import after dotenv load is intentional
+]
+"chroma_explorer.ipynb" = [
+    "B007",  # Unused loop variable is acceptable in notebooks
+    "E741",  # Single letter variables acceptable in notebooks
 ]
 
 [tool.ruff.lint.isort]
@@ -105,7 +116,7 @@ known-first-party = ["src"]
 # Type Checking Configuration (mypy)
 # ============================================================================
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 warn_return_any = false  # Relaxed for gradual typing
 warn_unused_configs = true
 disallow_untyped_defs = false  # Relaxed - will enable gradually
@@ -147,13 +158,21 @@ module = [
     "langchain_google_genai.*",
     "langchain_ollama.*",
     "langchain_chroma.*",
+    "langchain_core.*",
+    "langchain_text_splitters.*",
     "langgraph.*",
     "chromadb.*",
     "tavily.*",
     "ollama.*",
     "unstructured.*",
+    "numpy.*",
+    "dotenv.*",
+    "pytest.*",
+    "_pytest.*",
+    "pydantic.*",
 ]
 ignore_missing_imports = true
+ignore_errors = true
 
 # ============================================================================
 # Coverage Configuration

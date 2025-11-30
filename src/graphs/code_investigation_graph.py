@@ -19,7 +19,7 @@ Use cases:
 """
 
 import operator
-from typing import Annotated, Literal, TypedDict
+from typing import Annotated, Any, Literal, TypedDict
 
 from langgraph.graph import END, StateGraph
 
@@ -67,14 +67,18 @@ class CodeInvestigationState(TypedDict):
     # Aggregated analysis (use Annotated for concurrent updates from parallel nodes)
     key_findings: Annotated[list[str], operator.add]  # Important discoveries
     related_files: Annotated[list[str], operator.add]  # Files involved in the investigation
-    architecture_patterns: Annotated[list[str], operator.add]  # Detected patterns (MVC, Factory, etc.)
+    architecture_patterns: Annotated[
+        list[str], operator.add
+    ]  # Detected patterns (MVC, Factory, etc.)
 
     # Control flow
     loop_count: int  # Iteration counter
     needs_deeper_analysis: bool  # Whether to do another pass
 
 
-def investigation_router(state: CodeInvestigationState) -> Literal["code_investigation_synthesizer", "code_retriever"]:
+def investigation_router(
+    state: CodeInvestigationState,
+) -> Literal["code_investigation_synthesizer", "code_retriever"]:
     """
     Router to decide if deeper investigation is needed.
 
@@ -109,7 +113,7 @@ class CodeInvestigationGraphBuilder(BaseGraphBuilder):
         """Return the state class for this graph"""
         return CodeInvestigationState
 
-    def build(self) -> StateGraph:
+    def build(self) -> Any:
         """Build and compile the Code Investigation workflow"""
         workflow = StateGraph(CodeInvestigationState)
 
@@ -179,7 +183,7 @@ class CodeInvestigationGraphBuilder(BaseGraphBuilder):
                 "Analyzing data flow through the codebase",
                 "Architecture and design pattern analysis",
                 "Refactoring impact assessment",
-                "Code review and understanding"
+                "Code review and understanding",
             ],
             "complexity": "medium",
             "supports_streaming": True,
@@ -190,18 +194,14 @@ class CodeInvestigationGraphBuilder(BaseGraphBuilder):
                 "Data and control flow tracking",
                 "Variable and function usage analysis",
                 "Architecture pattern detection",
-                "Comprehensive investigation reports with code references"
+                "Comprehensive investigation reports with code references",
             ],
-            "performance": {
-                "avg_execution_time": "45-90 seconds",
-                "max_iterations": 2,
-                "nodes": 5
-            },
+            "performance": {"avg_execution_time": "45-90 seconds", "max_iterations": 2, "nodes": 5},
             "workflow": [
                 "1. Code Query Analyzer - Understand investigation scope and targets",
                 "2. Code Retriever - Retrieve relevant code via RAG",
                 "3. Dependency Analyzer - Track class/function dependencies (parallel)",
                 "4. Code Flow Tracker - Analyze data/control flow (parallel)",
-                "5. Code Investigation Synthesizer - Generate comprehensive report"
-            ]
+                "5. Code Investigation Synthesizer - Generate comprehensive report",
+            ],
         }

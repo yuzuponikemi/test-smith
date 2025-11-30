@@ -20,6 +20,7 @@ def master_planner(state):
 
     # Get KB metadata for context (reuse existing function from Strategic Planner)
     from src.nodes.planner_node import check_kb_contents
+
     kb_info = check_kb_contents()
 
     # Invoke LLM with structured output (using command-r for better structured output)
@@ -27,9 +28,7 @@ def master_planner(state):
     structured_llm = model.with_structured_output(MasterPlan)
 
     prompt = MASTER_PLANNER_PROMPT.format(
-        query=query,
-        kb_summary=kb_info['summary'],
-        kb_available=kb_info['available']
+        query=query, kb_summary=kb_info["summary"], kb_available=kb_info["available"]
     )
 
     try:
@@ -45,7 +44,9 @@ def master_planner(state):
             print(f"\n  Subtasks Generated: {len(master_plan.subtasks)}")
             for subtask in master_plan.subtasks:
                 deps = f" (depends: {subtask.dependencies})" if subtask.dependencies else ""
-                print(f"    {subtask.priority}. [{subtask.subtask_id}] {subtask.description[:80]}...{deps}")
+                print(
+                    f"    {subtask.priority}. [{subtask.subtask_id}] {subtask.description[:80]}...{deps}"
+                )
             print(f"\n  Overall Strategy: {master_plan.overall_strategy[:200]}...\n")
         else:
             print(f"  Strategy: {master_plan.overall_strategy[:150]}...\n")
@@ -69,7 +70,7 @@ def master_planner(state):
             # Phase 4.1 fields (Budget-Aware Control)
             "node_execution_count": 0,  # Track recursion usage
             "recursion_limit": 150,  # Default limit (should match config)
-            "budget_warnings": []
+            "budget_warnings": [],
         }
 
     except Exception as e:
@@ -82,5 +83,5 @@ def master_planner(state):
             "master_plan": None,
             "current_subtask_index": 0,
             "current_subtask_id": "",
-            "subtask_results": {}
+            "subtask_results": {},
         }

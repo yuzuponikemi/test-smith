@@ -24,7 +24,7 @@ warnings.warn(
     "Please use 'from src.graphs import get_graph' instead. "
     "See src/graphs/__init__.py for migration guide.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # Backward compatibility: Export the deep_research graph as default
@@ -50,14 +50,14 @@ try:
 
     # Save Mermaid diagram (text format that can be rendered)
     mermaid_path = viz_dir / "graph_structure.mmd"
-    mermaid_diagram = workflow.get_graph().draw_mermaid()
+    mermaid_diagram = workflow.get_graph().draw_mermaid()  # type: ignore[attr-defined]
     with open(mermaid_path, "w") as f:
         f.write(mermaid_diagram)
     print(f"Graph visualization saved to: {mermaid_path}")
 
     # Try to save PNG if dependencies are available
     try:
-        png_data = workflow.get_graph().draw_mermaid_png()
+        png_data = workflow.get_graph().draw_mermaid_png()  # type: ignore[attr-defined]
         png_path = viz_dir / "graph_structure.png"
         with open(png_path, "wb") as f:
             f.write(png_data)

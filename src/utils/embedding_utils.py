@@ -62,10 +62,7 @@ def get_embeddings(model: str = DEFAULT_EMBEDDING_MODEL) -> OllamaEmbeddings:
     Returns:
         OllamaEmbeddings instance
     """
-    return OllamaEmbeddings(
-        model=model,
-        base_url=OLLAMA_BASE_URL
-    )
+    return OllamaEmbeddings(model=model, base_url=OLLAMA_BASE_URL)
 
 
 def get_model_config(model: str) -> dict:
@@ -78,11 +75,14 @@ def get_model_config(model: str) -> dict:
     Returns:
         Model configuration dict
     """
-    return EMBEDDING_MODELS.get(model, {
-        "dimensions": 768,
-        "description": "Unknown model",
-        "max_batch_size": 5,
-    })
+    return EMBEDDING_MODELS.get(
+        model,
+        {
+            "dimensions": 768,
+            "description": "Unknown model",
+            "max_batch_size": 5,
+        },
+    )
 
 
 def store_embedding_metadata(vectorstore, model: str):

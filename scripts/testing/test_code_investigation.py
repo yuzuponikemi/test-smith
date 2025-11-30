@@ -70,7 +70,7 @@ def ingest_repository():
         repo_path=repo_path,
         chroma_db_dir="chroma_db",
         collection_name="codebase_collection",
-        min_quality_score=0.3
+        min_quality_score=0.3,
     )
 
     start_time = time.time()
@@ -108,31 +108,31 @@ def run_test_queries(test_filter=None):
             "name": "dependency",
             "query": "What are the dependencies of the CodeInvestigationGraphBuilder class?",
             "expected_keywords": ["CodeInvestigationGraphBuilder", "StateGraph", "import", "node"],
-            "description": "Test dependency tracking for a specific class"
+            "description": "Test dependency tracking for a specific class",
         },
         {
             "name": "flow",
             "query": "How does data flow through the dependency_analyzer_node?",
             "expected_keywords": ["state", "code_results", "dependencies", "return"],
-            "description": "Test data flow analysis"
+            "description": "Test data flow analysis",
         },
         {
             "name": "usage",
             "query": "Where is the DocumentAnalyzer class used in the codebase?",
             "expected_keywords": ["DocumentAnalyzer", "ingest", "preprocessor", "analyze"],
-            "description": "Test usage finding"
+            "description": "Test usage finding",
         },
         {
             "name": "architecture",
             "query": "What is the architecture of the graph registry system?",
             "expected_keywords": ["registry", "register_graph", "get_graph", "BaseGraphBuilder"],
-            "description": "Test architecture understanding"
+            "description": "Test architecture understanding",
         },
         {
             "name": "implementation",
             "query": "How does the C# code analysis work in the DocumentAnalyzer?",
             "expected_keywords": ["csharp", "class", "method", "namespace", "property"],
-            "description": "Test implementation understanding"
+            "description": "Test implementation understanding",
         },
     ]
 
@@ -146,9 +146,9 @@ def run_test_queries(test_filter=None):
     results = []
 
     for i, test in enumerate(test_cases, 1):
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"TEST {i}/{len(test_cases)}: {test['name'].upper()}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Description: {test['description']}")
         print(f"Query: {test['query']}")
 
@@ -156,10 +156,9 @@ def run_test_queries(test_filter=None):
 
         try:
             # Run the graph
-            result = graph.invoke({
-                "query": test["query"],
-                "collection_name": "codebase_collection"
-            })
+            result = graph.invoke(
+                {"query": test["query"], "collection_name": "codebase_collection"}
+            )
 
             elapsed = time.time() - start_time
 
@@ -176,7 +175,11 @@ def run_test_queries(test_filter=None):
                     missing_keywords.append(keyword)
 
             # Calculate score
-            score = len(found_keywords) / len(test["expected_keywords"]) if test["expected_keywords"] else 1.0
+            score = (
+                len(found_keywords) / len(test["expected_keywords"])
+                if test["expected_keywords"]
+                else 1.0
+            )
             passed = score >= 0.5  # At least 50% of keywords found
 
             # Print results
@@ -195,30 +198,34 @@ def run_test_queries(test_filter=None):
             # Show report preview
             if report:
                 preview = report[:500] + "..." if len(report) > 500 else report
-                print(f"\nReport Preview:\n{'-'*40}\n{preview}\n{'-'*40}")
+                print(f"\nReport Preview:\n{'-' * 40}\n{preview}\n{'-' * 40}")
 
-            results.append({
-                "name": test["name"],
-                "passed": passed,
-                "score": score,
-                "time": elapsed,
-                "report_length": len(report),
-                "found_keywords": found_keywords,
-                "missing_keywords": missing_keywords
-            })
+            results.append(
+                {
+                    "name": test["name"],
+                    "passed": passed,
+                    "score": score,
+                    "time": elapsed,
+                    "report_length": len(report),
+                    "found_keywords": found_keywords,
+                    "missing_keywords": missing_keywords,
+                }
+            )
 
         except Exception as e:
             elapsed = time.time() - start_time
             print(f"\nError: {e}")
             print("Result: FAIL (error)")
 
-            results.append({
-                "name": test["name"],
-                "passed": False,
-                "score": 0,
-                "time": elapsed,
-                "error": str(e)
-            })
+            results.append(
+                {
+                    "name": test["name"],
+                    "passed": False,
+                    "score": 0,
+                    "time": elapsed,
+                    "error": str(e),
+                }
+            )
 
     return results
 
@@ -263,26 +270,20 @@ def print_summary(ingest_stats, test_results):
 def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(
-        description='Test code_investigation graph with test-smith codebase'
+        description="Test code_investigation graph with test-smith codebase"
     )
 
     parser.add_argument(
-        '--skip-ingest',
-        action='store_true',
-        help='Skip ingestion and use existing collection'
+        "--skip-ingest", action="store_true", help="Skip ingestion and use existing collection"
     )
 
     parser.add_argument(
-        '--test',
-        choices=['dependency', 'flow', 'usage', 'architecture', 'implementation'],
-        help='Run only a specific test'
+        "--test",
+        choices=["dependency", "flow", "usage", "architecture", "implementation"],
+        help="Run only a specific test",
     )
 
-    parser.add_argument(
-        '--verbose',
-        action='store_true',
-        help='Show verbose output'
-    )
+    parser.add_argument("--verbose", action="store_true", help="Show verbose output")
 
     args = parser.parse_args()
 

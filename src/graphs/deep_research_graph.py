@@ -17,7 +17,7 @@ Use cases:
 import builtins
 import operator
 import sys
-from typing import Annotated, TypedDict
+from typing import Annotated, Any, TypedDict
 
 from langgraph.graph import END, StateGraph
 
@@ -55,13 +55,14 @@ from .base_graph import BaseGraphBuilder
 def _safe_print(*args, **kwargs):
     """Print function that doesn't raise BrokenPipeError in Studio environments"""
     try:
-        builtins.__dict__.get('_original_print', print)(*args, **kwargs)
+        builtins.__dict__.get("_original_print", print)(*args, **kwargs)
         sys.stdout.flush()
     except (BrokenPipeError, OSError):
         pass  # Silently ignore broken pipe errors
 
-if '_original_print' not in builtins.__dict__:
-    builtins.__dict__['_original_print'] = print
+
+if "_original_print" not in builtins.__dict__:
+    builtins.__dict__["_original_print"] = print
 builtins.print = _safe_print
 
 
@@ -109,8 +110,12 @@ class DeepResearchState(TypedDict):
 
     # === Reflection & Self-Critique Fields ===
     reflection_critique: dict  # ReflectionCritique as dict (JSON-serializable)
-    reflection_quality: str  # Overall quality assessment: "excellent" | "good" | "adequate" | "poor"
-    should_continue_research: bool  # Whether reflection identified critical gaps requiring more research
+    reflection_quality: (
+        str  # Overall quality assessment: "excellent" | "good" | "adequate" | "poor"
+    )
+    should_continue_research: (
+        bool  # Whether reflection identified critical gaps requiring more research
+    )
     reflection_confidence: float  # Confidence score from reflection (0.0-1.0)
 
 
@@ -142,12 +147,16 @@ def router(state):
 
         # Check reflection feedback first (higher priority)
         if should_continue_research:
-            print(f"  Simple mode: Reflection identified critical gaps (quality: {reflection_quality}) → refine with planner")
+            print(
+                f"  Simple mode: Reflection identified critical gaps (quality: {reflection_quality}) → refine with planner"
+            )
             return "planner"
 
         # Check evaluation
         if "sufficient" in evaluation.lower():
-            print(f"  Simple mode: Evaluation sufficient, reflection quality: {reflection_quality} → synthesize")
+            print(
+                f"  Simple mode: Evaluation sufficient, reflection quality: {reflection_quality} → synthesize"
+            )
             return "synthesizer"
         else:
             print("  Simple mode: Evaluation insufficient → refine with planner")
@@ -183,7 +192,7 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         """Return the state class for this graph"""
         return DeepResearchState
 
-    def build(self) -> StateGraph:
+    def build(self) -> Any:
         """Build and compile the Deep Research workflow"""
         workflow = StateGraph(DeepResearchState)
 
@@ -222,8 +231,8 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
             {
                 "simple": "planner",  # Simple mode: Use existing flow
                 "execute_subtask": "subtask_executor",  # Hierarchical: Start first subtask
-                "synthesize": "synthesizer"  # Edge case: no subtasks to execute
-            }
+                "synthesize": "synthesizer",  # Edge case: no subtasks to execute
+            },
         )
 
         # Subtask executor → Strategic Planner (for this specific subtask)
@@ -239,15 +248,14 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_conditional_edges(
             "analyzer",
             analyzer_router,
-            {
-                "evaluator": "evaluator",
-                "depth_evaluator": "depth_evaluator"
-            }
+            {"evaluator": "evaluator", "depth_evaluator": "depth_evaluator"},
         )
 
         # After depth_evaluator: Check for drill-down, then revise plan, then save result (Phase 3 + Phase 4)
         workflow.add_edge("depth_evaluator", "drill_down_generator")
-        workflow.add_edge("drill_down_generator", "plan_revisor")  # Phase 4: Plan revision after drill-down
+        workflow.add_edge(
+            "drill_down_generator", "plan_revisor"
+        )  # Phase 4: Plan revision after drill-down
         workflow.add_edge("plan_revisor", "save_result")
 
         # After evaluator: Go to reflection for meta-reasoning critique
@@ -260,8 +268,8 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
             {
                 "synthesizer": "synthesizer",  # Simple mode: sufficient
                 "planner": "planner",  # Simple mode: loop back
-                "save_result": "save_result"  # Hierarchical: save and continue
-            }
+                "save_result": "save_result",  # Hierarchical: save and continue
+            },
         )
 
         # After saving result: Check if more subtasks
@@ -270,8 +278,8 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
             post_save_router,
             {
                 "execute_subtask": "subtask_executor",  # More subtasks to execute
-                "synthesize": "synthesizer"  # All done, synthesize
-            }
+                "synthesize": "synthesizer",  # All done, synthesize
+            },
         )
 
         workflow.add_edge("synthesizer", END)
@@ -303,7 +311,11 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_conditional_edges(
             "master_planner",
             subtask_router,
-            {"simple": "planner", "execute_subtask": "subtask_executor", "synthesize": "synthesizer"}
+            {
+                "simple": "planner",
+                "execute_subtask": "subtask_executor",
+                "synthesize": "synthesizer",
+            },
         )
         workflow.add_edge("subtask_executor", "planner")
         workflow.add_edge("planner", "searcher")
@@ -313,7 +325,7 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_conditional_edges(
             "analyzer",
             analyzer_router,
-            {"evaluator": "evaluator", "depth_evaluator": "depth_evaluator"}
+            {"evaluator": "evaluator", "depth_evaluator": "depth_evaluator"},
         )
         workflow.add_edge("depth_evaluator", "drill_down_generator")
         workflow.add_edge("drill_down_generator", "plan_revisor")
@@ -322,12 +334,12 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_conditional_edges(
             "reflection",
             router,
-            {"synthesizer": "synthesizer", "planner": "planner", "save_result": "save_result"}
+            {"synthesizer": "synthesizer", "planner": "planner", "save_result": "save_result"},
         )
         workflow.add_conditional_edges(
             "save_result",
             post_save_router,
-            {"execute_subtask": "subtask_executor", "synthesize": "synthesizer"}
+            {"execute_subtask": "subtask_executor", "synthesize": "synthesizer"},
         )
         workflow.add_edge("synthesizer", END)
 
@@ -344,7 +356,7 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
                 "Complex multi-faceted research questions",
                 "Topics requiring deep exploration",
                 "Queries benefiting from subtask decomposition",
-                "Adaptive research that discovers new angles mid-execution"
+                "Adaptive research that discovers new angles mid-execution",
             ],
             "complexity": "high",
             "supports_streaming": True,
@@ -355,13 +367,13 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
                 "Strategic query allocation (RAG vs Web)",
                 "Recursive drill-down up to 2 levels",
                 "Budget-aware execution control",
-                "Meta-reasoning reflection & self-critique"
+                "Meta-reasoning reflection & self-critique",
             ],
             "phases": {
                 "1": "Basic hierarchical decomposition",
                 "2": "Depth evaluation and quality assessment",
                 "3": "Recursive drill-down for important subtasks",
                 "4": "Dynamic plan revision based on discoveries",
-                "4.1": "Budget-aware control and monitoring"
-            }
+                "4.1": "Budget-aware control and monitoring",
+            },
         }

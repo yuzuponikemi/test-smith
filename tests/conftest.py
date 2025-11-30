@@ -29,7 +29,9 @@ def sample_query() -> str:
 
 def pytest_configure(config: pytest.Config) -> None:
     """Register custom markers."""
-    config.addinivalue_line("markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')")
+    config.addinivalue_line(
+        "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
+    )
     config.addinivalue_line("markers", "integration: marks tests as integration tests")
     config.addinivalue_line("markers", "benchmark: marks tests as performance benchmarks")
     config.addinivalue_line("markers", "scientific: marks tests that verify scientific accuracy")

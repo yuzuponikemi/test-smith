@@ -59,6 +59,7 @@ from src.graphs import get_default_graph, get_graph
 # DATASET MANAGEMENT
 # ============================================================================
 
+
 def load_dataset(dataset_path: str = "evaluation/datasets/research_test_cases.json") -> dict:
     """Load test dataset from JSON file."""
     path = Path(dataset_path)
@@ -73,7 +74,7 @@ def filter_examples(
     dataset: dict,
     category: Optional[str] = None,
     complexity: Optional[str] = None,
-    limit: Optional[int] = None
+    limit: Optional[int] = None,
 ) -> list[dict]:
     """
     Filter test examples based on criteria.
@@ -102,10 +103,7 @@ def filter_examples(
 
 
 def upload_dataset_to_langsmith(
-    client: Client,
-    dataset: dict,
-    examples: list[dict],
-    dataset_name: Optional[str] = None
+    client: Client, dataset: dict, examples: list[dict], dataset_name: Optional[str] = None
 ) -> str:
     """
     Upload dataset to LangSmith.
@@ -127,7 +125,7 @@ def upload_dataset_to_langsmith(
         client.read_dataset(dataset_name=name)
         print(f"✓ Dataset '{name}' already exists in LangSmith")
         return name
-    except:
+    except Exception:
         pass
 
     # Create new dataset
@@ -136,33 +134,28 @@ def upload_dataset_to_langsmith(
     # Convert examples to LangSmith format
     langsmith_examples = []
     for ex in examples:
-        langsmith_examples.append({
-            "inputs": {
-                "query": ex["input"],
-                "metadata": ex.get("metadata", {}),
-                "category": ex.get("category"),
-                "complexity": ex.get("complexity")
-            },
-            "outputs": {
-                "reference_output": ex.get("reference_output", ""),
-                "expected_graph": ex.get("expected_graph"),
-                "evaluation_criteria": ex.get("evaluation_criteria", {})
+        langsmith_examples.append(
+            {
+                "inputs": {
+                    "query": ex["input"],
+                    "metadata": ex.get("metadata", {}),
+                    "category": ex.get("category"),
+                    "complexity": ex.get("complexity"),
+                },
+                "outputs": {
+                    "reference_output": ex.get("reference_output", ""),
+                    "expected_graph": ex.get("expected_graph"),
+                    "evaluation_criteria": ex.get("evaluation_criteria", {}),
+                },
             }
-        })
+        )
 
     # Create dataset
-    dataset_obj = client.create_dataset(
-        dataset_name=name,
-        description=description
-    )
+    dataset_obj = client.create_dataset(dataset_name=name, description=description)
 
     # Add examples
     for ex in langsmith_examples:
-        client.create_example(
-            dataset_id=dataset_obj.id,
-            inputs=ex["inputs"],
-            outputs=ex["outputs"]
-        )
+        client.create_example(dataset_id=dataset_obj.id, inputs=ex["inputs"], outputs=ex["outputs"])
 
     print(f"✓ Uploaded {len(langsmith_examples)} examples to LangSmith")
     return name
@@ -171,6 +164,7 @@ def upload_dataset_to_langsmith(
 # ============================================================================
 # AGENT WRAPPER FOR EVALUATION
 # ============================================================================
+
 
 def create_agent_wrapper(graph_name: str):
     """
@@ -202,10 +196,7 @@ def create_agent_wrapper(graph_name: str):
             uncompiled_graph = builder.get_uncompiled_graph()
             app = uncompiled_graph.compile(checkpointer=memory)
 
-            config = {
-                "configurable": {"thread_id": f"eval-{time.time()}"},
-                "recursion_limit": 150
-            }
+            config = {"configurable": {"thread_id": f"eval-{time.time()}"}, "recursion_limit": 150}
 
             # Run the graph
             start_time = time.time()
@@ -230,7 +221,7 @@ def create_agent_wrapper(graph_name: str):
                     "report": "",
                     "error": str(e),
                     "execution_time": execution_time,
-                    "graph_type": graph_name
+                    "graph_type": graph_name,
                 }
 
     return RunnableLambda(run_agent)
@@ -240,6 +231,7 @@ def create_agent_wrapper(graph_name: str):
 # EVALUATION EXECUTION
 # ============================================================================
 
+
 def run_evaluation(
     graph_name: str,
     dataset_name: str,
@@ -247,7 +239,7 @@ def run_evaluation(
     evaluators: list,
     experiment_name: Optional[str] = None,
     dry_run: bool = False,
-    max_concurrency: int = 1
+    max_concurrency: int = 1,
 ) -> Any:
     """
     Run evaluation experiment.
@@ -268,15 +260,15 @@ def run_evaluation(
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         experiment_name = f"{graph_name}_eval_{timestamp}"
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"Running Evaluation: {experiment_name}")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     print(f"Graph: {graph_name}")
     print(f"Dataset: {dataset_name}")
     print(f"Examples: {len(examples)}")
     print(f"Evaluators: {len(evaluators)}")
     print(f"Dry Run: {dry_run}")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     # Create agent wrapper
     agent = create_agent_wrapper(graph_name)
@@ -305,11 +297,9 @@ def run_evaluation(
                         "input": ex["input"],
                         "metadata": ex.get("metadata", {}),
                         "category": ex.get("category"),
-                        "complexity": ex.get("complexity")
+                        "complexity": ex.get("complexity"),
                     }
-                    self.outputs = {
-                        "reference_output": ex.get("reference_output", "")
-                    }
+                    self.outputs = {"reference_output": ex.get("reference_output", "")}
 
             mock_run = MockRun(output)
             mock_example = MockExample(example)
@@ -330,11 +320,7 @@ def run_evaluation(
                 comment = result.get("comment", "")[:100]
                 print(f"    {key}: {score} - {comment}")
 
-            results.append({
-                "example": example,
-                "output": output,
-                "evaluations": eval_results
-            })
+            results.append({"example": example, "output": output, "evaluations": eval_results})
 
         return results
 
@@ -363,10 +349,10 @@ def generate_summary_report(results: Any, output_path: str = "evaluation/results
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     report_file = output_dir / f"eval_summary_{timestamp}.txt"
 
-    with open(report_file, 'w') as f:
-        f.write("="*80 + "\n")
+    with open(report_file, "w") as f:
+        f.write("=" * 80 + "\n")
         f.write("TEST-SMITH EVALUATION SUMMARY\n")
-        f.write("="*80 + "\n\n")
+        f.write("=" * 80 + "\n\n")
         f.write(f"Generated: {datetime.now().isoformat()}\n")
         f.write(f"Results: {results}\n\n")
 
@@ -380,12 +366,13 @@ def generate_summary_report(results: Any, output_path: str = "evaluation/results
 # COMPARATIVE EVALUATION
 # ============================================================================
 
+
 def compare_graphs(
     graph_names: list[str],
     dataset_name: str,
     examples: list[dict],
     evaluators: list,
-    max_concurrency: int = 1
+    max_concurrency: int = 1,
 ):
     """
     Run comparative evaluation across multiple graphs.
@@ -397,9 +384,9 @@ def compare_graphs(
         evaluators: Evaluator functions
         max_concurrency: Number of parallel test executions (default: 1)
     """
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"COMPARATIVE EVALUATION: {', '.join(graph_names)}")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     results = {}
     for graph_name in graph_names:
@@ -410,14 +397,14 @@ def compare_graphs(
             examples=examples,
             evaluators=evaluators,
             experiment_name=f"compare_{graph_name}",
-            max_concurrency=max_concurrency
+            max_concurrency=max_concurrency,
         )
         results[graph_name] = result
 
     # Generate comparison report
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("COMPARISON SUMMARY")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     for graph_name, result in results.items():
         print(f"\n{graph_name}:")
         print(f"  Status: {result}")
@@ -428,6 +415,7 @@ def compare_graphs(
 # ============================================================================
 # MAIN CLI
 # ============================================================================
+
 
 def main():
     # Note: load_dotenv() is called at module import time (top of file)
@@ -452,72 +440,53 @@ Examples:
 
   # Dry run (local only, no LangSmith)
   python evaluate_agent.py --dry-run --limit 3
-        """
+        """,
     )
 
     parser.add_argument(
-        "--graph",
-        type=str,
-        default=None,
-        help="Graph to evaluate (default: deep_research)"
+        "--graph", type=str, default=None, help="Graph to evaluate (default: deep_research)"
     )
 
-    parser.add_argument(
-        "--compare",
-        nargs="+",
-        help="Compare multiple graphs (space-separated)"
-    )
+    parser.add_argument("--compare", nargs="+", help="Compare multiple graphs (space-separated)")
 
     parser.add_argument(
         "--dataset",
         type=str,
         default="evaluation/datasets/research_test_cases.json",
-        help="Path to test dataset JSON"
+        help="Path to test dataset JSON",
     )
 
     parser.add_argument(
-        "--category",
-        type=str,
-        help="Filter by category (e.g., factual_lookup, deep_research)"
+        "--category", type=str, help="Filter by category (e.g., factual_lookup, deep_research)"
     )
 
     parser.add_argument(
         "--complexity",
         type=str,
         choices=["simple", "medium", "high", "very_high"],
-        help="Filter by complexity level"
+        help="Filter by complexity level",
     )
 
-    parser.add_argument(
-        "--limit",
-        type=int,
-        help="Limit number of test examples"
-    )
+    parser.add_argument("--limit", type=int, help="Limit number of test examples")
 
     parser.add_argument(
         "--evaluators",
         nargs="+",
         choices=list(ALL_EVALUATORS.keys()),
-        help="Specific evaluators to use (default: auto-select based on example)"
+        help="Specific evaluators to use (default: auto-select based on example)",
     )
 
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Run locally without uploading to LangSmith"
+        "--dry-run", action="store_true", help="Run locally without uploading to LangSmith"
     )
 
-    parser.add_argument(
-        "--experiment-name",
-        type=str,
-        help="Custom experiment name"
-    )
+    parser.add_argument("--experiment-name", type=str, help="Custom experiment name")
 
     parser.add_argument(
         "--concurrency",
         type=int,
         default=1,
-        help="Number of test cases to run in parallel (default: 1 for clean output, increase for speed)"
+        help="Number of test cases to run in parallel (default: 1 for clean output, increase for speed)",
     )
 
     args = parser.parse_args()
@@ -526,10 +495,7 @@ Examples:
     print(f"Loading dataset: {args.dataset}")
     dataset = load_dataset(args.dataset)
     examples = filter_examples(
-        dataset,
-        category=args.category,
-        complexity=args.complexity,
-        limit=args.limit
+        dataset, category=args.category, complexity=args.complexity, limit=args.limit
     )
 
     print(f"✓ Loaded {len(examples)} test examples")
@@ -543,7 +509,7 @@ Examples:
         evaluators = list(HEURISTIC_EVALUATORS.values()) + [
             LLM_EVALUATORS["accuracy"],
             LLM_EVALUATORS["relevance"],
-            LLM_EVALUATORS["hallucination"]
+            LLM_EVALUATORS["hallucination"],
         ]
         print(f"✓ Using default evaluator set ({len(evaluators)} evaluators)")
 
@@ -560,7 +526,7 @@ Examples:
             graph_names=args.compare,
             dataset_name=dataset_name,
             examples=examples,
-            evaluators=evaluators
+            evaluators=evaluators,
         )
     else:
         # Single graph evaluation
@@ -572,7 +538,7 @@ Examples:
             evaluators=evaluators,
             experiment_name=args.experiment_name,
             dry_run=args.dry_run,
-            max_concurrency=args.concurrency
+            max_concurrency=args.concurrency,
         )
 
     # Generate summary report

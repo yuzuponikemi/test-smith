@@ -8,10 +8,12 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Default Gemini models
 DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"  # Stable and widely supported
-ADVANCED_GEMINI_MODEL = "gemini-1.5-pro"   # For complex tasks (optional)
+ADVANCED_GEMINI_MODEL = "gemini-1.5-pro"  # For complex tasks (optional)
 
 
-def _get_model(gemini_model: str = DEFAULT_GEMINI_MODEL, ollama_model: str = "llama3", temperature: float = 0.7):
+def _get_model(
+    gemini_model: str = DEFAULT_GEMINI_MODEL, ollama_model: str = "llama3", temperature: float = 0.7
+):
     """
     Factory function to get the appropriate model based on MODEL_PROVIDER.
 
@@ -31,7 +33,7 @@ def _get_model(gemini_model: str = DEFAULT_GEMINI_MODEL, ollama_model: str = "ll
             raise ImportError(
                 "langchain_google_genai is required when MODEL_PROVIDER=gemini. "
                 "Install it with: pip install langchain-google-genai"
-            )
+            ) from None
 
         if not GOOGLE_API_KEY:
             raise ValueError(
@@ -42,7 +44,7 @@ def _get_model(gemini_model: str = DEFAULT_GEMINI_MODEL, ollama_model: str = "ll
             model=gemini_model,
             google_api_key=GOOGLE_API_KEY,
             temperature=temperature,
-            convert_system_message_to_human=True  # Gemini compatibility
+            convert_system_message_to_human=True,  # Gemini compatibility
         )
     elif MODEL_PROVIDER == "ollama":
         return ChatOllama(model=ollama_model, temperature=temperature)
@@ -52,11 +54,7 @@ def _get_model(gemini_model: str = DEFAULT_GEMINI_MODEL, ollama_model: str = "ll
 
 def get_planner_model():
     """Strategic planner for query allocation (RAG vs Web)"""
-    return _get_model(
-        gemini_model=DEFAULT_GEMINI_MODEL,
-        ollama_model="llama3",
-        temperature=0.7
-    )
+    return _get_model(gemini_model=DEFAULT_GEMINI_MODEL, ollama_model="llama3", temperature=0.7)
 
 
 def get_master_planner_model():
@@ -67,17 +65,13 @@ def get_master_planner_model():
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,  # Flash is fast enough for planning
         ollama_model="command-r",
-        temperature=0.7
+        temperature=0.7,
     )
 
 
 def get_reflection_model():
     """Reflection and self-evaluation"""
-    return _get_model(
-        gemini_model=DEFAULT_GEMINI_MODEL,
-        ollama_model="llama3",
-        temperature=0.7
-    )
+    return _get_model(gemini_model=DEFAULT_GEMINI_MODEL, ollama_model="llama3", temperature=0.7)
 
 
 def get_evaluation_model():
@@ -85,17 +79,13 @@ def get_evaluation_model():
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
         ollama_model="command-r",
-        temperature=0.5  # Lower temperature for more consistent evaluation
+        temperature=0.5,  # Lower temperature for more consistent evaluation
     )
 
 
 def get_analyzer_model():
     """Data analysis and summarization"""
-    return _get_model(
-        gemini_model=DEFAULT_GEMINI_MODEL,
-        ollama_model="llama3",
-        temperature=0.7
-    )
+    return _get_model(gemini_model=DEFAULT_GEMINI_MODEL, ollama_model="llama3", temperature=0.7)
 
 
 def get_synthesizer_model():
@@ -103,18 +93,19 @@ def get_synthesizer_model():
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
         ollama_model="llama3",
-        temperature=0.8  # Slightly higher for more creative synthesis
+        temperature=0.8,  # Slightly higher for more creative synthesis
     )
 
 
 # === Causal Inference Models ===
+
 
 def get_issue_analyzer_model():
     """Issue analysis and symptom extraction for causal inference"""
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
         ollama_model="llama3",
-        temperature=0.5  # Lower temperature for systematic analysis
+        temperature=0.5,  # Lower temperature for systematic analysis
     )
 
 
@@ -123,17 +114,13 @@ def get_brainstormer_model():
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
         ollama_model="llama3",
-        temperature=0.9  # Higher temperature for creative divergent thinking
+        temperature=0.9,  # Higher temperature for creative divergent thinking
     )
 
 
 def get_evidence_planner_model():
     """Strategic evidence gathering planning for causal validation"""
-    return _get_model(
-        gemini_model=DEFAULT_GEMINI_MODEL,
-        ollama_model="llama3",
-        temperature=0.7
-    )
+    return _get_model(gemini_model=DEFAULT_GEMINI_MODEL, ollama_model="llama3", temperature=0.7)
 
 
 def get_causal_checker_model():
@@ -141,7 +128,7 @@ def get_causal_checker_model():
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
         ollama_model="command-r",
-        temperature=0.5  # Lower temperature for rigorous causal reasoning
+        temperature=0.5,  # Lower temperature for rigorous causal reasoning
     )
 
 
@@ -150,7 +137,7 @@ def get_hypothesis_validator_model():
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
         ollama_model="command-r",
-        temperature=0.5  # Lower temperature for consistent ranking
+        temperature=0.5,  # Lower temperature for consistent ranking
     )
 
 
@@ -159,26 +146,29 @@ def get_root_cause_synthesizer_model():
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
         ollama_model="llama3",
-        temperature=0.8  # Slightly higher for comprehensive reporting
+        temperature=0.8,  # Slightly higher for comprehensive reporting
     )
 
 
 # === Code Execution Models ===
+
 
 def get_code_executor_model():
     """Code generation and execution planning"""
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
         ollama_model="llama3",
-        temperature=0.3  # Lower temperature for precise code generation
+        temperature=0.3,  # Lower temperature for precise code generation
     )
 
+
 # === Code Assistant Models ===
+
 
 def get_code_assistant_model():
     """Code analysis and explanation for codebase queries"""
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
         ollama_model="llama3",
-        temperature=0.5  # Lower temperature for accurate code analysis
+        temperature=0.5,  # Lower temperature for accurate code analysis
     )

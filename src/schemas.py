@@ -5,7 +5,9 @@ from pydantic import BaseModel, Field
 
 class Plan(BaseModel):
     """A plan to answer the user's query."""
+
     queries: list[str] = Field(description="A list of search queries to answer the user's query.")
+
 
 class StrategicPlan(BaseModel):
     """Strategic plan with intelligent query allocation between RAG and web sources."""
@@ -20,12 +22,18 @@ class StrategicPlan(BaseModel):
         description="Reasoning for this allocation: What information is likely in KB vs needs web? Why this distribution?"
     )
 
+
 class Evaluation(BaseModel):
     """An evaluation of the sufficiency of the information."""
-    is_sufficient: bool = Field(description="Whether the information is sufficient to create a comprehensive report.")
+
+    is_sufficient: bool = Field(
+        description="Whether the information is sufficient to create a comprehensive report."
+    )
     reason: str = Field(description="The reason for the evaluation.")
 
+
 # === Hierarchical Task Decomposition Schemas (Phase 1) ===
+
 
 class SubTask(BaseModel):
     """
@@ -34,37 +42,34 @@ class SubTask(BaseModel):
     Used in Phase 1 (v2.0-alpha) for basic task decomposition.
     Enhanced in Phase 2 (v2.0-beta) with depth tracking for recursive drill-down.
     """
+
     subtask_id: str = Field(
         description="Unique identifier for this subtask (e.g., 'task_1', 'task_1.1', 'task_2.3.1')"
     )
     parent_id: Optional[str] = Field(
         default=None,
-        description="ID of parent subtask (None for root-level tasks, e.g., 'task_1' for 'task_1.1')"
+        description="ID of parent subtask (None for root-level tasks, e.g., 'task_1' for 'task_1.1')",
     )
     depth: int = Field(
         default=0,
         description="Hierarchical depth level: 0 = root, 1 = first drill-down, 2 = second drill-down, etc.",
-        ge=0
+        ge=0,
     )
-    description: str = Field(
-        description="Clear description of what this subtask should accomplish"
-    )
-    focus_area: str = Field(
-        description="Specific aspect or domain this subtask covers"
-    )
+    description: str = Field(description="Clear description of what this subtask should accomplish")
+    focus_area: str = Field(description="Specific aspect or domain this subtask covers")
     priority: int = Field(
-        description="Execution order, starting from 1 (1 = first to execute)",
-        ge=1
+        description="Execution order, starting from 1 (1 = first to execute)", ge=1
     )
     dependencies: list[str] = Field(
         default_factory=list,
-        description="List of subtask_ids that must complete before this subtask can start"
+        description="List of subtask_ids that must complete before this subtask can start",
     )
     estimated_importance: float = Field(
         ge=0.0,
         le=1.0,
-        description="Importance score (0.0-1.0) for resource allocation and prioritization"
+        description="Importance score (0.0-1.0) for resource allocation and prioritization",
     )
+
 
 class MasterPlan(BaseModel):
     """
@@ -73,6 +78,7 @@ class MasterPlan(BaseModel):
     Determines whether a query is simple (single-pass research) or complex
     (requires hierarchical decomposition into subtasks).
     """
+
     is_complex: bool = Field(
         description="Whether the query requires hierarchical decomposition into subtasks"
     )
@@ -81,17 +87,17 @@ class MasterPlan(BaseModel):
     )
     execution_mode: Literal["simple", "hierarchical"] = Field(
         description="Execution mode: 'simple' uses existing single-pass flow, "
-                    "'hierarchical' decomposes into subtasks"
+        "'hierarchical' decomposes into subtasks"
     )
     subtasks: list[SubTask] = Field(
         default_factory=list,
-        description="List of subtasks for hierarchical execution (empty if simple mode)"
+        description="List of subtasks for hierarchical execution (empty if simple mode)",
     )
-    overall_strategy: str = Field(
-        description="High-level strategy for addressing the user's query"
-    )
+    overall_strategy: str = Field(description="High-level strategy for addressing the user's query")
+
 
 # === Hierarchical Task Decomposition Schemas (Phase 2) ===
+
 
 class DepthEvaluation(BaseModel):
     """
@@ -100,27 +106,30 @@ class DepthEvaluation(BaseModel):
     Used in Phase 2 (v2.0-beta) to determine if a subtask needs deeper exploration
     through drill-down into child subtasks.
     """
+
     is_sufficient: bool = Field(
         description="Whether the subtask has been explored sufficiently for its importance level"
     )
     depth_quality: Literal["superficial", "adequate", "deep"] = Field(
         description="Assessment of information depth: "
-                    "'superficial' = general statements only, lacks detail; "
-                    "'adequate' = specific facts with context; "
-                    "'deep' = rich detail, multiple perspectives, well-sourced"
+        "'superficial' = general statements only, lacks detail; "
+        "'adequate' = specific facts with context; "
+        "'deep' = rich detail, multiple perspectives, well-sourced"
     )
     drill_down_needed: bool = Field(
         description="Whether this subtask should spawn child subtasks for deeper exploration"
     )
     drill_down_areas: list[str] = Field(
         default_factory=list,
-        description="Specific areas or aspects that need deeper investigation (for child subtasks)"
+        description="Specific areas or aspects that need deeper investigation (for child subtasks)",
     )
     reasoning: str = Field(
         description="Detailed explanation of the depth assessment and drill-down decision"
     )
 
+
 # === Hierarchical Task Decomposition Schemas (Phase 4) ===
+
 
 class PlanRevision(BaseModel):
     """
@@ -130,37 +139,42 @@ class PlanRevision(BaseModel):
     during execution. Analyzes subtask results and determines if the Master Plan
     should be updated to add new subtasks, adjust priorities, or change scope.
     """
+
     should_revise: bool = Field(
         description="Whether the Master Plan should be revised based on current findings"
     )
     revision_reasoning: str = Field(
         description="Detailed explanation of why revision is or isn't needed"
     )
-    trigger_type: Literal["new_topic", "scope_adjustment", "contradiction", "importance_shift", "none"] = Field(
+    trigger_type: Literal[
+        "new_topic", "scope_adjustment", "contradiction", "importance_shift", "none"
+    ] = Field(
         description="Type of trigger for revision: "
-                    "'new_topic' = important related topic discovered not in original plan; "
-                    "'scope_adjustment' = current scope too narrow/broad; "
-                    "'contradiction' = conflicting information needs resolution; "
-                    "'importance_shift' = unexpected importance of certain aspects; "
-                    "'none' = no revision needed"
+        "'new_topic' = important related topic discovered not in original plan; "
+        "'scope_adjustment' = current scope too narrow/broad; "
+        "'contradiction' = conflicting information needs resolution; "
+        "'importance_shift' = unexpected importance of certain aspects; "
+        "'none' = no revision needed"
     )
     new_subtasks: list[SubTask] = Field(
         default_factory=list,
-        description="New subtasks to add to the Master Plan (if revision needed)"
+        description="New subtasks to add to the Master Plan (if revision needed)",
     )
     removed_subtasks: list[str] = Field(
         default_factory=list,
-        description="Subtask IDs to skip/remove from execution (if revision needed)"
+        description="Subtask IDs to skip/remove from execution (if revision needed)",
     )
     priority_changes: dict = Field(
         default_factory=dict,
-        description="Priority changes for existing subtasks: subtask_id → new_priority (if revision needed)"
+        description="Priority changes for existing subtasks: subtask_id → new_priority (if revision needed)",
     )
     estimated_impact: str = Field(
         description="How this revision will improve the final report quality"
     )
 
+
 # === Reflection & Self-Critique Schemas ===
+
 
 class CritiquePoint(BaseModel):
     """
@@ -169,6 +183,7 @@ class CritiquePoint(BaseModel):
     Used to identify specific issues in research findings that need attention
     before synthesis.
     """
+
     category: Literal[
         "logical_fallacy",
         "contradiction",
@@ -177,29 +192,20 @@ class CritiquePoint(BaseModel):
         "source_credibility",
         "alternative_perspective",
         "incomplete_coverage",
-        "other"
-    ] = Field(
-        description="Category of the critique point"
-    )
+        "other",
+    ] = Field(description="Category of the critique point")
     severity: Literal["critical", "moderate", "minor"] = Field(
         description="Severity level: 'critical' = must fix before synthesis, "
-                    "'moderate' = should address if possible, "
-                    "'minor' = note for improvement"
+        "'moderate' = should address if possible, "
+        "'minor' = note for improvement"
     )
-    description: str = Field(
-        description="Clear description of the issue identified"
-    )
+    description: str = Field(description="Clear description of the issue identified")
     location: str = Field(
         description="Where in the analyzed data this issue appears (e.g., 'subtask_2', 'web results', 'overall')"
     )
-    recommendation: str = Field(
-        description="Specific recommendation for addressing this issue"
-    )
-    confidence: float = Field(
-        ge=0.0,
-        le=1.0,
-        description="Confidence in this critique (0.0-1.0)"
-    )
+    recommendation: str = Field(description="Specific recommendation for addressing this issue")
+    confidence: float = Field(ge=0.0, le=1.0, description="Confidence in this critique (0.0-1.0)")
+
 
 class ReflectionCritique(BaseModel):
     """
@@ -209,6 +215,7 @@ class ReflectionCritique(BaseModel):
     contradictions, biases, and suggests improvements to ensure
     high-quality, trustworthy research output.
     """
+
     overall_quality: Literal["excellent", "good", "adequate", "poor"] = Field(
         description="Overall assessment of research findings quality"
     )
@@ -216,20 +223,17 @@ class ReflectionCritique(BaseModel):
         description="Detailed explanation of the overall quality assessment"
     )
     critique_points: list[CritiquePoint] = Field(
-        default_factory=list,
-        description="Specific issues identified in the research findings"
+        default_factory=list, description="Specific issues identified in the research findings"
     )
     missing_perspectives: list[str] = Field(
         default_factory=list,
-        description="Important perspectives or viewpoints that are missing from the research"
+        description="Important perspectives or viewpoints that are missing from the research",
     )
     contradictions: list[str] = Field(
-        default_factory=list,
-        description="Contradictions or conflicts found in the research data"
+        default_factory=list, description="Contradictions or conflicts found in the research data"
     )
     bias_indicators: list[str] = Field(
-        default_factory=list,
-        description="Potential biases detected in sources or analysis"
+        default_factory=list, description="Potential biases detected in sources or analysis"
     )
     evidence_strength: Literal["strong", "moderate", "weak"] = Field(
         description="Overall strength of evidence supporting conclusions"
@@ -242,15 +246,15 @@ class ReflectionCritique(BaseModel):
     )
     synthesis_recommendations: list[str] = Field(
         default_factory=list,
-        description="Specific recommendations for the synthesis phase to address identified issues"
+        description="Specific recommendations for the synthesis phase to address identified issues",
     )
     confidence_score: float = Field(
-        ge=0.0,
-        le=1.0,
-        description="Overall confidence in the research findings (0.0-1.0)"
+        ge=0.0, le=1.0, description="Overall confidence in the research findings (0.0-1.0)"
     )
 
+
 # === Causal Inference Schemas ===
+
 
 class IssueAnalysis(BaseModel):
     """
@@ -259,9 +263,8 @@ class IssueAnalysis(BaseModel):
     Used to decompose an issue into observable effects and background information
     before generating causal hypotheses.
     """
-    issue_summary: str = Field(
-        description="Concise summary of the problem/issue being analyzed"
-    )
+
+    issue_summary: str = Field(description="Concise summary of the problem/issue being analyzed")
     symptoms: list[str] = Field(
         description="Observable symptoms, effects, or manifestations of the issue"
     )
@@ -272,38 +275,37 @@ class IssueAnalysis(BaseModel):
         description="Scope of the issue: system/component affected, timeframe, conditions"
     )
 
+
 class RootCauseHypothesis(BaseModel):
     """
     A potential root cause hypothesis for the observed issue.
 
     Generated during brainstorming phase before evidence gathering.
     """
+
     hypothesis_id: str = Field(
         description="Unique identifier for this hypothesis (e.g., 'H1', 'H2', 'H3')"
     )
-    description: str = Field(
-        description="Clear description of the hypothesized root cause"
-    )
+    description: str = Field(description="Clear description of the hypothesized root cause")
     mechanism: str = Field(
         description="How this cause could produce the observed symptoms (causal mechanism)"
     )
-    category: Literal["technical", "process", "human", "environmental", "design", "external"] = Field(
-        description="Category of root cause for organization"
+    category: Literal["technical", "process", "human", "environmental", "design", "external"] = (
+        Field(description="Category of root cause for organization")
     )
     initial_plausibility: float = Field(
-        ge=0.0,
-        le=1.0,
-        description="Initial plausibility score (0.0-1.0) before evidence gathering"
+        ge=0.0, le=1.0, description="Initial plausibility score (0.0-1.0) before evidence gathering"
     )
+
 
 class HypothesisList(BaseModel):
     """List of root cause hypotheses generated during brainstorming."""
-    hypotheses: list[RootCauseHypothesis] = Field(
-        description="All generated root cause hypotheses"
-    )
+
+    hypotheses: list[RootCauseHypothesis] = Field(description="All generated root cause hypotheses")
     brainstorming_approach: str = Field(
         description="Explanation of the brainstorming methodology used"
     )
+
 
 class CausalRelationship(BaseModel):
     """
@@ -311,41 +313,38 @@ class CausalRelationship(BaseModel):
 
     Created after evidence gathering to assess causal links.
     """
-    hypothesis_id: str = Field(
-        description="ID of the hypothesis being evaluated"
-    )
-    relationship_type: Literal["direct_cause", "contributing_factor", "correlated", "unlikely", "refuted"] = Field(
+
+    hypothesis_id: str = Field(description="ID of the hypothesis being evaluated")
+    relationship_type: Literal[
+        "direct_cause", "contributing_factor", "correlated", "unlikely", "refuted"
+    ] = Field(
         description="Type of causal relationship: "
-                    "'direct_cause' = strong evidence of causation; "
-                    "'contributing_factor' = partial causation; "
-                    "'correlated' = association without clear causation; "
-                    "'unlikely' = weak or contradictory evidence; "
-                    "'refuted' = evidence disproves this cause"
+        "'direct_cause' = strong evidence of causation; "
+        "'contributing_factor' = partial causation; "
+        "'correlated' = association without clear causation; "
+        "'unlikely' = weak or contradictory evidence; "
+        "'refuted' = evidence disproves this cause"
     )
     supporting_evidence: list[str] = Field(
         description="Evidence supporting this causal relationship"
     )
     contradicting_evidence: list[str] = Field(
-        default_factory=list,
-        description="Evidence contradicting this causal relationship"
+        default_factory=list, description="Evidence contradicting this causal relationship"
     )
     causal_strength: float = Field(
-        ge=0.0,
-        le=1.0,
-        description="Strength of causal link based on evidence (0.0-1.0)"
+        ge=0.0, le=1.0, description="Strength of causal link based on evidence (0.0-1.0)"
     )
-    reasoning: str = Field(
-        description="Detailed reasoning for this causal assessment"
-    )
+    reasoning: str = Field(description="Detailed reasoning for this causal assessment")
+
 
 class CausalAnalysis(BaseModel):
     """Complete causal analysis with all validated relationships."""
+
     relationships: list[CausalRelationship] = Field(
         description="All evaluated causal relationships"
     )
-    analysis_approach: str = Field(
-        description="Methodology used for causal validation"
-    )
+    analysis_approach: str = Field(description="Methodology used for causal validation")
+
 
 class RankedHypothesis(BaseModel):
     """
@@ -353,44 +352,37 @@ class RankedHypothesis(BaseModel):
 
     Generated after all evidence is gathered and analyzed.
     """
-    hypothesis_id: str = Field(
-        description="ID of the hypothesis"
-    )
-    description: str = Field(
-        description="Description of the root cause"
-    )
+
+    hypothesis_id: str = Field(description="ID of the hypothesis")
+    description: str = Field(description="Description of the root cause")
     likelihood: float = Field(
-        ge=0.0,
-        le=1.0,
-        description="Final likelihood/probability (0.0-1.0) based on all evidence"
+        ge=0.0, le=1.0, description="Final likelihood/probability (0.0-1.0) based on all evidence"
     )
     confidence: Literal["high", "medium", "low"] = Field(
         description="Confidence level in this assessment based on evidence quality"
     )
-    supporting_factors: list[str] = Field(
-        description="Key factors supporting this root cause"
-    )
+    supporting_factors: list[str] = Field(description="Key factors supporting this root cause")
     mitigating_factors: list[str] = Field(
         default_factory=list,
-        description="Factors reducing likelihood or providing alternative explanations"
+        description="Factors reducing likelihood or providing alternative explanations",
     )
     recommendation: str = Field(
         description="Recommended action or investigation steps for this hypothesis"
     )
 
+
 class HypothesisRanking(BaseModel):
     """Ranked list of root cause hypotheses with probabilities."""
+
     ranked_hypotheses: list[RankedHypothesis] = Field(
         description="Hypotheses ranked by likelihood (highest first)"
     )
-    ranking_methodology: str = Field(
-        description="Explanation of ranking methodology and criteria"
-    )
-    overall_assessment: str = Field(
-        description="Overall assessment of root cause certainty"
-    )
+    ranking_methodology: str = Field(description="Explanation of ranking methodology and criteria")
+    overall_assessment: str = Field(description="Overall assessment of root cause certainty")
+
 
 # === Code Execution Schemas ===
+
 
 class CodeExecutionRequest(BaseModel):
     """
@@ -399,23 +391,20 @@ class CodeExecutionRequest(BaseModel):
     Used to generate and execute Python code for data analysis,
     calculations, or information processing during research.
     """
+
     task_description: str = Field(
         description="Clear description of what the code should accomplish"
     )
-    context: str = Field(
-        description="Relevant context from previous research steps"
-    )
+    context: str = Field(description="Relevant context from previous research steps")
     input_data: Optional[str] = Field(
         default=None,
-        description="Input data or parameters for the code (JSON format if structured)"
+        description="Input data or parameters for the code (JSON format if structured)",
     )
     requirements: list[str] = Field(
-        default_factory=list,
-        description="Specific requirements or constraints for the code"
+        default_factory=list, description="Specific requirements or constraints for the code"
     )
-    expected_output: str = Field(
-        description="Description of expected output format"
-    )
+    expected_output: str = Field(description="Description of expected output format")
+
 
 class CodeExecutionResult(BaseModel):
     """
@@ -424,74 +413,57 @@ class CodeExecutionResult(BaseModel):
     Captures both successful execution results and errors
     for proper handling in the workflow.
     """
-    success: bool = Field(
-        description="Whether code execution succeeded"
-    )
-    output: str = Field(
-        description="Output from code execution (stdout or return value)"
-    )
-    error: Optional[str] = Field(
-        default=None,
-        description="Error message if execution failed"
-    )
-    execution_time: float = Field(
-        description="Execution time in seconds"
-    )
-    code: str = Field(
-        description="The actual code that was executed"
-    )
+
+    success: bool = Field(description="Whether code execution succeeded")
+    output: str = Field(description="Output from code execution (stdout or return value)")
+    error: Optional[str] = Field(default=None, description="Error message if execution failed")
+    execution_time: float = Field(description="Execution time in seconds")
+    code: str = Field(description="The actual code that was executed")
+
 
 # === Code Assistant Schemas ===
+
 
 class CodeReference(BaseModel):
     """
     A reference to a specific location in the codebase.
     """
-    file_path: str = Field(
-        description="Relative path to the file in the repository"
-    )
+
+    file_path: str = Field(description="Relative path to the file in the repository")
     line_number: Optional[int] = Field(
-        default=None,
-        description="Specific line number (if applicable)"
+        default=None, description="Specific line number (if applicable)"
     )
     symbol_name: Optional[str] = Field(
-        default=None,
-        description="Name of function, class, or variable referenced"
+        default=None, description="Name of function, class, or variable referenced"
     )
-    context: str = Field(
-        description="Brief description of what this code does"
-    )
+    context: str = Field(description="Brief description of what this code does")
+
 
 class CodeAnalysis(BaseModel):
     """
     Analysis result from the code assistant.
     """
-    answer: str = Field(
-        description="Direct answer to the user's code question"
-    )
+
+    answer: str = Field(description="Direct answer to the user's code question")
     references: list[CodeReference] = Field(
-        default_factory=list,
-        description="Code references supporting the answer"
+        default_factory=list, description="Code references supporting the answer"
     )
     related_files: list[str] = Field(
-        default_factory=list,
-        description="Additional related files the user might want to check"
+        default_factory=list, description="Additional related files the user might want to check"
     )
     code_snippets: list[str] = Field(
         default_factory=list,
-        description="Relevant code snippets (formatted with language identifier)"
+        description="Relevant code snippets (formatted with language identifier)",
     )
     confidence: Literal["high", "medium", "low"] = Field(
         description="Confidence in this answer based on retrieved code context"
     )
 
+
 class CodeSearchQueries(BaseModel):
     """
     Search queries generated for code retrieval.
     """
-    queries: list[str] = Field(
-        description="List of search queries to find relevant code"
-    )
-    reasoning: str = Field(
-        description="Explanation of query generation strategy"
-    )
+
+    queries: list[str] = Field(description="List of search queries to find relevant code")
+    reasoning: str = Field(description="Explanation of query generation strategy")

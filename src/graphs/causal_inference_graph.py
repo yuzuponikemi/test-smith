@@ -19,7 +19,7 @@ Use cases:
 """
 
 import operator
-from typing import Annotated, Literal, TypedDict
+from typing import Annotated, Any, Literal, TypedDict
 
 from langgraph.graph import END, StateGraph
 
@@ -63,11 +63,15 @@ class CausalInferenceState(TypedDict):
     rag_results: Annotated[list[str], operator.add]  # RAG results (cumulative)
 
     # Causal analysis
-    causal_relationships: list[dict]  # Validated causal relationships (list of CausalRelationship dicts)
+    causal_relationships: list[
+        dict
+    ]  # Validated causal relationships (list of CausalRelationship dicts)
     causal_analysis_approach: str  # Analysis methodology
 
     # Hypothesis ranking
-    ranked_hypotheses: list[dict]  # Hypotheses ranked by likelihood (list of RankedHypothesis dicts)
+    ranked_hypotheses: list[
+        dict
+    ]  # Hypotheses ranked by likelihood (list of RankedHypothesis dicts)
     ranking_methodology: str  # Ranking methodology
     overall_assessment: str  # Overall confidence assessment
 
@@ -79,7 +83,9 @@ class CausalInferenceState(TypedDict):
     needs_more_evidence: bool  # Whether more evidence gathering is needed
 
 
-def evidence_router(state: CausalInferenceState) -> Literal["causal_graph_builder", "evidence_planner"]:
+def evidence_router(
+    state: CausalInferenceState,
+) -> Literal["causal_graph_builder", "evidence_planner"]:
     """
     Router to decide if more evidence is needed or proceed to graph building.
 
@@ -97,8 +103,9 @@ def evidence_router(state: CausalInferenceState) -> Literal["causal_graph_builde
 
     # Count hypotheses with strong or weak evidence
     strong_evidence_count = sum(
-        1 for rel in causal_relationships
-        if rel['relationship_type'] in ['direct_cause', 'contributing_factor']
+        1
+        for rel in causal_relationships
+        if rel["relationship_type"] in ["direct_cause", "contributing_factor"]
     )
 
     # If we have strong evidence for at least half the hypotheses, proceed
@@ -120,20 +127,20 @@ class CausalInferenceGraphBuilder(BaseGraphBuilder):
         """Return the state class for this graph"""
         return CausalInferenceState
 
-    def build(self) -> StateGraph:
+    def build(self) -> Any:
         """Build and compile the Causal Inference workflow"""
         workflow = StateGraph(CausalInferenceState)
 
         # Register all nodes
-        workflow.add_node("issue_analyzer", issue_analyzer_node)
-        workflow.add_node("brainstormer", brainstormer_node)
-        workflow.add_node("evidence_planner", evidence_planner_node)
-        workflow.add_node("searcher", searcher)
-        workflow.add_node("rag_retriever", rag_retriever)
-        workflow.add_node("causal_checker", causal_checker_node)
-        workflow.add_node("hypothesis_validator", hypothesis_validator_node)
-        workflow.add_node("causal_graph_builder", causal_graph_builder_node)
-        workflow.add_node("root_cause_synthesizer", root_cause_synthesizer_node)
+        workflow.add_node("issue_analyzer", issue_analyzer_node)  # type: ignore[type-var]
+        workflow.add_node("brainstormer", brainstormer_node)  # type: ignore[type-var]
+        workflow.add_node("evidence_planner", evidence_planner_node)  # type: ignore[type-var]
+        workflow.add_node("searcher", searcher)  # type: ignore[type-var]
+        workflow.add_node("rag_retriever", rag_retriever)  # type: ignore[type-var]
+        workflow.add_node("causal_checker", causal_checker_node)  # type: ignore[type-var]
+        workflow.add_node("hypothesis_validator", hypothesis_validator_node)  # type: ignore[type-var]
+        workflow.add_node("causal_graph_builder", causal_graph_builder_node)  # type: ignore[type-var]
+        workflow.add_node("root_cause_synthesizer", root_cause_synthesizer_node)  # type: ignore[type-var]
 
         # Set up workflow
         workflow.set_entry_point("issue_analyzer")
@@ -159,8 +166,8 @@ class CausalInferenceGraphBuilder(BaseGraphBuilder):
             evidence_router,
             {
                 "evidence_planner": "evidence_planner",  # Gather more evidence
-                "causal_graph_builder": "causal_graph_builder"  # Proceed to visualization
-            }
+                "causal_graph_builder": "causal_graph_builder",  # Proceed to visualization
+            },
         )
 
         # Graph building → synthesis
@@ -172,20 +179,20 @@ class CausalInferenceGraphBuilder(BaseGraphBuilder):
         # Compile and return
         return workflow.compile()
 
-    def get_uncompiled_graph(self) -> StateGraph:
+    def get_uncompiled_graph(self) -> Any:
         """Return uncompiled graph for custom checkpointer setup"""
         workflow = StateGraph(CausalInferenceState)
 
         # Register nodes
-        workflow.add_node("issue_analyzer", issue_analyzer_node)
-        workflow.add_node("brainstormer", brainstormer_node)
-        workflow.add_node("evidence_planner", evidence_planner_node)
-        workflow.add_node("searcher", searcher)
-        workflow.add_node("rag_retriever", rag_retriever)
-        workflow.add_node("causal_checker", causal_checker_node)
-        workflow.add_node("hypothesis_validator", hypothesis_validator_node)
-        workflow.add_node("causal_graph_builder", causal_graph_builder_node)
-        workflow.add_node("root_cause_synthesizer", root_cause_synthesizer_node)
+        workflow.add_node("issue_analyzer", issue_analyzer_node)  # type: ignore[type-var]
+        workflow.add_node("brainstormer", brainstormer_node)  # type: ignore[type-var]
+        workflow.add_node("evidence_planner", evidence_planner_node)  # type: ignore[type-var]
+        workflow.add_node("searcher", searcher)  # type: ignore[type-var]
+        workflow.add_node("rag_retriever", rag_retriever)  # type: ignore[type-var]
+        workflow.add_node("causal_checker", causal_checker_node)  # type: ignore[type-var]
+        workflow.add_node("hypothesis_validator", hypothesis_validator_node)  # type: ignore[type-var]
+        workflow.add_node("causal_graph_builder", causal_graph_builder_node)  # type: ignore[type-var]
+        workflow.add_node("root_cause_synthesizer", root_cause_synthesizer_node)  # type: ignore[type-var]
 
         # Set up edges
         workflow.set_entry_point("issue_analyzer")
@@ -201,8 +208,8 @@ class CausalInferenceGraphBuilder(BaseGraphBuilder):
             evidence_router,
             {
                 "evidence_planner": "evidence_planner",
-                "causal_graph_builder": "causal_graph_builder"
-            }
+                "causal_graph_builder": "causal_graph_builder",
+            },
         )
         workflow.add_edge("causal_graph_builder", "root_cause_synthesizer")
         workflow.add_edge("root_cause_synthesizer", END)
@@ -222,7 +229,7 @@ class CausalInferenceGraphBuilder(BaseGraphBuilder):
                 "Incident investigation and troubleshooting",
                 "Understanding causal relationships",
                 "Problem diagnosis with evidence validation",
-                "Hypothesis-driven investigation"
+                "Hypothesis-driven investigation",
             ],
             "complexity": "medium",
             "supports_streaming": True,
@@ -234,13 +241,9 @@ class CausalInferenceGraphBuilder(BaseGraphBuilder):
                 "Probability-based hypothesis ranking",
                 "Causal graph visualization data",
                 "Comprehensive root cause analysis reports",
-                "Iterative evidence refinement (max 2 iterations)"
+                "Iterative evidence refinement (max 2 iterations)",
             ],
-            "performance": {
-                "avg_execution_time": "60-90 seconds",
-                "max_iterations": 2,
-                "nodes": 9
-            },
+            "performance": {"avg_execution_time": "60-90 seconds", "max_iterations": 2, "nodes": 9},
             "workflow": [
                 "1. Issue Analyzer - Extract symptoms and context",
                 "2. Brainstormer - Generate root cause hypotheses",
@@ -250,6 +253,6 @@ class CausalInferenceGraphBuilder(BaseGraphBuilder):
                 "6. Hypothesis Validator - Rank by likelihood",
                 "7. Router - More evidence needed? (max 2 iterations)",
                 "8. Causal Graph Builder - Create visualization data",
-                "9. Root Cause Synthesizer - Generate comprehensive report"
-            ]
+                "9. Root Cause Synthesizer - Generate comprehensive report",
+            ],
         }

@@ -21,7 +21,4 @@ Use systematic thinking:
 Provide a structured analysis that will serve as the foundation for generating root cause hypotheses.
 """
 
-ISSUE_ANALYZER_PROMPT = PromptTemplate(
-    template=ISSUE_ANALYZER_TEMPLATE,
-    input_variables=["query"]
-)
+ISSUE_ANALYZER_PROMPT = PromptTemplate(template=ISSUE_ANALYZER_TEMPLATE, input_variables=["query"])

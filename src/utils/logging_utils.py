@@ -33,12 +33,14 @@ def get_current_model_info() -> str:
         String describing the current model (e.g., "gemini/gemini-2.5-flash" or "ollama/llama3+command-r")
     """
     from dotenv import load_dotenv
+
     load_dotenv()
 
     provider = os.getenv("MODEL_PROVIDER", "ollama")
 
     if provider == "gemini":
         from src.models import DEFAULT_GEMINI_MODEL
+
         return f"gemini/{DEFAULT_GEMINI_MODEL}"
     else:
         # Ollama uses different models for different tasks
@@ -89,26 +91,26 @@ class ExecutionLogger:
     def _sanitize_filename(self, text: str) -> str:
         """Convert text to safe filename."""
         # Replace unsafe characters
-        safe = "".join(c if c.isalnum() or c in (' ', '-', '_') else '_' for c in text)
+        safe = "".join(c if c.isalnum() or c in (" ", "-", "_") else "_" for c in text)
         # Replace spaces with underscores
-        safe = safe.replace(' ', '_')
+        safe = safe.replace(" ", "_")
         # Remove consecutive underscores
-        while '__' in safe:
-            safe = safe.replace('__', '_')
-        return safe.strip('_')
+        while "__" in safe:
+            safe = safe.replace("__", "_")
+        return safe.strip("_")
 
     def _write_header(self):
         """Write log file header."""
-        header = f"""{'='*80}
+        header = f"""{"=" * 80}
 Test-Smith Execution Log
-{'='*80}
+{"=" * 80}
 Query: {self.query}
 Thread ID: {self.thread_id}
 Start Time: {self.start_time.isoformat()}
-{'='*80}
+{"=" * 80}
 
 """
-        with open(self.log_file, 'w', encoding='utf-8') as f:
+        with open(self.log_file, "w", encoding="utf-8") as f:
             f.write(header)
 
     def log(self, message: str, level: str = "INFO"):
@@ -116,7 +118,7 @@ Start Time: {self.start_time.isoformat()}
         timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
         log_line = f"[{timestamp}] {level}: {message}\n"
 
-        with open(self.log_file, 'a', encoding='utf-8') as f:
+        with open(self.log_file, "a", encoding="utf-8") as f:
             f.write(log_line)
 
         # Also print to console
@@ -141,22 +143,24 @@ Start Time: {self.start_time.isoformat()}
 
     def log_master_plan(self, master_plan: dict[str, Any]):
         """Log the master plan details."""
-        self.log("\n" + "="*80, "MASTER_PLAN")
+        self.log("\n" + "=" * 80, "MASTER_PLAN")
         self.log(f"Complexity: {'COMPLEX' if master_plan.get('is_complex') else 'SIMPLE'}")
         self.log(f"Execution Mode: {master_plan.get('execution_mode')}")
 
-        if master_plan.get('is_complex'):
-            subtasks = master_plan.get('subtasks', [])
+        if master_plan.get("is_complex"):
+            subtasks = master_plan.get("subtasks", [])
             self.log(f"Subtasks: {len(subtasks)}")
             for i, subtask in enumerate(subtasks, 1):
                 self.log(f"\n  Subtask {i}: {subtask['subtask_id']}")
                 self.log(f"    Description: {subtask['description']}")
                 self.log(f"    Focus: {subtask['focus_area']}")
-                self.log(f"    Priority: {subtask['priority']}, Importance: {subtask['estimated_importance']}")
-                if subtask.get('dependencies'):
+                self.log(
+                    f"    Priority: {subtask['priority']}, Importance: {subtask['estimated_importance']}"
+                )
+                if subtask.get("dependencies"):
                     self.log(f"    Dependencies: {subtask['dependencies']}")
 
-        self.log("="*80 + "\n")
+        self.log("=" * 80 + "\n")
 
     def log_queries(self, rag_queries: list, web_queries: list, strategy: str):
         """Log query allocation."""
@@ -168,22 +172,22 @@ Start Time: {self.start_time.isoformat()}
         """Log an error."""
         self.log(f"ERROR in {context}: {type(error).__name__}: {str(error)}", "ERROR")
 
-    def finalize(self, final_report: str):
+    def finalize(self, _final_report: str):
         """Write final summary and close log."""
         end_time = datetime.now()
         duration = (end_time - self.start_time).total_seconds()
 
         footer = f"""
-{'='*80}
+{"=" * 80}
 Execution Complete
-{'='*80}
+{"=" * 80}
 End Time: {end_time.isoformat()}
 Duration: {duration:.2f} seconds
 Log File: {self.log_file}
-{'='*80}
+{"=" * 80}
 """
 
-        with open(self.log_file, 'a', encoding='utf-8') as f:
+        with open(self.log_file, "a", encoding="utf-8") as f:
             f.write(footer)
 
         self.log(f"Execution completed in {duration:.2f}s", "INFO")
@@ -224,8 +228,12 @@ def setup_execution_logger(query: str, thread_id: str) -> ExecutionLogger:
     return ExecutionLogger(query, thread_id)
 
 
-def save_report(report_content: str, query: str, execution_mode: str = "simple",
-                metadata: Optional[dict[str, Any]] = None) -> Path:
+def save_report(
+    report_content: str,
+    query: str,
+    execution_mode: str = "simple",
+    metadata: Optional[dict[str, Any]] = None,
+) -> Path:
     """
     Save the final research report to a markdown file.
 
@@ -251,18 +259,19 @@ def save_report(report_content: str, query: str, execution_mode: str = "simple",
     full_report = _build_report_with_metadata(report_content, query, execution_mode, metadata)
 
     # Save report
-    with open(report_file, 'w', encoding='utf-8') as f:
+    with open(report_file, "w", encoding="utf-8") as f:
         f.write(full_report)
 
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"Report saved to: {report_file}")
-    print(f"{'='*80}\n")
+    print(f"{'=' * 80}\n")
 
     return report_file
 
 
-def _build_report_with_metadata(content: str, query: str, execution_mode: str,
-                                 metadata: Optional[dict[str, Any]]) -> str:
+def _build_report_with_metadata(
+    content: str, query: str, execution_mode: str, metadata: Optional[dict[str, Any]]
+) -> str:
     """Build complete report with metadata header."""
 
     header = f"""---
@@ -275,7 +284,7 @@ query: "{query}"
     if metadata:
         for key, value in metadata.items():
             if isinstance(value, str):
-                header += f"{key}: \"{value}\"\n"
+                header += f'{key}: "{value}"\n'
             else:
                 header += f"{key}: {value}\n"
 

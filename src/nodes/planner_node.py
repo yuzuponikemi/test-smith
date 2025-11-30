@@ -20,17 +20,17 @@ def check_kb_contents():
         # Check if KB exists
         if not os.path.exists("chroma_db"):
             return {
-                'available': False,
-                'total_chunks': 0,
-                'document_types': [],
-                'summary': 'Knowledge base not found. Use web search only.'
+                "available": False,
+                "total_chunks": 0,
+                "document_types": [],
+                "summary": "Knowledge base not found. Use web search only.",
             }
 
         embeddings = OllamaEmbeddings(model="nomic-embed-text")
         vectorstore = Chroma(
             collection_name="research_agent_collection",
             embedding_function=embeddings,
-            persist_directory="chroma_db"
+            persist_directory="chroma_db",
         )
 
         collection = vectorstore._collection
@@ -38,43 +38,45 @@ def check_kb_contents():
 
         if total_docs == 0:
             return {
-                'available': False,
-                'total_chunks': 0,
-                'document_types': [],
-                'summary': 'Knowledge base is empty. Use web search only.'
+                "available": False,
+                "total_chunks": 0,
+                "document_types": [],
+                "summary": "Knowledge base is empty. Use web search only.",
             }
 
         # Sample some documents to understand content
         sample = collection.peek(limit=10)
         sources = set()
-        if sample and 'metadatas' in sample:
-            for meta in sample['metadatas']:
-                if meta and 'source' in meta:
+        if sample and "metadatas" in sample and sample["metadatas"] is not None:
+            for meta in sample["metadatas"]:
+                if meta and "source" in meta and isinstance(meta["source"], str):
                     # Extract filename from path
-                    source = os.path.basename(meta['source'])
+                    source = os.path.basename(meta["source"])
                     sources.add(source)
 
         # Create summary
-        doc_list = ', '.join(list(sources)[:5])
+        doc_list = ", ".join(list(sources)[:5])
         if len(sources) > 5:
             doc_list += f" and {len(sources) - 5} more"
 
-        summary = f"Knowledge base contains {total_docs} chunks from documents including: {doc_list}"
+        summary = (
+            f"Knowledge base contains {total_docs} chunks from documents including: {doc_list}"
+        )
 
         return {
-            'available': True,
-            'total_chunks': total_docs,
-            'document_types': list(sources),
-            'summary': summary
+            "available": True,
+            "total_chunks": total_docs,
+            "document_types": list(sources),
+            "summary": summary,
         }
 
     except Exception as e:
         print(f"Warning: Could not check KB contents: {e}")
         return {
-            'available': False,
-            'total_chunks': 0,
-            'document_types': [],
-            'summary': 'Could not access knowledge base. Use web search only.'
+            "available": False,
+            "total_chunks": 0,
+            "document_types": [],
+            "summary": "Could not access knowledge base. Use web search only.",
         }
 
 
@@ -107,8 +109,8 @@ def planner(state):
     prompt = STRATEGIC_PLANNER_PROMPT.format(
         query=query,
         feedback=feedback,
-        kb_summary=kb_info['summary'],
-        kb_available=kb_info['available']
+        kb_summary=kb_info["summary"],
+        kb_available=kb_info["available"],
     )
 
     try:
@@ -122,7 +124,7 @@ def planner(state):
             "rag_queries": plan.rag_queries,
             "web_queries": plan.web_queries,
             "allocation_strategy": plan.strategy,
-            "loop_count": loop_count + 1
+            "loop_count": loop_count + 1,
         }
 
     except Exception as e:
@@ -133,7 +135,7 @@ def planner(state):
         content = response.content
 
         # Try to extract JSON from response
-        json_match = re.search(r'\{[\s\S]*\}', content)
+        json_match = re.search(r"\{[\s\S]*\}", content)
         if json_match:
             try:
                 plan_dict = json.loads(json_match.group(0))
@@ -141,7 +143,7 @@ def planner(state):
                     "rag_queries": plan_dict.get("rag_queries", []),
                     "web_queries": plan_dict.get("web_queries", [query]),
                     "allocation_strategy": plan_dict.get("strategy", "Fallback allocation"),
-                    "loop_count": loop_count + 1
+                    "loop_count": loop_count + 1,
                 }
             except json.JSONDecodeError:
                 pass
@@ -149,8 +151,8 @@ def planner(state):
         # Final fallback: Use original query for both
         print("  Using fallback: sending query to both sources")
         return {
-            "rag_queries": [query] if kb_info['available'] else [],
+            "rag_queries": [query] if kb_info["available"] else [],
             "web_queries": [query],
             "allocation_strategy": "Fallback: using original query for both sources",
-            "loop_count": loop_count + 1
+            "loop_count": loop_count + 1,
         }
