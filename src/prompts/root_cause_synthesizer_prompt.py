@@ -93,5 +93,5 @@ Provide a thorough, professional report suitable for technical decision-makers.
 
 ROOT_CAUSE_SYNTHESIZER_PROMPT = PromptTemplate(
     template=ROOT_CAUSE_SYNTHESIZER_TEMPLATE,
-    input_variables=["query", "issue_analysis", "ranked_hypotheses", "causal_graph_data"]
+    input_variables=["query", "issue_analysis", "ranked_hypotheses", "causal_graph_data"],
 )

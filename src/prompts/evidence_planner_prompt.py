@@ -48,5 +48,5 @@ Generate 4-8 targeted queries total (split between RAG and web based on KB conte
 
 EVIDENCE_PLANNER_PROMPT = PromptTemplate(
     template=EVIDENCE_PLANNER_TEMPLATE,
-    input_variables=["query", "issue_summary", "hypotheses", "kb_info"]
+    input_variables=["query", "issue_summary", "hypotheses", "kb_info"],
 )

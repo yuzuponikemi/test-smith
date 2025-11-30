@@ -39,10 +39,12 @@ def causal_checker_node(state: dict) -> dict:
     structured_model = model.with_structured_output(CausalAnalysis)
 
     # Format hypotheses for prompt
-    hypotheses_str = "\n".join([
-        f"- {h['hypothesis_id']}: {h['description']}\n  Mechanism: {h['mechanism']}"
-        for h in hypotheses
-    ])
+    hypotheses_str = "\n".join(
+        [
+            f"- {h['hypothesis_id']}: {h['description']}\n  Mechanism: {h['mechanism']}"
+            for h in hypotheses
+        ]
+    )
 
     # Format prompt and invoke
     prompt = CAUSAL_CHECKER_PROMPT.format(
@@ -51,7 +53,7 @@ def causal_checker_node(state: dict) -> dict:
         symptoms=symptoms,
         hypotheses=hypotheses_str,
         web_results=web_results,
-        rag_results=rag_results
+        rag_results=rag_results,
     )
 
     analysis: CausalAnalysis = structured_model.invoke(prompt)
@@ -59,9 +61,9 @@ def causal_checker_node(state: dict) -> dict:
     print(f"  Evaluated {len(analysis.relationships)} causal relationships")
 
     # Show summary of relationship types
-    relationship_types = {}
+    relationship_types: dict[str, int] = {}
     for rel in analysis.relationships:
-        rel_type = rel.relationship_type
+        rel_type = str(rel.relationship_type)
         relationship_types[rel_type] = relationship_types.get(rel_type, 0) + 1
 
     for rel_type, count in relationship_types.items():

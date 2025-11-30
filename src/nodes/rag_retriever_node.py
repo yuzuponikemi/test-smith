@@ -52,7 +52,9 @@ def rag_retriever(state):
             # Format the documents into a string
             doc_string = ""
             if documents:
-                doc_string += f"=== Retrieved {len(documents)} relevant chunks for '{query}' ===\n\n"
+                doc_string += (
+                    f"=== Retrieved {len(documents)} relevant chunks for '{query}' ===\n\n"
+                )
                 for i, doc in enumerate(documents, 1):
                     doc_string += f"[Chunk {i}]\n"
                     doc_string += f"Content: {doc.page_content}\n"

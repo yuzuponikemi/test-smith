@@ -60,13 +60,15 @@ def code_retriever(state):
 
                 for i, doc in enumerate(documents, 1):
                     # Extract metadata
-                    rel_path = doc.metadata.get('relative_path', doc.metadata.get('source', 'Unknown'))
-                    prog_lang = doc.metadata.get('programming_language', 'unknown')
-                    doc.metadata.get('filename', '')
+                    rel_path = doc.metadata.get(
+                        "relative_path", doc.metadata.get("source", "Unknown")
+                    )
+                    prog_lang = doc.metadata.get("programming_language", "unknown")
+                    doc.metadata.get("filename", "")
 
                     doc_string += f"[Result {i}]\n"
                     doc_string += f"File: {rel_path}\n"
-                    if prog_lang != 'unknown':
+                    if prog_lang != "unknown":
                         doc_string += f"Language: {prog_lang}\n"
 
                     # Format code content
@@ -106,8 +108,8 @@ def code_assistant(state):
         print("  No code results to analyze")
         return {
             "code_response": "I couldn't find any relevant code in the indexed codebase. "
-                           "Please make sure the repository has been ingested using "
-                           "`python scripts/ingest/ingest_codebase.py`"
+            "Please make sure the repository has been ingested using "
+            "`python scripts/ingest/ingest_codebase.py`"
         }
 
     # Combine code results
@@ -117,8 +119,7 @@ def code_assistant(state):
 
     # Create prompt
     prompt = PromptTemplate(
-        template=CODE_ASSISTANT_PROMPT,
-        input_variables=["query", "code_context"]
+        template=CODE_ASSISTANT_PROMPT, input_variables=["query", "code_context"]
     )
 
     # Get model and generate response
@@ -126,13 +127,10 @@ def code_assistant(state):
     chain = prompt | model
 
     try:
-        response = chain.invoke({
-            "query": query,
-            "code_context": code_context
-        })
+        response = chain.invoke({"query": query, "code_context": code_context})
 
         # Extract content from response
-        result = response.content if hasattr(response, 'content') else str(response)
+        result = response.content if hasattr(response, "content") else str(response)
 
         print(f"  Generated response ({len(result)} chars)")
 
@@ -142,7 +140,7 @@ def code_assistant(state):
         print(f"  Error generating response: {e}")
         return {
             "code_response": f"Error analyzing code: {str(e)}\n\n"
-                           f"Retrieved code context:\n{code_context[:2000]}..."
+            f"Retrieved code context:\n{code_context[:2000]}..."
         }
 
 
@@ -170,8 +168,8 @@ def code_query_generator(state):
     queries.extend(quoted)
 
     # Look for camelCase or snake_case terms
-    identifiers = re.findall(r'\b([a-z_][a-z_0-9]*(?:_[a-z_0-9]+)+)\b', query.lower())
-    identifiers.extend(re.findall(r'\b([A-Z][a-zA-Z0-9]+)\b', query))
+    identifiers = re.findall(r"\b([a-z_][a-z_0-9]*(?:_[a-z_0-9]+)+)\b", query.lower())
+    identifiers.extend(re.findall(r"\b([A-Z][a-zA-Z0-9]+)\b", query))
     queries.extend(identifiers)
 
     # Remove duplicates while preserving order

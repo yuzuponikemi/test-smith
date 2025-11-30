@@ -17,8 +17,6 @@ Usage:
         print(f"{name}: {metadata['description']}")
 """
 
-from typing import Dict, Optional
-
 from .base_graph import BaseAgentState, BaseGraphBuilder, ExtendedAgentState
 
 # Global registry of available graphs
@@ -58,9 +56,7 @@ def get_graph(name: str) -> BaseGraphBuilder:
     """
     if name not in _GRAPH_REGISTRY:
         available = ", ".join(_GRAPH_REGISTRY.keys())
-        raise KeyError(
-            f"Graph '{name}' not found. Available graphs: {available}"
-        )
+        raise KeyError(f"Graph '{name}' not found. Available graphs: {available}")
 
     return _GRAPH_REGISTRY[name]
 
@@ -83,10 +79,7 @@ def list_graphs() -> dict[str, dict]:
             ...
         }
     """
-    return {
-        name: builder.get_metadata()
-        for name, builder in _GRAPH_REGISTRY.items()
-    }
+    return {name: builder.get_metadata() for name, builder in _GRAPH_REGISTRY.items()}
 
 
 def get_default_graph() -> str:
@@ -110,42 +103,49 @@ def _auto_register_graphs():
     """
     try:
         from .deep_research_graph import DeepResearchGraphBuilder
+
         register_graph("deep_research", DeepResearchGraphBuilder())
     except ImportError as e:
         print(f"[GraphRegistry] Warning: Could not load deep_research graph: {e}")
 
     try:
         from .quick_research_graph import QuickResearchGraphBuilder
+
         register_graph("quick_research", QuickResearchGraphBuilder())
     except ImportError as e:
         print(f"[GraphRegistry] Warning: Could not load quick_research graph: {e}")
 
     try:
         from .fact_check_graph import FactCheckGraphBuilder
+
         register_graph("fact_check", FactCheckGraphBuilder())
     except ImportError as e:
         print(f"[GraphRegistry] Warning: Could not load fact_check graph: {e}")
 
     try:
         from .comparative_graph import ComparativeResearchGraphBuilder
+
         register_graph("comparative", ComparativeResearchGraphBuilder())
     except ImportError as e:
         print(f"[GraphRegistry] Warning: Could not load comparative graph: {e}")
 
     try:
         from .causal_inference_graph import CausalInferenceGraphBuilder
+
         register_graph("causal_inference", CausalInferenceGraphBuilder())
     except ImportError as e:
         print(f"[GraphRegistry] Warning: Could not load causal_inference graph: {e}")
 
     try:
         from .code_execution_graph import CodeExecutionGraphBuilder
+
         register_graph("code_execution", CodeExecutionGraphBuilder())
     except ImportError as e:
         print(f"[GraphRegistry] Warning: Could not load code_execution graph: {e}")
 
     try:
         from .code_investigation_graph import CodeInvestigationGraphBuilder
+
         register_graph("code_investigation", CodeInvestigationGraphBuilder())
     except ImportError as e:
         print(f"[GraphRegistry] Warning: Could not load code_investigation graph: {e}")
@@ -156,11 +156,11 @@ _auto_register_graphs()
 
 
 __all__ = [
-    'BaseGraphBuilder',
-    'BaseAgentState',
-    'ExtendedAgentState',
-    'register_graph',
-    'get_graph',
-    'list_graphs',
-    'get_default_graph',
+    "BaseGraphBuilder",
+    "BaseAgentState",
+    "ExtendedAgentState",
+    "register_graph",
+    "get_graph",
+    "list_graphs",
+    "get_default_graph",
 ]

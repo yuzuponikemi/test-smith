@@ -26,6 +26,7 @@ try:
 except ImportError:
     legacy_graph = None
 
+
 def main():
     # Note: load_dotenv() is called at module import time (top of file)
     parser = argparse.ArgumentParser(
@@ -49,7 +50,7 @@ Examples:
 
   # Combine streaming with specific graph
   python main.py run "Why is my app slow?" --graph causal_inference --stream
-        """
+        """,
     )
     parser.add_argument("--version", action="version", version="%(prog)s 2.1")
     subparsers = parser.add_subparsers(dest="command")
@@ -58,12 +59,12 @@ Examples:
     graphs_parser = subparsers.add_parser(
         "graphs",
         help="List all available graph workflows",
-        description="Display all registered graph workflows with their descriptions and use cases"
+        description="Display all registered graph workflows with their descriptions and use cases",
     )
     graphs_parser.add_argument(
         "--detailed",
         action="store_true",
-        help="Show detailed information including features and performance metrics"
+        help="Show detailed information including features and performance metrics",
     )
 
     # Run command
@@ -73,28 +74,42 @@ Examples:
         "--graph",
         type=str,
         default=None,
-        help=f"Graph workflow to use (default: {get_default_graph()}). Use 'python main.py graphs' to see available options."
+        help=f"Graph workflow to use (default: {get_default_graph()}). Use 'python main.py graphs' to see available options.",
     )
-    run_parser.add_argument("--thread-id", type=str, help="The thread ID to use for the conversation")
-    run_parser.add_argument("--no-log", action="store_true", help="Disable file logging (console only)")
-    run_parser.add_argument("--no-report", action="store_true", help="Don't save final report to file")
-    run_parser.add_argument("--stream", action="store_true", help="Enable streaming progressive output (real-time updates)")
-    run_parser.add_argument("--no-color", action="store_true", help="Disable colored output in streaming mode")
+    run_parser.add_argument(
+        "--thread-id", type=str, help="The thread ID to use for the conversation"
+    )
+    run_parser.add_argument(
+        "--no-log", action="store_true", help="Disable file logging (console only)"
+    )
+    run_parser.add_argument(
+        "--no-report", action="store_true", help="Don't save final report to file"
+    )
+    run_parser.add_argument(
+        "--stream",
+        action="store_true",
+        help="Enable streaming progressive output (real-time updates)",
+    )
+    run_parser.add_argument(
+        "--no-color", action="store_true", help="Disable colored output in streaming mode"
+    )
 
     # List command
     list_parser = subparsers.add_parser("list", help="List recent reports or logs")
     list_parser.add_argument("type", choices=["reports", "logs"], help="Type of files to list")
     list_parser.add_argument("--limit", type=int, default=10, help="Number of files to show")
-    list_parser.add_argument("--mode", choices=["simple", "hierarchical"], help="Filter reports by execution mode")
+    list_parser.add_argument(
+        "--mode", choices=["simple", "hierarchical"], help="Filter reports by execution mode"
+    )
 
     args = parser.parse_args()
 
     if args.command == "graphs":
         # Display available graph workflows
         graphs = list_graphs()
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("AVAILABLE GRAPH WORKFLOWS")
-        print("="*80 + "\n")
+        print("=" * 80 + "\n")
 
         for graph_name, metadata in graphs.items():
             print(f"📊 {graph_name}")
@@ -104,26 +119,26 @@ Examples:
 
             if args.detailed:
                 print("\n   Use Cases:")
-                for use_case in metadata.get('use_cases', []):
+                for use_case in metadata.get("use_cases", []):
                     print(f"   • {use_case}")
 
-                if 'features' in metadata:
+                if "features" in metadata:
                     print("\n   Features:")
-                    for feature in metadata['features']:
+                    for feature in metadata["features"]:
                         print(f"   • {feature}")
 
-                if 'performance' in metadata:
-                    perf = metadata['performance']
+                if "performance" in metadata:
+                    perf = metadata["performance"]
                     print("\n   Performance:")
                     for key, value in perf.items():
                         print(f"   • {key}: {value}")
 
             print()
 
-        print("="*80)
+        print("=" * 80)
         print(f"\nDefault graph: {get_default_graph()}")
-        print("\nUsage: python main.py run \"your query\" --graph <graph_name>")
-        print("="*80 + "\n")
+        print('\nUsage: python main.py run "your query" --graph <graph_name>')
+        print("=" * 80 + "\n")
 
     elif args.command == "run":
         # Select graph workflow (auto-select if not specified)
@@ -134,6 +149,7 @@ Examples:
         else:
             # Auto-select based on query (MCP-aligned: load only necessary graph)
             from src.utils.graph_selector import auto_select_graph, explain_selection
+
             graph_name = auto_select_graph(args.query)
             selection_mode = "auto"
 
@@ -145,6 +161,7 @@ Examples:
             # Show selection reasoning if auto-selected
             if selection_mode == "auto" and not args.no_log:
                 from src.utils.graph_selector import explain_selection
+
                 print("\n[Auto-Selection Reasoning]")
                 print(explain_selection(args.query, graph_name))
             print()
@@ -161,7 +178,7 @@ Examples:
             thread_id = args.thread_id if args.thread_id else str(uuid.uuid4())
             config = {
                 "configurable": {"thread_id": thread_id},
-                "recursion_limit": 150  # Increased for Phase 4 dynamic replanning (default: 25, Phase 1-3: 100)
+                "recursion_limit": 150,  # Increased for Phase 4 dynamic replanning (default: 25, Phase 1-3: 100)
             }
 
             # Setup logger if enabled
@@ -171,7 +188,9 @@ Examples:
             streaming_formatter = None
             if args.stream:
                 use_colors = not args.no_color
-                streaming_formatter = StreamingFormatter(graph_name=graph_name, use_colors=use_colors)
+                streaming_formatter = StreamingFormatter(
+                    graph_name=graph_name, use_colors=use_colors
+                )
 
             if logger:
                 logger.log("Starting Test-Smith execution", "INFO")
@@ -205,17 +224,20 @@ Examples:
                             print("\n---\n")
 
                         # Track special nodes for metadata
-                        if key == "master_planner" and "master_plan" in value:
-                            if logger and value.get("master_plan"):
-                                logger.log_master_plan(value["master_plan"])
+                        if (
+                            key == "master_planner"
+                            and "master_plan" in value
+                            and logger
+                            and value.get("master_plan")
+                        ):
+                            logger.log_master_plan(value["master_plan"])
 
-                        if key == "planner" and "allocation_strategy" in value:
-                            if logger:
-                                logger.log_queries(
-                                    value.get("rag_queries", []),
-                                    value.get("web_queries", []),
-                                    value.get("allocation_strategy", "")
-                                )
+                        if key == "planner" and "allocation_strategy" in value and logger:
+                            logger.log_queries(
+                                value.get("rag_queries", []),
+                                value.get("web_queries", []),
+                                value.get("allocation_strategy", ""),
+                            )
 
                         # Update final state
                         final_state.update(value)
@@ -236,13 +258,12 @@ Examples:
                         master_plan = final_state["master_plan"]
                         if master_plan:
                             metadata["subtask_count"] = len(master_plan.get("subtasks", []))
-                            metadata["complexity_reasoning"] = master_plan.get("complexity_reasoning", "")
+                            metadata["complexity_reasoning"] = master_plan.get(
+                                "complexity_reasoning", ""
+                            )
 
                     report_path = save_report(
-                        final_state["report"],
-                        args.query,
-                        execution_mode,
-                        metadata
+                        final_state["report"], args.query, execution_mode, metadata
                     )
 
                 # Save causal graph data if available (for causal_inference graph)
@@ -255,7 +276,7 @@ Examples:
                     graph_file = Path("causal_graphs") / f"causal_graph_{timestamp}.json"
 
                     # Save graph data to JSON
-                    with open(graph_file, 'w') as f:
+                    with open(graph_file, "w") as f:
                         json.dump(final_state["causal_graph_data"], f, indent=2)
 
                     print(f"\n✓ Causal graph data saved to: {graph_file}")
@@ -263,7 +284,7 @@ Examples:
 
                     # Also save as causal_graph.json for easy access
                     latest_file = Path("causal_graphs") / "causal_graph.json"
-                    with open(latest_file, 'w') as f:
+                    with open(latest_file, "w") as f:
                         json.dump(final_state["causal_graph_data"], f, indent=2)
                     print(f"  Latest graph also saved to: {latest_file}\n")
 
@@ -283,11 +304,12 @@ Examples:
         if args.type == "reports":
             reports = get_recent_reports(limit=args.limit, execution_mode=args.mode)
             print(f"\nRecent Reports ({len(reports)}):")
-            print("="*80)
+            print("=" * 80)
             for i, report in enumerate(reports, 1):
                 size_kb = report.stat().st_size / 1024
                 mtime = report.stat().st_mtime
                 from datetime import datetime
+
                 mtime_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
                 print(f"{i:2}. {report.name}")
                 print(f"    Size: {size_kb:.1f} KB | Modified: {mtime_str}")
@@ -297,11 +319,12 @@ Examples:
         elif args.type == "logs":
             logs = get_recent_logs(limit=args.limit)
             print(f"\nRecent Execution Logs ({len(logs)}):")
-            print("="*80)
+            print("=" * 80)
             for i, log in enumerate(logs, 1):
                 size_kb = log.stat().st_size / 1024
                 mtime = log.stat().st_mtime
                 from datetime import datetime
+
                 mtime_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
                 print(f"{i:2}. {log.name}")
                 print(f"    Size: {size_kb:.1f} KB | Modified: {mtime_str}")
@@ -310,6 +333,7 @@ Examples:
 
     else:
         parser.print_help()
+
 
 if __name__ == "__main__":
     main()

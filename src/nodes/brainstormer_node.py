@@ -36,11 +36,7 @@ def brainstormer_node(state: dict) -> dict:
 
     # Format prompt and invoke
     prompt = BRAINSTORMER_PROMPT.format(
-        query=query,
-        issue_summary=issue_summary,
-        symptoms=symptoms,
-        context=context,
-        scope=scope
+        query=query, issue_summary=issue_summary, symptoms=symptoms, context=context, scope=scope
     )
 
     result: HypothesisList = structured_model.invoke(prompt)

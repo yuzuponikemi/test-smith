@@ -22,7 +22,7 @@ GraphType = Literal[
     "comparative",
     "fact_check",
     "quick_research",
-    "deep_research"
+    "deep_research",
 ]
 
 
@@ -41,21 +41,43 @@ def detect_code_execution_need(query: str) -> bool:
 
     # Calculation indicators
     calculation_keywords = [
-        "calculate", "compute", "sum", "average", "mean", "median",
-        "percentage", "ratio", "rate", "growth", "trend",
-        "statistical", "correlation", "regression",
-        "analyze data", "process data", "parse",
-        "how many", "how much", "total", "count"
+        "calculate",
+        "compute",
+        "sum",
+        "average",
+        "mean",
+        "median",
+        "percentage",
+        "ratio",
+        "rate",
+        "growth",
+        "trend",
+        "statistical",
+        "correlation",
+        "regression",
+        "analyze data",
+        "process data",
+        "parse",
+        "how many",
+        "how much",
+        "total",
+        "count",
     ]
 
     # Visualization indicators
     viz_keywords = [
-        "chart", "graph", "plot", "visualize", "diagram",
-        "show trend", "distribution", "histogram"
+        "chart",
+        "graph",
+        "plot",
+        "visualize",
+        "diagram",
+        "show trend",
+        "distribution",
+        "histogram",
     ]
 
     # Check for mathematical expressions
-    has_math_expression = bool(re.search(r'\d+\s*[\+\-\*\/\%]\s*\d+', query))
+    has_math_expression = bool(re.search(r"\d+\s*[\+\-\*\/\%]\s*\d+", query))
 
     # Check keywords
     has_calculation = any(kw in query_lower for kw in calculation_keywords)
@@ -77,11 +99,22 @@ def detect_causal_inference_need(query: str) -> bool:
     query_lower = query.lower()
 
     causal_keywords = [
-        "why", "причина", "理由",  # multilingual "why"
-        "root cause", "cause of", "reason for",
-        "troubleshoot", "debug", "diagnose",
-        "failure", "error", "bug", "issue",
-        "not working", "broken", "problem with"
+        "why",
+        "причина",
+        "理由",  # multilingual "why"
+        "root cause",
+        "cause of",
+        "reason for",
+        "troubleshoot",
+        "debug",
+        "diagnose",
+        "failure",
+        "error",
+        "bug",
+        "issue",
+        "not working",
+        "broken",
+        "problem with",
     ]
 
     return any(kw in query_lower for kw in causal_keywords)
@@ -100,15 +133,24 @@ def detect_comparative_need(query: str) -> bool:
     query_lower = query.lower()
 
     comparative_keywords = [
-        " vs ", " versus ", "compare", "comparison",
-        "difference between", "similarities between",
-        "better than", "worse than",
-        "which", "choose between", "decide between",
-        "pros and cons", "trade-off", "tradeoff"
+        " vs ",
+        " versus ",
+        "compare",
+        "comparison",
+        "difference between",
+        "similarities between",
+        "better than",
+        "worse than",
+        "which",
+        "choose between",
+        "decide between",
+        "pros and cons",
+        "trade-off",
+        "tradeoff",
     ]
 
     # Check for "A vs B" pattern
-    has_vs_pattern = bool(re.search(r'\w+\s+(vs|versus)\s+\w+', query_lower))
+    has_vs_pattern = bool(re.search(r"\w+\s+(vs|versus)\s+\w+", query_lower))
 
     has_comparative = any(kw in query_lower for kw in comparative_keywords)
 
@@ -127,10 +169,17 @@ def detect_fact_check_need(query: str) -> bool:
     query_lower = query.lower()
 
     fact_check_keywords = [
-        "is it true", "is this true", "fact check",
-        "verify", "accurate", "correct",
-        "true or false", "真偽", "本当",
-        "confirm", "validate"
+        "is it true",
+        "is this true",
+        "fact check",
+        "verify",
+        "accurate",
+        "correct",
+        "true or false",
+        "真偽",
+        "本当",
+        "confirm",
+        "validate",
     ]
 
     return any(kw in query_lower for kw in fact_check_keywords)
@@ -150,11 +199,11 @@ def detect_simple_query(query: str) -> bool:
         return True
 
     # Single sentence questions
-    sentences = query.split('.')
+    sentences = query.split(".")
     return bool(len(sentences) <= 1 and len(query) < 100)
 
 
-def auto_select_graph(query: str, default: str = "deep_research") -> GraphType:
+def auto_select_graph(query: str, default: GraphType = "deep_research") -> GraphType:
     """
     Automatically select the optimal graph based on query analysis.
 
@@ -237,7 +286,7 @@ if __name__ == "__main__":
         "Compare React vs Vue frameworks",
         "Is it true that Python is slower than C++?",
         "What is quantum computing?",
-        "Analyze the correlation between variables A and B in this dataset"
+        "Analyze the correlation between variables A and B in this dataset",
     ]
 
     print("Graph Selection Examples:\n")

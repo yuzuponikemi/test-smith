@@ -34,7 +34,7 @@ def check_kb_contents() -> str:
         vectorstore = Chroma(
             persist_directory=str(chroma_db_path),
             embedding_function=embeddings,
-            collection_name="research_agent_collection"
+            collection_name="research_agent_collection",
         )
 
         # Get collection stats
@@ -44,7 +44,7 @@ def check_kb_contents() -> str:
         # Sample a few documents to understand content
         if count > 0:
             sample = collection.peek(limit=3)
-            sample_docs = sample.get('documents', [])[:3]
+            sample_docs = sample.get("documents", [])[:3]
             sample_preview = " | ".join([doc[:100] for doc in sample_docs])
 
             return f"""Knowledge Base: Available
@@ -85,17 +85,11 @@ def evidence_planner_node(state: dict) -> dict:
     structured_model = model.with_structured_output(StrategicPlan)
 
     # Format hypotheses for prompt
-    hypotheses_str = "\n".join([
-        f"- {h['hypothesis_id']}: {h['description']}"
-        for h in hypotheses
-    ])
+    hypotheses_str = "\n".join([f"- {h['hypothesis_id']}: {h['description']}" for h in hypotheses])
 
     # Format prompt and invoke
     prompt = EVIDENCE_PLANNER_PROMPT.format(
-        query=query,
-        issue_summary=issue_summary,
-        hypotheses=hypotheses_str,
-        kb_info=kb_info
+        query=query, issue_summary=issue_summary, hypotheses=hypotheses_str, kb_info=kb_info
     )
 
     plan: StrategicPlan = structured_model.invoke(prompt)

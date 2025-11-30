@@ -34,25 +34,24 @@ def hypothesis_validator_node(state: dict) -> dict:
     structured_model = model.with_structured_output(HypothesisRanking)
 
     # Format causal analysis for prompt
-    causal_analysis_str = "\n".join([
-        f"- {rel['hypothesis_id']}: {rel['relationship_type']} (strength: {rel['causal_strength']:.2f})\n"
-        f"  Supporting: {', '.join(rel['supporting_evidence'][:2])}\n"
-        f"  Reasoning: {rel['reasoning'][:100]}..."
-        for rel in causal_relationships
-    ])
+    causal_analysis_str = "\n".join(
+        [
+            f"- {rel['hypothesis_id']}: {rel['relationship_type']} (strength: {rel['causal_strength']:.2f})\n"
+            f"  Supporting: {', '.join(rel['supporting_evidence'][:2])}\n"
+            f"  Reasoning: {rel['reasoning'][:100]}..."
+            for rel in causal_relationships
+        ]
+    )
 
     # Format hypotheses for prompt
-    hypotheses_str = "\n".join([
-        f"- {h['hypothesis_id']}: {h['description']}"
-        for h in hypotheses
-    ])
+    hypotheses_str = "\n".join([f"- {h['hypothesis_id']}: {h['description']}" for h in hypotheses])
 
     # Format prompt and invoke
     prompt = HYPOTHESIS_VALIDATOR_PROMPT.format(
         query=query,
         issue_summary=issue_summary,
         causal_analysis=causal_analysis_str,
-        hypotheses=hypotheses_str
+        hypotheses=hypotheses_str,
     )
 
     ranking: HypothesisRanking = structured_model.invoke(prompt)
@@ -60,7 +59,9 @@ def hypothesis_validator_node(state: dict) -> dict:
     print(f"  Ranked {len(ranking.ranked_hypotheses)} hypotheses")
     print("  Top 3 most likely:")
     for i, h in enumerate(ranking.ranked_hypotheses[:3], 1):
-        print(f"    {i}. {h.hypothesis_id}: {h.description[:50]}... (likelihood: {h.likelihood:.2f})")
+        print(
+            f"    {i}. {h.hypothesis_id}: {h.description[:50]}... (likelihood: {h.likelihood:.2f})"
+        )
 
     # Convert to dict format for state storage
     ranked_hypotheses_dict = [h.dict() for h in ranking.ranked_hypotheses]

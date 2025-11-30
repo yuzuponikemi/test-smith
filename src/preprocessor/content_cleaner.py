@@ -12,6 +12,7 @@ import hashlib
 import re
 from collections import Counter
 from difflib import SequenceMatcher
+from typing import Union
 
 from langchain.schema import Document
 
@@ -19,9 +20,7 @@ from langchain.schema import Document
 class ContentCleaner:
     """Cleans and deduplicates document content"""
 
-    def __init__(self,
-                 similarity_threshold: float = 0.95,
-                 min_content_length: int = 50):
+    def __init__(self, similarity_threshold: float = 0.95, min_content_length: int = 50):
         """
         Args:
             similarity_threshold: Threshold for near-duplicate detection (0-1)
@@ -31,18 +30,20 @@ class ContentCleaner:
         self.min_content_length = min_content_length
 
         self.stats = {
-            'total_input_chunks': 0,
-            'exact_duplicates_removed': 0,
-            'near_duplicates_removed': 0,
-            'too_small_removed': 0,
-            'boilerplate_removed': 0,
-            'total_output_chunks': 0,
+            "total_input_chunks": 0,
+            "exact_duplicates_removed": 0,
+            "near_duplicates_removed": 0,
+            "too_small_removed": 0,
+            "boilerplate_removed": 0,
+            "total_output_chunks": 0,
         }
 
-    def clean_and_deduplicate(self,
-                              chunks: list[Document],
-                              remove_near_duplicates: bool = True,
-                              remove_boilerplate: bool = True) -> list[Document]:
+    def clean_and_deduplicate(
+        self,
+        chunks: list[Document],
+        remove_near_duplicates: bool = True,
+        remove_boilerplate: bool = True,
+    ) -> list[Document]:
         """
         Clean and deduplicate chunks
 
@@ -54,7 +55,7 @@ class ContentCleaner:
         Returns:
             List of cleaned, deduplicated chunks
         """
-        self.stats['total_input_chunks'] += len(chunks)
+        self.stats["total_input_chunks"] += len(chunks)
 
         if not chunks:
             return []
@@ -76,7 +77,7 @@ class ContentCleaner:
         # Step 5: Normalize content
         chunks = self._normalize_chunks(chunks)
 
-        self.stats['total_output_chunks'] = len(chunks)
+        self.stats["total_output_chunks"] = len(chunks)
 
         return chunks
 
@@ -94,7 +95,7 @@ class ContentCleaner:
                 seen_hashes.add(content_hash)
                 unique_chunks.append(chunk)
             else:
-                self.stats['exact_duplicates_removed'] += 1
+                self.stats["exact_duplicates_removed"] += 1
 
         return unique_chunks
 
@@ -105,21 +106,18 @@ class ContentCleaner:
             return chunks
 
         unique_chunks = []
-        seen_contents = []
+        seen_contents: list[str] = []
 
         for chunk in chunks:
             is_duplicate = False
 
             # Compare with previously seen chunks
             for seen_content in seen_contents:
-                similarity = self._calculate_similarity(
-                    chunk.page_content,
-                    seen_content
-                )
+                similarity = self._calculate_similarity(chunk.page_content, seen_content)
 
                 if similarity >= self.similarity_threshold:
                     is_duplicate = True
-                    self.stats['near_duplicates_removed'] += 1
+                    self.stats["near_duplicates_removed"] += 1
                     break
 
             if not is_duplicate:
@@ -137,8 +135,7 @@ class ContentCleaner:
         # If a chunk appears in > 20% of documents, it's likely boilerplate
         threshold = max(3, len(chunks) * 0.2)
         boilerplate_content = {
-            content for content, count in content_counter.items()
-            if count >= threshold
+            content for content, count in content_counter.items() if count >= threshold
         }
 
         if not boilerplate_content:
@@ -150,7 +147,7 @@ class ContentCleaner:
             if chunk.page_content not in boilerplate_content:
                 cleaned_chunks.append(chunk)
             else:
-                self.stats['boilerplate_removed'] += 1
+                self.stats["boilerplate_removed"] += 1
 
         return cleaned_chunks
 
@@ -165,7 +162,7 @@ class ContentCleaner:
             if content_length >= self.min_content_length:
                 filtered_chunks.append(chunk)
             else:
-                self.stats['too_small_removed'] += 1
+                self.stats["too_small_removed"] += 1
 
         return filtered_chunks
 
@@ -175,8 +172,8 @@ class ContentCleaner:
         for chunk in chunks:
             # Normalize whitespace
             content = chunk.page_content
-            content = re.sub(r'\s+', ' ', content)  # Multiple spaces to single
-            content = re.sub(r'\n\s*\n\s*\n+', '\n\n', content)  # Multiple newlines to double
+            content = re.sub(r"\s+", " ", content)  # Multiple spaces to single
+            content = re.sub(r"\n\s*\n\s*\n+", "\n\n", content)  # Multiple newlines to double
             content = content.strip()
 
             chunk.page_content = content
@@ -204,14 +201,14 @@ class ContentCleaner:
 
         # Common patterns to detect
         patterns = {
-            'japanese_header': r'^\d+\.\s*書誌情報',
-            'researchgate': r'researchgate\.net',
-            'doi': r'doi\.org',
-            'arxiv': r'arxiv\.org',
-            'citations': r'(References|参考文献|Bibliography)',
-            'copyright': r'©|Copyright',
-            'page_numbers': r'^\d+$',
-            'urls': r'https?://',
+            "japanese_header": r"^\d+\.\s*書誌情報",
+            "researchgate": r"researchgate\.net",
+            "doi": r"doi\.org",
+            "arxiv": r"arxiv\.org",
+            "citations": r"(References|参考文献|Bibliography)",
+            "copyright": r"©|Copyright",
+            "page_numbers": r"^\d+$",
+            "urls": r"https?://",
         }
 
         pattern_counts = dict.fromkeys(patterns.keys(), 0)
@@ -224,25 +221,24 @@ class ContentCleaner:
 
         return pattern_counts
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Union[int, float]]:
         """Get cleaning statistics"""
-        stats = self.stats.copy()
+        stats_copy: dict[str, Union[int, float]] = dict(self.stats)
 
-        if stats['total_input_chunks'] > 0:
-            stats['removal_rate'] = (
-                (stats['total_input_chunks'] - stats['total_output_chunks'])
-                / stats['total_input_chunks']
-            )
+        if stats_copy["total_input_chunks"] > 0:
+            stats_copy["removal_rate"] = (
+                stats_copy["total_input_chunks"] - stats_copy["total_output_chunks"]
+            ) / stats_copy["total_input_chunks"]
         else:
-            stats['removal_rate'] = 0.0
+            stats_copy["removal_rate"] = 0.0
 
-        return stats
+        return stats_copy
 
     def print_stats(self):
         """Print cleaning statistics"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("CONTENT CLEANING STATISTICS")
-        print("="*80)
+        print("=" * 80)
 
         stats = self.get_stats()
 
@@ -257,13 +253,15 @@ class ContentCleaner:
         print(f"  Boilerplate: {stats['boilerplate_removed']}")
         print(f"  Too small: {stats['too_small_removed']}")
 
-        print("="*80)
+        print("=" * 80)
 
 
-def clean_documents(chunks: list[Document],
-                   min_length: int = 100,
-                   similarity_threshold: float = 0.95,
-                   remove_near_duplicates: bool = True) -> list[Document]:
+def clean_documents(
+    chunks: list[Document],
+    min_length: int = 100,
+    similarity_threshold: float = 0.95,
+    remove_near_duplicates: bool = True,
+) -> list[Document]:
     """
     Convenience function to clean and deduplicate documents
 
@@ -277,11 +275,7 @@ def clean_documents(chunks: list[Document],
         Cleaned and deduplicated chunks
     """
     cleaner = ContentCleaner(
-        similarity_threshold=similarity_threshold,
-        min_content_length=min_length
+        similarity_threshold=similarity_threshold, min_content_length=min_length
     )
 
-    return cleaner.clean_and_deduplicate(
-        chunks,
-        remove_near_duplicates=remove_near_duplicates
-    )
+    return cleaner.clean_and_deduplicate(chunks, remove_near_duplicates=remove_near_duplicates)

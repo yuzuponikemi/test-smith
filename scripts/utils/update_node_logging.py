@@ -35,22 +35,29 @@ for filepath, node_name in nodes_to_update:
     if "from src.models import" in content or "from src.prompts import" in content:
         # Add import after first from src. import
         content = re.sub(
-            r'(from src\.\w+ import [^\n]+\n)',
-            r'\1from src.utils.logging_utils import print_node_header\n',
+            r"(from src\.\w+ import [^\n]+\n)",
+            r"\1from src.utils.logging_utils import print_node_header\n",
             content,
-            count=1
+            count=1,
         )
     else:
         # Add at top after any existing imports
-        lines = content.split('\n')
+        lines = content.split("\n")
         insert_idx = 0
         for i, line in enumerate(lines):
-            if line.strip() and not line.strip().startswith('#') and not line.strip().startswith('"""'):
-                if not line.startswith('import') and not line.startswith('from'):
-                    insert_idx = i
-                    break
-        lines.insert(insert_idx, 'from src.utils.logging_utils import print_node_header')
-        content = '\n'.join(lines)
+            if (
+                (
+                    line.strip()
+                    and not line.strip().startswith("#")
+                    and not line.strip().startswith('"""')
+                )
+                and not line.startswith("import")
+                and not line.startswith("from")
+            ):
+                insert_idx = i
+                break
+        lines.insert(insert_idx, "from src.utils.logging_utils import print_node_header")
+        content = "\n".join(lines)
 
     # Replace print("---NODE NAME---") with print_node_header("NODE NAME")
     old_pattern = f'print\\("---{node_name}---"\\)'

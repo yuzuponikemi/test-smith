@@ -54,5 +54,5 @@ Provide a comprehensive ranking with clear reasoning.
 
 HYPOTHESIS_VALIDATOR_PROMPT = PromptTemplate(
     template=HYPOTHESIS_VALIDATOR_TEMPLATE,
-    input_variables=["query", "issue_summary", "causal_analysis", "hypotheses"]
+    input_variables=["query", "issue_summary", "causal_analysis", "hypotheses"],
 )

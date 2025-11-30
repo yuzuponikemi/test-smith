@@ -31,6 +31,7 @@ from src.models import get_evaluation_model
 # HEURISTIC EVALUATORS (Rule-Based)
 # ============================================================================
 
+
 def evaluate_response_length(run: Any, example: Any) -> dict[str, Any]:
     """
     Evaluate if response length is appropriate for query complexity.
@@ -44,18 +45,14 @@ def evaluate_response_length(run: Any, example: Any) -> dict[str, Any]:
     length = len(actual_output)
 
     if length == 0:
-        return {
-            "key": "response_length",
-            "score": 0.0,
-            "comment": "Empty response"
-        }
+        return {"key": "response_length", "score": 0.0, "comment": "Empty response"}
 
     # Define expected length ranges
     length_ranges = {
         "simple": (50, 500),
         "medium": (200, 1500),
         "high": (500, 3000),
-        "very_high": (1000, 5000)
+        "very_high": (1000, 5000),
     }
 
     min_length, max_length = length_ranges.get(complexity, (200, 2000))
@@ -70,11 +67,7 @@ def evaluate_response_length(run: Any, example: Any) -> dict[str, Any]:
         score = 0.5
         comment = f"Too long ({length} chars) for {complexity} query (expected <{max_length})"
 
-    return {
-        "key": "response_length",
-        "score": score,
-        "comment": comment
-    }
+    return {"key": "response_length", "score": score, "comment": comment}
 
 
 def evaluate_execution_time(run: Any, example: Any) -> dict[str, Any]:
@@ -85,17 +78,17 @@ def evaluate_execution_time(run: Any, example: Any) -> dict[str, Any]:
         score: 1.0 if within threshold, proportional penalty if over
     """
     # Get execution time from run metadata
-    if hasattr(run, 'execution_time'):
+    if hasattr(run, "execution_time"):
         execution_time = run.execution_time
     else:
         # Calculate from start/end times if available
-        if hasattr(run, 'start_time') and hasattr(run, 'end_time'):
+        if hasattr(run, "start_time") and hasattr(run, "end_time"):
             execution_time = (run.end_time - run.start_time).total_seconds()
         else:
             return {
                 "key": "execution_time",
                 "score": None,
-                "comment": "Execution time not available"
+                "comment": "Execution time not available",
             }
 
     # Get expected time from example metadata
@@ -108,7 +101,7 @@ def evaluate_execution_time(run: Any, example: Any) -> dict[str, Any]:
             "quick_research": 60,
             "fact_check": 45,
             "comparative": 90,
-            "deep_research": 180
+            "deep_research": 180,
         }
         max_expected_time = thresholds.get(expected_graph, 120)
 
@@ -121,12 +114,7 @@ def evaluate_execution_time(run: Any, example: Any) -> dict[str, Any]:
         score = max(0.0, 1.0 - (overage_ratio - 1.0) * 0.5)
         comment = f"Slow: {execution_time:.1f}s (expected <{max_expected_time}s)"
 
-    return {
-        "key": "execution_time",
-        "score": score,
-        "comment": comment,
-        "value": execution_time
-    }
+    return {"key": "execution_time", "score": score, "comment": comment, "value": execution_time}
 
 
 def evaluate_rag_usage(run: Any, example: Any) -> dict[str, Any]:
@@ -159,28 +147,24 @@ def evaluate_rag_usage(run: Any, example: Any) -> dict[str, Any]:
         return {
             "key": "rag_usage",
             "score": 0.0,
-            "comment": "Failed to use knowledge base for internal documentation query"
+            "comment": "Failed to use knowledge base for internal documentation query",
         }
 
     if requires_web and not used_web:
         return {
             "key": "rag_usage",
             "score": 0.0,
-            "comment": "Failed to use web search for current events/external query"
+            "comment": "Failed to use web search for current events/external query",
         }
 
     if should_use_rag is True and not used_rag:
-        return {
-            "key": "rag_usage",
-            "score": 0.0,
-            "comment": "Should have used RAG but didn't"
-        }
+        return {"key": "rag_usage", "score": 0.0, "comment": "Should have used RAG but didn't"}
 
     if should_use_rag is False and used_rag and not used_web:
         return {
             "key": "rag_usage",
             "score": 0.5,
-            "comment": "Used only RAG when web search would be more appropriate"
+            "comment": "Used only RAG when web search would be more appropriate",
         }
 
     # If no specific requirement, check for reasonable allocation
@@ -197,14 +181,10 @@ def evaluate_rag_usage(run: Any, example: Any) -> dict[str, Any]:
         comment = "Warning: No sources used"
         score = 0.0
 
-    return {
-        "key": "rag_usage",
-        "score": score,
-        "comment": comment
-    }
+    return {"key": "rag_usage", "score": score, "comment": comment}
 
 
-def evaluate_no_errors(run: Any, example: Any) -> dict[str, Any]:
+def evaluate_no_errors(run: Any, _example: Any) -> dict[str, Any]:
     """
     Check if execution completed without errors.
 
@@ -212,12 +192,8 @@ def evaluate_no_errors(run: Any, example: Any) -> dict[str, Any]:
         score: 1.0 if no errors, 0.0 if errors occurred
     """
     # Check for error in run
-    if hasattr(run, 'error') and run.error:
-        return {
-            "key": "no_errors",
-            "score": 0.0,
-            "comment": f"Execution error: {str(run.error)}"
-        }
+    if hasattr(run, "error") and run.error:
+        return {"key": "no_errors", "score": 0.0, "comment": f"Execution error: {str(run.error)}"}
 
     # Check for empty output (possible silent failure)
     actual_output = run.outputs.get("report", "")
@@ -225,25 +201,18 @@ def evaluate_no_errors(run: Any, example: Any) -> dict[str, Any]:
         return {
             "key": "no_errors",
             "score": 0.0,
-            "comment": "Empty output (possible silent failure)"
+            "comment": "Empty output (possible silent failure)",
         }
 
-    return {
-        "key": "no_errors",
-        "score": 1.0,
-        "comment": "Completed without errors"
-    }
+    return {"key": "no_errors", "score": 1.0, "comment": "Completed without errors"}
 
 
 # ============================================================================
 # LLM-AS-JUDGE EVALUATORS
 # ============================================================================
 
-def create_llm_evaluator(
-    criteria: str,
-    metric_name: str,
-    scoring_guide: str = None
-) -> callable:
+
+def create_llm_evaluator(criteria: str, metric_name: str, scoring_guide: str = None) -> callable:
     """
     Factory function to create LLM-as-judge evaluators.
 
@@ -266,12 +235,18 @@ def create_llm_evaluator(
     1.0 = Excellent, fully meets criteria
     """
 
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", """You are an expert evaluator for a research AI agent.
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                """You are an expert evaluator for a research AI agent.
 Your task is to evaluate the agent's output based on specific criteria.
 
-Be objective and consistent. Provide a numerical score and brief reasoning."""),
-        ("human", """Evaluate the following:
+Be objective and consistent. Provide a numerical score and brief reasoning.""",
+            ),
+            (
+                "human",
+                """Evaluate the following:
 
 QUERY: {query}
 
@@ -288,8 +263,10 @@ SCORING GUIDE:
 
 Provide your evaluation in this exact format:
 Score: <number between 0.0 and 1.0>
-Reasoning: <brief explanation>""")
-    ])
+Reasoning: <brief explanation>""",
+            ),
+        ]
+    )
 
     chain = prompt | llm
 
@@ -300,13 +277,15 @@ Reasoning: <brief explanation>""")
         query = example.inputs.get("input", "")
 
         try:
-            result = chain.invoke({
-                "query": query,
-                "output": actual_output,
-                "reference": reference_output,
-                "criteria": criteria,
-                "scoring_guide": scoring_guide or default_scoring
-            })
+            result = chain.invoke(
+                {
+                    "query": query,
+                    "output": actual_output,
+                    "reference": reference_output,
+                    "criteria": criteria,
+                    "scoring_guide": scoring_guide or default_scoring,
+                }
+            )
 
             # Parse score from LLM response
             response_text = result.content
@@ -324,15 +303,11 @@ Reasoning: <brief explanation>""")
             return {
                 "key": metric_name,
                 "score": score,
-                "comment": reasoning[:500]  # Limit comment length
+                "comment": reasoning[:500],  # Limit comment length
             }
 
         except Exception as e:
-            return {
-                "key": metric_name,
-                "score": None,
-                "comment": f"Evaluation error: {str(e)}"
-            }
+            return {"key": metric_name, "score": None, "comment": f"Evaluation error: {str(e)}"}
 
     return evaluator
 
@@ -347,7 +322,7 @@ evaluate_accuracy = create_llm_evaluator(
     0.5 = Several errors or missing important facts
     0.25 = Major factual errors
     0.0 = Completely incorrect or fabricated
-    """
+    """,
 )
 
 evaluate_completeness = create_llm_evaluator(
@@ -359,7 +334,7 @@ evaluate_completeness = create_llm_evaluator(
     0.5 = Covers some aspects, significant gaps
     0.25 = Superficial, misses most aspects
     0.0 = Does not address the query
-    """
+    """,
 )
 
 evaluate_hallucination = create_llm_evaluator(
@@ -373,7 +348,7 @@ evaluate_hallucination = create_llm_evaluator(
     0.0 = Entirely fabricated response
 
     Note: Score 1.0 means NO hallucination (higher is better)
-    """
+    """,
 )
 
 evaluate_relevance = create_llm_evaluator(
@@ -385,7 +360,7 @@ evaluate_relevance = create_llm_evaluator(
     0.5 = Partially relevant, some off-topic content
     0.25 = Largely irrelevant
     0.0 = Completely off-topic
-    """
+    """,
 )
 
 evaluate_structure = create_llm_evaluator(
@@ -397,13 +372,14 @@ evaluate_structure = create_llm_evaluator(
     0.5 = Acceptable but could be better organized
     0.25 = Poor organization, hard to follow
     0.0 = Chaotic, no clear structure
-    """
+    """,
 )
 
 
 # ============================================================================
 # SPECIALIZED EVALUATORS
 # ============================================================================
+
 
 def evaluate_graph_selection(run: Any, example: Any) -> dict[str, Any]:
     """
@@ -415,20 +391,16 @@ def evaluate_graph_selection(run: Any, example: Any) -> dict[str, Any]:
     expected_graph = example.inputs.get("metadata", {}).get("expected_graph")
 
     if not expected_graph or expected_graph == "any":
-        return {
-            "key": "graph_selection",
-            "score": None,
-            "comment": "No specific graph requirement"
-        }
+        return {"key": "graph_selection", "score": None, "comment": "No specific graph requirement"}
 
     # Get actual graph used from run metadata
-    actual_graph = run.outputs.get("graph_type") or getattr(run, 'graph_type', None)
+    actual_graph = run.outputs.get("graph_type") or getattr(run, "graph_type", None)
 
     if not actual_graph:
         return {
             "key": "graph_selection",
             "score": None,
-            "comment": "Graph type not recorded in run"
+            "comment": "Graph type not recorded in run",
         }
 
     if actual_graph == expected_graph:
@@ -440,7 +412,7 @@ def evaluate_graph_selection(run: Any, example: Any) -> dict[str, Any]:
             "quick_research": ["fact_check", "comparative"],
             "deep_research": ["quick_research"],  # overkill but works
             "fact_check": ["quick_research"],
-            "comparative": ["quick_research", "deep_research"]
+            "comparative": ["quick_research", "deep_research"],
         }
 
         if actual_graph in alternatives.get(expected_graph, []):
@@ -450,11 +422,7 @@ def evaluate_graph_selection(run: Any, example: Any) -> dict[str, Any]:
             score = 0.0
             comment = f"Wrong: Used {actual_graph}, expected {expected_graph}"
 
-    return {
-        "key": "graph_selection",
-        "score": score,
-        "comment": comment
-    }
+    return {"key": "graph_selection", "score": score, "comment": comment}
 
 
 def evaluate_citation_quality(run: Any, example: Any) -> dict[str, Any]:
@@ -480,19 +448,13 @@ def evaluate_citation_quality(run: Any, example: Any) -> dict[str, Any]:
     ]
 
     citation_count = sum(
-        len(re.findall(pattern, actual_output, re.IGNORECASE))
-        for pattern in citation_patterns
+        len(re.findall(pattern, actual_output, re.IGNORECASE)) for pattern in citation_patterns
     )
 
     complexity = example.inputs.get("metadata", {}).get("complexity", "medium")
 
     # Expected citations by complexity
-    expected_citations = {
-        "simple": 0,
-        "medium": 1,
-        "high": 3,
-        "very_high": 5
-    }
+    expected_citations = {"simple": 0, "medium": 1, "high": 3, "very_high": 5}
 
     expected = expected_citations.get(complexity, 1)
 
@@ -506,12 +468,7 @@ def evaluate_citation_quality(run: Any, example: Any) -> dict[str, Any]:
         score = 0.0
         comment = f"Poor citation quality ({citation_count} indicators, expected {expected}+)"
 
-    return {
-        "key": "citation_quality",
-        "score": score,
-        "comment": comment,
-        "value": citation_count
-    }
+    return {"key": "citation_quality", "score": score, "comment": comment, "value": citation_count}
 
 
 # ============================================================================
@@ -565,11 +522,13 @@ def get_evaluators_for_example(example: Any) -> list:
         evaluators.append(evaluate_rag_usage)
 
     if complexity in ["high", "very_high"]:
-        evaluators.extend([
-            evaluate_completeness,
-            evaluate_structure,
-            evaluate_citation_quality,
-        ])
+        evaluators.extend(
+            [
+                evaluate_completeness,
+                evaluate_structure,
+                evaluate_citation_quality,
+            ]
+        )
 
     if "hallucination" in category:
         evaluators.append(evaluate_hallucination)

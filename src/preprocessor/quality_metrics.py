@@ -24,7 +24,7 @@ class QualityMetrics:
         """Calculate comprehensive quality metrics"""
 
         if not chunks:
-            return {'status': 'no_chunks', 'total_chunks': 0}
+            return {"status": "no_chunks", "total_chunks": 0}
 
         # Basic statistics
         chunk_lengths = [len(chunk.page_content) for chunk in chunks]
@@ -32,14 +32,14 @@ class QualityMetrics:
 
         # Chunk size metrics
         size_metrics = {
-            'total_chunks': len(chunks),
-            'mean_chunk_size': np.mean(chunk_lengths),
-            'median_chunk_size': np.median(chunk_lengths),
-            'std_chunk_size': np.std(chunk_lengths),
-            'min_chunk_size': np.min(chunk_lengths),
-            'max_chunk_size': np.max(chunk_lengths),
-            'mean_word_count': np.mean(word_counts),
-            'median_word_count': np.median(word_counts),
+            "total_chunks": len(chunks),
+            "mean_chunk_size": np.mean(chunk_lengths),
+            "median_chunk_size": np.median(chunk_lengths),
+            "std_chunk_size": np.std(chunk_lengths),
+            "min_chunk_size": np.min(chunk_lengths),
+            "max_chunk_size": np.max(chunk_lengths),
+            "mean_word_count": np.mean(word_counts),
+            "median_word_count": np.median(word_counts),
         }
 
         # Size distribution
@@ -52,19 +52,15 @@ class QualityMetrics:
         metadata_metrics = self._calculate_metadata_coverage(chunks)
 
         # Quality score
-        quality_score = self._calculate_quality_score(
-            size_metrics,
-            diversity_metrics,
-            len(chunks)
-        )
+        quality_score = self._calculate_quality_score(size_metrics, diversity_metrics, len(chunks))
 
         self.metrics = {
             **size_metrics,
-            'size_distribution': size_distribution,
+            "size_distribution": size_distribution,
             **diversity_metrics,
             **metadata_metrics,
-            'quality_score': quality_score,
-            'quality_grade': self._get_quality_grade(quality_score)
+            "quality_score": quality_score,
+            "quality_grade": self._get_quality_grade(quality_score),
         }
 
         return self.metrics
@@ -73,24 +69,24 @@ class QualityMetrics:
         """Calculate distribution of chunk sizes"""
 
         distribution = {
-            'very_small': 0,    # < 100 chars
-            'small': 0,         # 100-500
-            'medium': 0,        # 500-1000
-            'large': 0,         # 1000-1500
-            'very_large': 0,    # > 1500
+            "very_small": 0,  # < 100 chars
+            "small": 0,  # 100-500
+            "medium": 0,  # 500-1000
+            "large": 0,  # 1000-1500
+            "very_large": 0,  # > 1500
         }
 
         for length in chunk_lengths:
             if length < 100:
-                distribution['very_small'] += 1
+                distribution["very_small"] += 1
             elif length < 500:
-                distribution['small'] += 1
+                distribution["small"] += 1
             elif length < 1000:
-                distribution['medium'] += 1
+                distribution["medium"] += 1
             elif length < 1500:
-                distribution['large'] += 1
+                distribution["large"] += 1
             else:
-                distribution['very_large'] += 1
+                distribution["very_large"] += 1
 
         return distribution
 
@@ -116,17 +112,17 @@ class QualityMetrics:
         common_words = self._find_common_words(chunks)
 
         return {
-            'uniqueness_ratio': uniqueness_ratio,
-            'vocabulary_diversity': vocabulary_diversity,
-            'total_vocabulary_size': unique_words,
-            'avg_words_per_chunk': total_words / len(chunks) if chunks else 0,
-            'top_common_words': common_words[:10],
+            "uniqueness_ratio": uniqueness_ratio,
+            "vocabulary_diversity": vocabulary_diversity,
+            "total_vocabulary_size": unique_words,
+            "avg_words_per_chunk": total_words / len(chunks) if chunks else 0,
+            "top_common_words": common_words[:10],
         }
 
     def _find_common_words(self, chunks: list[Document], min_length: int = 4) -> list[tuple]:
         """Find most common words across chunks"""
 
-        word_counter = Counter()
+        word_counter: Counter[str] = Counter()
 
         for chunk in chunks:
             words = chunk.page_content.lower().split()
@@ -141,8 +137,8 @@ class QualityMetrics:
         """Calculate metadata coverage"""
 
         # Count how many chunks have various metadata fields
-        has_source = sum(1 for c in chunks if 'source' in c.metadata)
-        has_chunking_method = sum(1 for c in chunks if 'chunking_method' in c.metadata)
+        has_source = sum(1 for c in chunks if "source" in c.metadata)
+        has_chunking_method = sum(1 for c in chunks if "chunking_method" in c.metadata)
 
         # Collect all metadata keys
         all_metadata_keys = set()
@@ -150,16 +146,15 @@ class QualityMetrics:
             all_metadata_keys.update(chunk.metadata.keys())
 
         return {
-            'chunks_with_source': has_source,
-            'chunks_with_chunking_method': has_chunking_method,
-            'metadata_keys': list(all_metadata_keys),
-            'avg_metadata_fields': np.mean([len(c.metadata) for c in chunks]) if chunks else 0,
+            "chunks_with_source": has_source,
+            "chunks_with_chunking_method": has_chunking_method,
+            "metadata_keys": list(all_metadata_keys),
+            "avg_metadata_fields": np.mean([len(c.metadata) for c in chunks]) if chunks else 0,
         }
 
-    def _calculate_quality_score(self,
-                                 size_metrics: dict,
-                                 diversity_metrics: dict,
-                                 num_chunks: int) -> float:
+    def _calculate_quality_score(
+        self, size_metrics: dict, diversity_metrics: dict, _num_chunks: int
+    ) -> float:
         """
         Calculate overall quality score (0-1)
 
@@ -172,7 +167,7 @@ class QualityMetrics:
         score = 0.0
 
         # Size score (0-0.4)
-        median_size = size_metrics['median_chunk_size']
+        median_size = size_metrics["median_chunk_size"]
         if 300 <= median_size <= 1500:
             size_score = 0.4
         elif 150 <= median_size <= 2000:
@@ -185,7 +180,7 @@ class QualityMetrics:
         score += size_score
 
         # Diversity score (0-0.4)
-        uniqueness = diversity_metrics['uniqueness_ratio']
+        uniqueness = diversity_metrics["uniqueness_ratio"]
         if uniqueness >= 0.95:
             diversity_score = 0.4
         elif uniqueness >= 0.85:
@@ -198,7 +193,7 @@ class QualityMetrics:
         score += diversity_score
 
         # Vocabulary score (0-0.2)
-        vocab_diversity = diversity_metrics['vocabulary_diversity']
+        vocab_diversity = diversity_metrics["vocabulary_diversity"]
         if vocab_diversity >= 0.5:
             vocab_score = 0.2
         elif vocab_diversity >= 0.3:
@@ -216,15 +211,15 @@ class QualityMetrics:
         """Convert quality score to grade"""
 
         if score >= 0.9:
-            return 'Excellent'
+            return "Excellent"
         elif score >= 0.75:
-            return 'Good'
+            return "Good"
         elif score >= 0.6:
-            return 'Fair'
+            return "Fair"
         elif score >= 0.4:
-            return 'Poor'
+            return "Poor"
         else:
-            return 'Very Poor'
+            return "Very Poor"
 
     def print_report(self):
         """Print detailed metrics report"""
@@ -233,9 +228,9 @@ class QualityMetrics:
             print("No metrics calculated yet. Run calculate_metrics() first.")
             return
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("QUALITY METRICS REPORT")
-        print("="*80)
+        print("=" * 80)
 
         m = self.metrics
 
@@ -250,8 +245,8 @@ class QualityMetrics:
         print(f"  Mean Words: {m['mean_word_count']:.1f} words/chunk")
 
         print("\n📈 Size Distribution:")
-        dist = m['size_distribution']
-        total = m['total_chunks']
+        dist = m["size_distribution"]
+        total = m["total_chunks"]
         for category, count in dist.items():
             percentage = (count / total * 100) if total > 0 else 0
             print(f"  {category:>12}: {count:>5} ({percentage:>5.1f}%)")
@@ -262,38 +257,46 @@ class QualityMetrics:
         print(f"  Total Vocabulary: {m['total_vocabulary_size']} unique words")
         print(f"  Avg Words/Chunk: {m['avg_words_per_chunk']:.1f}")
 
-        if m['top_common_words']:
+        if m["top_common_words"]:
             print("\n  Top 10 Common Words:")
-            for word, count in m['top_common_words'][:10]:
+            for word, count in m["top_common_words"][:10]:
                 print(f"    '{word}': {count}")
 
         print("\n📋 Metadata Coverage:")
         print(f"  Chunks with source: {m['chunks_with_source']}/{m['total_chunks']}")
-        print(f"  Chunks with chunking_method: {m['chunks_with_chunking_method']}/{m['total_chunks']}")
+        print(
+            f"  Chunks with chunking_method: {m['chunks_with_chunking_method']}/{m['total_chunks']}"
+        )
         print(f"  Metadata fields: {', '.join(m['metadata_keys'])}")
 
         # Recommendations
         print("\n💡 Recommendations:")
 
-        if m['median_chunk_size'] < 300:
-            print("  ⚠️  Chunks are quite small - consider increasing chunk size or filtering more aggressively")
+        if m["median_chunk_size"] < 300:
+            print(
+                "  ⚠️  Chunks are quite small - consider increasing chunk size or filtering more aggressively"
+            )
 
-        if m['median_chunk_size'] > 2000:
-            print("  ⚠️  Chunks are quite large - consider decreasing chunk size for better retrieval")
+        if m["median_chunk_size"] > 2000:
+            print(
+                "  ⚠️  Chunks are quite large - consider decreasing chunk size for better retrieval"
+            )
 
-        if m['uniqueness_ratio'] < 0.85:
+        if m["uniqueness_ratio"] < 0.85:
             print("  ⚠️  High duplication rate - enable near-duplicate detection")
 
-        if m['vocabulary_diversity'] < 0.2:
+        if m["vocabulary_diversity"] < 0.2:
             print("  ⚠️  Low vocabulary diversity - documents may be too similar or repetitive")
 
-        if dist['very_small'] > total * 0.1:
-            print(f"  ⚠️  {dist['very_small']} very small chunks detected - increase min_chunk_size filter")
+        if dist["very_small"] > total * 0.1:
+            print(
+                f"  ⚠️  {dist['very_small']} very small chunks detected - increase min_chunk_size filter"
+            )
 
-        if m['quality_score'] >= 0.75:
+        if m["quality_score"] >= 0.75:
             print("  ✅ Data quality looks good! Ready for embedding.")
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
 
     def get_recommendations(self) -> list[str]:
         """Get actionable recommendations based on metrics"""
@@ -305,25 +308,25 @@ class QualityMetrics:
         m = self.metrics
 
         # Size recommendations
-        if m['median_chunk_size'] < 200:
+        if m["median_chunk_size"] < 200:
             recommendations.append("Increase minimum chunk size to at least 200 characters")
-        elif m['median_chunk_size'] > 2500:
+        elif m["median_chunk_size"] > 2500:
             recommendations.append("Decrease chunk size to improve retrieval granularity")
 
         # Diversity recommendations
-        if m['uniqueness_ratio'] < 0.80:
+        if m["uniqueness_ratio"] < 0.80:
             recommendations.append("Enable near-duplicate detection to improve uniqueness")
 
-        if m['vocabulary_diversity'] < 0.15:
+        if m["vocabulary_diversity"] < 0.15:
             recommendations.append("Review source documents - content may be too repetitive")
 
         # Distribution recommendations
-        dist = m['size_distribution']
-        if dist['very_small'] > m['total_chunks'] * 0.15:
+        dist = m["size_distribution"]
+        if dist["very_small"] > m["total_chunks"] * 0.15:
             recommendations.append("Too many very small chunks - increase min_chunk_size filter")
 
         # Overall
-        if m['quality_score'] < 0.5:
+        if m["quality_score"] < 0.5:
             recommendations.append("Consider reviewing document preprocessing pipeline")
 
         if not recommendations:

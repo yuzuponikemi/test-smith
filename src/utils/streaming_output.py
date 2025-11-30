@@ -53,8 +53,8 @@ class Colors:
     def disable(cls):
         """Disable colors for non-terminal output"""
         for attr in dir(cls):
-            if not attr.startswith('_') and attr.isupper():
-                setattr(cls, attr, '')
+            if not attr.startswith("_") and attr.isupper():
+                setattr(cls, attr, "")
 
 
 # Check if stdout supports colors
@@ -103,23 +103,19 @@ class StreamingFormatter:
         "master_planner": "Analyzing query complexity and creating research plan",
         "planner": "Allocating queries between knowledge base and web search",
         "subtask_executor": "Setting up subtask execution",
-
         # Research nodes
         "searcher": "Searching the web for information",
         "rag_retriever": "Searching internal knowledge base",
-
         # Analysis nodes
         "analyzer": "Analyzing and synthesizing gathered information",
         "evaluator": "Evaluating information sufficiency",
         "depth_evaluator": "Assessing research depth and quality",
         "reflection": "Performing meta-reasoning critique",
-
         # Generation nodes
         "drill_down_generator": "Generating follow-up research questions",
         "plan_revisor": "Adapting research plan based on discoveries",
         "save_result": "Saving subtask results",
         "synthesizer": "Generating final comprehensive report",
-
         # Causal inference nodes
         "issue_analyzer": "Analyzing issue symptoms and context",
         "brainstormer": "Generating root cause hypotheses",
@@ -128,12 +124,10 @@ class StreamingFormatter:
         "hypothesis_validator": "Ranking hypotheses by likelihood",
         "causal_graph_builder": "Building causal relationship graph",
         "root_cause_synthesizer": "Generating root cause analysis report",
-
         # Fact check nodes
         "claim_extractor": "Extracting claims to verify",
         "evidence_gatherer": "Gathering evidence for claims",
         "verdict_generator": "Generating fact-check verdicts",
-
         # Comparative nodes
         "comparison_planner": "Planning comparison analysis",
         "comparison_synthesizer": "Generating comparison report",
@@ -169,7 +163,9 @@ class StreamingFormatter:
     def _print_header(self):
         """Print the streaming output header"""
         print(f"\n{Colors.BOLD}{Colors.CYAN}{'═' * 70}{Colors.RESET}")
-        print(f"{Colors.BOLD}{Colors.CYAN}  Test-Smith Research Agent - Live Progress{Colors.RESET}")
+        print(
+            f"{Colors.BOLD}{Colors.CYAN}  Test-Smith Research Agent - Live Progress{Colors.RESET}"
+        )
         print(f"{Colors.CYAN}{'═' * 70}{Colors.RESET}\n")
 
     def _get_progress_bar(self, percentage: float, width: int = 30) -> str:
@@ -188,8 +184,10 @@ class StreamingFormatter:
         base_progress = (len(self.state.nodes_executed) / self.state.total_expected_nodes) * 100
 
         # Cap at 95% until synthesizer completes
-        if "synthesizer" not in self.state.nodes_executed and \
-           "root_cause_synthesizer" not in self.state.nodes_executed:
+        if (
+            "synthesizer" not in self.state.nodes_executed
+            and "root_cause_synthesizer" not in self.state.nodes_executed
+        ):
             base_progress = min(base_progress, 95)
 
         return min(base_progress, 100)
@@ -206,7 +204,7 @@ class StreamingFormatter:
                 latest = data[-1] if data else ""
                 if isinstance(latest, str) and len(latest) > 50:
                     # Extract first meaningful sentence
-                    sentences = re.split(r'[.!?]+', latest)
+                    sentences = re.split(r"[.!?]+", latest)
                     for sentence in sentences[:2]:
                         sentence = sentence.strip()
                         if len(sentence) > 30 and len(sentence) < 200:
@@ -251,7 +249,7 @@ class StreamingFormatter:
 
         return findings
 
-    def _extract_sources(self, node_name: str, value: dict[str, Any]) -> list[str]:
+    def _extract_sources(self, _node_name: str, value: dict[str, Any]) -> list[str]:
         """Extract source information from node output"""
         sources = []
 
@@ -264,7 +262,7 @@ class StreamingFormatter:
                     urls = re.findall(r'https?://[^\s<>"{}|\\^`\[\]]+', result)
                     for url in urls[:2]:  # Limit to 2 URLs per result
                         # Clean and shorten URL for display
-                        domain = re.search(r'https?://([^/]+)', url)
+                        domain = re.search(r"https?://([^/]+)", url)
                         if domain:
                             sources.append(domain.group(1))
 
@@ -361,7 +359,9 @@ class StreamingFormatter:
         # Subtask info (if hierarchical)
         if self.state.subtask_count > 0 and self.state.current_subtask:
             subtask_progress = f"{self.state.completed_subtasks + 1}/{self.state.subtask_count}"
-            print(f"  {Colors.YELLOW}Subtask: {self.state.current_subtask} ({subtask_progress}){Colors.RESET}")
+            print(
+                f"  {Colors.YELLOW}Subtask: {self.state.current_subtask} ({subtask_progress}){Colors.RESET}"
+            )
 
         # New findings
         if new_findings:
@@ -398,7 +398,9 @@ class StreamingFormatter:
         print(f"  • Sources consulted: {len(set(self.state.sources_consulted))}")
 
         if self.state.subtask_count > 0:
-            print(f"  • Subtasks completed: {self.state.completed_subtasks + 1}/{self.state.subtask_count}")
+            print(
+                f"  • Subtasks completed: {self.state.completed_subtasks + 1}/{self.state.subtask_count}"
+            )
 
         print()
 
@@ -420,6 +422,7 @@ def create_streaming_callback(formatter: StreamingFormatter):
 
         formatter.finalize()
     """
+
     def callback(chunk: dict[str, Any]):
         for node_name, value in chunk.items():
             formatter.process_node_output(node_name, value)

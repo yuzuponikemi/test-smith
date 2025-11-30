@@ -93,9 +93,20 @@ ignore = [
 ]
 "scripts/**/*.py" = [
     "T201", # print statements are ok in scripts
+    "E402", # Module level import after dotenv load is acceptable in scripts
 ]
 "benchmarks/**/*.py" = [
     "ARG",  # Unused arguments in benchmark fixtures
+]
+"main.py" = [
+    "E402",  # Module level import after dotenv load is intentional
+]
+"evaluation/evaluate_agent.py" = [
+    "E402",  # Module level import after dotenv load is intentional
+]
+"chroma_explorer.ipynb" = [
+    "B007",  # Unused loop variable is acceptable in notebooks
+    "E741",  # Single letter variables acceptable in notebooks
 ]
 
 [tool.ruff.lint.isort]

@@ -23,7 +23,7 @@ def evaluator_node(state):
         original_query=original_query,
         allocation_strategy=allocation_strategy,
         analyzed_data=analyzed_data,
-        loop_count=loop_count
+        loop_count=loop_count,
     )
 
     try:
@@ -32,14 +32,8 @@ def evaluator_node(state):
         print(f"  Result: {result}")
         print(f"  Reason: {evaluation.reason[:100]}...")
 
-        return {
-            "evaluation": result,
-            "reason": evaluation.reason
-        }
+        return {"evaluation": result, "reason": evaluation.reason}
     except Exception as e:
         print(f"  Warning: Structured evaluation failed, using fallback: {e}")
         message = model.invoke(prompt)
-        return {
-            "evaluation": message.content,
-            "reason": "Fallback evaluation used"
-        }
+        return {"evaluation": message.content, "reason": "Fallback evaluation used"}

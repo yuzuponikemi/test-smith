@@ -38,19 +38,21 @@ def root_cause_synthesizer_node(state: dict) -> dict:
     # Format issue analysis for prompt
     issue_analysis_str = f"""
 Summary: {issue_summary}
-Symptoms: {', '.join(symptoms)}
+Symptoms: {", ".join(symptoms)}
 Context: {context}
 Scope: {scope}
 """
 
     # Format ranked hypotheses for prompt
-    ranked_hypotheses_str = "\n".join([
-        f"{i+1}. {h['hypothesis_id']}: {h['description']}\n"
-        f"   Likelihood: {h['likelihood']:.2f} | Confidence: {h['confidence']}\n"
-        f"   Supporting factors: {', '.join(h['supporting_factors'][:3])}\n"
-        f"   Recommendation: {h['recommendation']}"
-        for i, h in enumerate(ranked_hypotheses)
-    ])
+    ranked_hypotheses_str = "\n".join(
+        [
+            f"{i + 1}. {h['hypothesis_id']}: {h['description']}\n"
+            f"   Likelihood: {h['likelihood']:.2f} | Confidence: {h['confidence']}\n"
+            f"   Supporting factors: {', '.join(h['supporting_factors'][:3])}\n"
+            f"   Recommendation: {h['recommendation']}"
+            for i, h in enumerate(ranked_hypotheses)
+        ]
+    )
 
     # Format causal graph data
     causal_graph_str = str(causal_graph_data) if causal_graph_data else "No graph data generated"
@@ -60,7 +62,7 @@ Scope: {scope}
         query=query,
         issue_analysis=issue_analysis_str,
         ranked_hypotheses=ranked_hypotheses_str,
-        causal_graph_data=causal_graph_str
+        causal_graph_data=causal_graph_str,
     )
 
     message = model.invoke(prompt)
@@ -68,6 +70,4 @@ Scope: {scope}
 
     print(f"  Generated comprehensive report ({len(report)} characters)")
 
-    return {
-        "report": report
-    }
+    return {"report": report}

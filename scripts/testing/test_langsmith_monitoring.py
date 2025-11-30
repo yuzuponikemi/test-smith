@@ -12,6 +12,7 @@ from src.graph import workflow
 
 load_dotenv()
 
+
 def test_with_langsmith_monitoring():
     """
     Simple test query for LangSmith monitoring.
@@ -47,21 +48,15 @@ def test_with_langsmith_monitoring():
         app = workflow.compile(checkpointer=memory)
 
         config = {
-            "configurable": {
-                "thread_id": "langsmith-monitoring-test"
-            },
-            "recursion_limit": 150
+            "configurable": {"thread_id": "langsmith-monitoring-test"},
+            "recursion_limit": 150,
         }
 
         print("\n🚀 Starting execution...\n")
         print("=" * 80)
 
         result = None
-        for event in app.stream(
-            {"query": test_query},
-            config=config,
-            stream_mode="values"
-        ):
+        for event in app.stream({"query": test_query}, config=config, stream_mode="values"):
             result = event
 
         print("\n" + "=" * 80)
@@ -74,13 +69,20 @@ def test_with_langsmith_monitoring():
             print(f"   Execution Mode: {execution_mode}")
 
             if execution_mode == "hierarchical":
-                print(f"   Total Subtasks: {len(result.get('master_plan', {}).get('subtasks', []))}")
+                print(
+                    f"   Total Subtasks: {len(result.get('master_plan', {}).get('subtasks', []))}"
+                )
                 print(f"   Revisions Made: {result.get('revision_count', 0)}")
-                print(f"   Node Executions: {result.get('node_execution_count', 0)}/{result.get('recursion_limit', 150)}")
-                print(f"   Budget Usage: {(result.get('node_execution_count', 0) / result.get('recursion_limit', 150) * 100):.1f}%")
+                print(
+                    f"   Node Executions: {result.get('node_execution_count', 0)}/{result.get('recursion_limit', 150)}"
+                )
+                print(
+                    f"   Budget Usage: {(result.get('node_execution_count', 0) / result.get('recursion_limit', 150) * 100):.1f}%"
+                )
 
             print("\n🎉 Check LangSmith for detailed trace visualization!")
             print("   https://smith.langchain.com/")
+
 
 if __name__ == "__main__":
     test_with_langsmith_monitoring()

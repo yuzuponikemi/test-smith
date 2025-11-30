@@ -20,9 +20,9 @@ from src.models import (
 
 
 def main():
-    print("="*60)
+    print("=" * 60)
     print("MODEL PROVIDER VERIFICATION")
-    print("="*60)
+    print("=" * 60)
 
     print("\n📍 Environment Variable:")
     print(f"   MODEL_PROVIDER = {os.getenv('MODEL_PROVIDER', 'not set')}")
@@ -49,7 +49,8 @@ def main():
     else:
         print("\n⚠️  WARNING: Unknown model type")
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
+
 
 if __name__ == "__main__":
     main()

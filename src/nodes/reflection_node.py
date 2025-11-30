@@ -43,7 +43,7 @@ def reflection_node(state):
         original_query=original_query,
         analyzed_data=analyzed_data,
         execution_mode=execution_mode,
-        context_info=context_info
+        context_info=context_info,
     )
 
     try:
@@ -67,7 +67,9 @@ def reflection_node(state):
             print(f"  ⚠️  CONTRADICTIONS: {len(critique.contradictions)}")
 
         # Print decision
-        decision = "CONTINUE RESEARCH" if critique.should_continue_research else "PROCEED TO SYNTHESIS"
+        decision = (
+            "CONTINUE RESEARCH" if critique.should_continue_research else "PROCEED TO SYNTHESIS"
+        )
         print(f"  Decision: {decision}")
         if critique.continuation_reasoning:
             print(f"  Reasoning: {critique.continuation_reasoning[:100]}...")
@@ -79,7 +81,7 @@ def reflection_node(state):
             "reflection_critique": critique_dict,
             "reflection_quality": critique.overall_quality,
             "should_continue_research": critique.should_continue_research,
-            "reflection_confidence": critique.confidence_score
+            "reflection_confidence": critique.confidence_score,
         }
 
     except Exception as e:
@@ -99,9 +101,9 @@ def reflection_node(state):
                 "should_continue_research": False,
                 "continuation_reasoning": "Fallback reflection used - proceeding with synthesis",
                 "synthesis_recommendations": [],
-                "confidence_score": 0.7
+                "confidence_score": 0.7,
             },
             "reflection_quality": "adequate",
             "should_continue_research": False,
-            "reflection_confidence": 0.7
+            "reflection_confidence": 0.7,
         }

@@ -31,10 +31,7 @@ def code_query_analyzer_node(state):
     print(f"  Analyzing query: {query[:100]}...")
 
     # Create prompt
-    prompt = PromptTemplate(
-        template=CODE_QUERY_ANALYZER_PROMPT,
-        input_variables=["query"]
-    )
+    prompt = PromptTemplate(template=CODE_QUERY_ANALYZER_PROMPT, input_variables=["query"])
 
     # Get model
     model = get_planner_model()
@@ -44,10 +41,10 @@ def code_query_analyzer_node(state):
         response = chain.invoke({"query": query})
 
         # Extract content
-        result = response.content if hasattr(response, 'content') else str(response)
+        result = response.content if hasattr(response, "content") else str(response)
 
         # Parse JSON from response
-        json_match = re.search(r'\{[\s\S]*\}', result)
+        json_match = re.search(r"\{[\s\S]*\}", result)
         if json_match:
             analysis = json.loads(json_match.group())
         else:
@@ -73,7 +70,7 @@ def code_query_analyzer_node(state):
             "search_patterns": search_patterns,
             "code_queries": code_queries,
             "investigation_scope": investigation_scope,
-            "loop_count": 0
+            "loop_count": 0,
         }
 
     except Exception as e:
@@ -86,7 +83,7 @@ def code_query_analyzer_node(state):
             "search_patterns": fallback["search_patterns"],
             "code_queries": fallback["code_queries"],
             "investigation_scope": fallback["investigation_scope"],
-            "loop_count": 0
+            "loop_count": 0,
         }
 
 
@@ -97,10 +94,10 @@ def _create_fallback_analysis(query: str) -> dict:
     identifiers = []
 
     # CamelCase
-    identifiers.extend(re.findall(r'\b([A-Z][a-zA-Z0-9]+)\b', query))
+    identifiers.extend(re.findall(r"\b([A-Z][a-zA-Z0-9]+)\b", query))
 
     # snake_case
-    identifiers.extend(re.findall(r'\b([a-z_][a-z_0-9]*(?:_[a-z_0-9]+)+)\b', query.lower()))
+    identifiers.extend(re.findall(r"\b([a-z_][a-z_0-9]*(?:_[a-z_0-9]+)+)\b", query.lower()))
 
     # Quoted terms
     identifiers.extend(re.findall(r'"([^"]+)"', query))
@@ -111,15 +108,15 @@ def _create_fallback_analysis(query: str) -> dict:
 
     # Determine investigation type from keywords
     query_lower = query.lower()
-    if any(word in query_lower for word in ['depend', 'import', 'use', 'call']):
+    if any(word in query_lower for word in ["depend", "import", "use", "call"]):
         inv_type = "dependency"
-    elif any(word in query_lower for word in ['flow', 'pass', 'data', 'variable']):
+    elif any(word in query_lower for word in ["flow", "pass", "data", "variable"]):
         inv_type = "flow"
-    elif any(word in query_lower for word in ['where', 'find', 'locate', 'usage']):
+    elif any(word in query_lower for word in ["where", "find", "locate", "usage"]):
         inv_type = "usage"
-    elif any(word in query_lower for word in ['architecture', 'structure', 'pattern', 'design']):
+    elif any(word in query_lower for word in ["architecture", "structure", "pattern", "design"]):
         inv_type = "architecture"
-    elif any(word in query_lower for word in ['how', 'work', 'implement']):
+    elif any(word in query_lower for word in ["how", "work", "implement"]):
         inv_type = "implementation"
     else:
         inv_type = "general"
@@ -129,5 +126,5 @@ def _create_fallback_analysis(query: str) -> dict:
         "target_elements": identifiers[:5],
         "search_patterns": identifiers[:3],
         "code_queries": [query] + identifiers[:4],
-        "investigation_scope": "medium"
+        "investigation_scope": "medium",
     }

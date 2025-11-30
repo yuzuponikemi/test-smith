@@ -116,12 +116,7 @@ class ComparativeResearchGraphBuilder(BaseGraphBuilder):
 
         # 5. Router: synthesize or gather more data
         workflow.add_conditional_edges(
-            "evaluator",
-            comparative_router,
-            {
-                "synthesizer": "synthesizer",
-                "planner": "planner"
-            }
+            "evaluator", comparative_router, {"synthesizer": "synthesizer", "planner": "planner"}
         )
 
         # 6. Synthesizer creates comparison matrix and final report
@@ -155,9 +150,7 @@ class ComparativeResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_edge("rag_retriever", "analyzer")
         workflow.add_edge("analyzer", "evaluator")
         workflow.add_conditional_edges(
-            "evaluator",
-            comparative_router,
-            {"synthesizer": "synthesizer", "planner": "planner"}
+            "evaluator", comparative_router, {"synthesizer": "synthesizer", "planner": "planner"}
         )
         workflow.add_edge("synthesizer", END)
 
@@ -177,7 +170,7 @@ class ComparativeResearchGraphBuilder(BaseGraphBuilder):
                 "Trade-off analysis",
                 "Decision support for choosing between options",
                 "Product/service comparison",
-                "A/B analysis"
+                "A/B analysis",
             ],
             "complexity": "medium",
             "supports_streaming": True,
@@ -189,7 +182,7 @@ class ComparativeResearchGraphBuilder(BaseGraphBuilder):
                 "Pros/cons analysis",
                 "Use case recommendations",
                 "Decision guidance",
-                "Up to 2 refinement iterations"
+                "Up to 2 refinement iterations",
             ],
             "output_format": {
                 "sections": [
@@ -200,18 +193,14 @@ class ComparativeResearchGraphBuilder(BaseGraphBuilder):
                     "Detailed analysis per item",
                     "Pros and cons",
                     "Best use cases for each option",
-                    "Decision recommendations"
+                    "Decision recommendations",
                 ]
             },
-            "performance": {
-                "avg_execution_time": "45-90 seconds",
-                "max_iterations": 2,
-                "nodes": 6
-            },
+            "performance": {"avg_execution_time": "45-90 seconds", "max_iterations": 2, "nodes": 6},
             "examples": [
                 "Compare React vs Vue vs Angular for web development",
                 "PostgreSQL vs MongoDB vs MySQL: which to choose?",
                 "Python vs Go vs Rust for backend services",
-                "AWS vs Azure vs GCP cloud platforms"
-            ]
+                "AWS vs Azure vs GCP cloud platforms",
+            ],
         }

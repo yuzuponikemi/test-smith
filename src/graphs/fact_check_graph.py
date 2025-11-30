@@ -135,7 +135,7 @@ class FactCheckGraphBuilder(BaseGraphBuilder):
                 "Check statement accuracy",
                 "Cross-reference information across sources",
                 "Detect contradictions or inconsistencies",
-                "Provide evidence-based assessments with citations"
+                "Provide evidence-based assessments with citations",
             ],
             "complexity": "medium",
             "supports_streaming": True,
@@ -146,7 +146,7 @@ class FactCheckGraphBuilder(BaseGraphBuilder):
                 "Confidence scoring (0.0-1.0)",
                 "Citation tracking",
                 "Contradiction detection",
-                "Single-pass execution for speed"
+                "Single-pass execution for speed",
             ],
             "output_format": {
                 "sections": [
@@ -154,12 +154,8 @@ class FactCheckGraphBuilder(BaseGraphBuilder):
                     "Supporting evidence with citations",
                     "Contradicting evidence with citations",
                     "Confidence assessment",
-                    "Limitations and caveats"
+                    "Limitations and caveats",
                 ]
             },
-            "performance": {
-                "avg_execution_time": "30-45 seconds",
-                "max_iterations": 1,
-                "nodes": 5
-            }
+            "performance": {"avg_execution_time": "30-45 seconds", "max_iterations": 1, "nodes": 5},
         }

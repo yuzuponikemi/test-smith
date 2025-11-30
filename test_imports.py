@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Quick test to verify all critical imports work"""
+
 import os
 
 from dotenv import load_dotenv
@@ -13,12 +14,17 @@ print("\n1. Testing .env loading...")
 load_dotenv()
 tavily_key = os.getenv("TAVILY_API_KEY")
 print("   ✓ .env loaded")
-print(f"   ✓ TAVILY_API_KEY found: {tavily_key[:20]}..." if tavily_key else "   ✗ TAVILY_API_KEY missing")
+print(
+    f"   ✓ TAVILY_API_KEY found: {tavily_key[:20]}..."
+    if tavily_key
+    else "   ✗ TAVILY_API_KEY missing"
+)
 
 # Test 2: Import chromadb
 print("\n2. Testing ChromaDB import...")
 try:
     import chromadb
+
     print(f"   ✓ chromadb imported (version: {chromadb.__version__})")
 except Exception as e:
     print(f"   ✗ chromadb import failed: {e}")
@@ -34,6 +40,7 @@ except Exception as e:
 print("\n4. Testing tavily-python import...")
 try:
     from tavily import TavilyClient
+
     print("   ✓ tavily.TavilyClient imported")
 except Exception as e:
     print(f"   ✗ tavily import failed: {e}")
@@ -56,6 +63,7 @@ except Exception as e:
 print("\n7. Testing Tavily client creation...")
 try:
     from tavily import TavilyClient
+
     if tavily_key:
         client = TavilyClient(api_key=tavily_key)
         print("   ✓ TavilyClient created successfully")
@@ -68,6 +76,7 @@ except Exception as e:
 print("\n8. Testing ChromaDB connection...")
 try:
     import chromadb
+
     client = chromadb.PersistentClient(path="./chroma_db")
     collections = client.list_collections()
     print("   ✓ ChromaDB connected")

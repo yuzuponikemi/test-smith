@@ -111,25 +111,25 @@ def plan_revisor(state):
     subtask_findings = "\n\n".join(analyzed_data) if analyzed_data else "No findings available"
 
     depth_eval_summary = f"""
-    - Sufficient: {depth_evaluation.get('is_sufficient', 'Unknown')}
-    - Quality: {depth_evaluation.get('depth_quality', 'Unknown')}
-    - Drill-down needed: {depth_evaluation.get('drill_down_needed', 'Unknown')}
-    - Reasoning: {depth_evaluation.get('reasoning', 'No reasoning provided')}
+    - Sufficient: {depth_evaluation.get("is_sufficient", "Unknown")}
+    - Quality: {depth_evaluation.get("depth_quality", "Unknown")}
+    - Drill-down needed: {depth_evaluation.get("drill_down_needed", "Unknown")}
+    - Reasoning: {depth_evaluation.get("reasoning", "No reasoning provided")}
     """
 
     # Format master plan for prompt
     master_plan_summary = f"""
-    Execution Mode: {master_plan.get('execution_mode', 'Unknown')}
-    Overall Strategy: {master_plan.get('overall_strategy', 'No strategy provided')}
+    Execution Mode: {master_plan.get("execution_mode", "Unknown")}
+    Overall Strategy: {master_plan.get("overall_strategy", "No strategy provided")}
 
     Subtasks:
     """
     for i, st in enumerate(subtasks):
         status = "COMPLETED" if i < completed_subtasks else "PENDING"
         master_plan_summary += f"""
-    [{status}] {st['subtask_id']}: {st['description']}
-              Focus: {st['focus_area']}
-              Priority: {st['priority']}, Importance: {st['estimated_importance']}
+    [{status}] {st["subtask_id"]}: {st["description"]}
+              Focus: {st["focus_area"]}
+              Priority: {st["priority"]}, Importance: {st["estimated_importance"]}
     """
 
     # Prepare prompt
@@ -147,7 +147,7 @@ def plan_revisor(state):
         depth_evaluation=depth_eval_summary,
         revision_count=revision_count,
         max_revisions=max_revisions,
-        max_total_subtasks=max_total_subtasks
+        max_total_subtasks=max_total_subtasks,
     )
 
     # Invoke LLM with structured output
@@ -173,8 +173,12 @@ def plan_revisor(state):
         new_subtasks_to_add = revision.new_subtasks[:max_new_allowed]
 
         if len(revision.new_subtasks) > max_new_allowed:
-            print(f"  ⚠️  Budget constraint: Limiting new subtasks from {len(revision.new_subtasks)} to {max_new_allowed}")
-            print(f"     Skipping: {len(revision.new_subtasks) - max_new_allowed} subtasks due to recursion budget")
+            print(
+                f"  ⚠️  Budget constraint: Limiting new subtasks from {len(revision.new_subtasks)} to {max_new_allowed}"
+            )
+            print(
+                f"     Skipping: {len(revision.new_subtasks) - max_new_allowed} subtasks due to recursion budget"
+            )
 
         print(f"  New subtasks: {len(new_subtasks_to_add)}")
         print(f"  Removed subtasks: {len(revision.removed_subtasks)}")
@@ -231,7 +235,7 @@ def plan_revisor(state):
             "master_plan": updated_master_plan,
             "revision_count": new_revision_count,
             "plan_revisions": plan_revisions,
-            "revision_triggers": revision_triggers
+            "revision_triggers": revision_triggers,
         }
 
     except Exception as e:

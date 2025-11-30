@@ -5,7 +5,6 @@ High-quality search API optimized for LLM applications.
 Requires API key (free tier: 1000 searches/month)
 """
 
-
 from langchain_community.tools import TavilySearchResults
 
 from .base_provider import BaseSearchProvider, SearchResult

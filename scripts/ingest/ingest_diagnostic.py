@@ -31,11 +31,8 @@ OLLAMA_BASE_URL = "http://localhost:11434"
 log_filename = f"ingestion_diagnostic_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(log_filename),
-        logging.StreamHandler()
-    ]
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler(log_filename), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
@@ -45,12 +42,7 @@ class EmbeddingQualityChecker:
 
     def __init__(self):
         self.embedding_samples = []
-        self.embedding_stats = {
-            'mean': [],
-            'std': [],
-            'min': [],
-            'max': []
-        }
+        self.embedding_stats = {"mean": [], "std": [], "min": [], "max": []}
         self.similarities = []
 
     def add_embedding(self, embedding: list[float], doc_text: str = None):
@@ -59,18 +51,20 @@ class EmbeddingQualityChecker:
 
         # Store sample (keep first 10)
         if len(self.embedding_samples) < 10:
-            self.embedding_samples.append({
-                'embedding': embedding[:10],  # Store first 10 dims
-                'full_mean': float(np.mean(emb_array)),
-                'full_std': float(np.std(emb_array)),
-                'text_preview': doc_text[:100] if doc_text else None
-            })
+            self.embedding_samples.append(
+                {
+                    "embedding": embedding[:10],  # Store first 10 dims
+                    "full_mean": float(np.mean(emb_array)),
+                    "full_std": float(np.std(emb_array)),
+                    "text_preview": doc_text[:100] if doc_text else None,
+                }
+            )
 
         # Track statistics
-        self.embedding_stats['mean'].append(float(np.mean(emb_array)))
-        self.embedding_stats['std'].append(float(np.std(emb_array)))
-        self.embedding_stats['min'].append(float(np.min(emb_array)))
-        self.embedding_stats['max'].append(float(np.max(emb_array)))
+        self.embedding_stats["mean"].append(float(np.mean(emb_array)))
+        self.embedding_stats["std"].append(float(np.std(emb_array)))
+        self.embedding_stats["min"].append(float(np.min(emb_array)))
+        self.embedding_stats["max"].append(float(np.max(emb_array)))
 
     def check_similarity(self, emb1: list[float], emb2: list[float]) -> float:
         """Calculate cosine similarity between two embeddings"""
@@ -80,13 +74,13 @@ class EmbeddingQualityChecker:
 
     def get_report(self) -> str:
         """Generate quality report"""
-        if not self.embedding_stats['mean']:
+        if not self.embedding_stats["mean"]:
             return "No embeddings analyzed yet."
 
         report = []
-        report.append("\n" + "="*80)
+        report.append("\n" + "=" * 80)
         report.append("EMBEDDING QUALITY REPORT")
-        report.append("="*80)
+        report.append("=" * 80)
 
         # Overall statistics
         report.append(f"\nTotal embeddings analyzed: {len(self.embedding_stats['mean'])}")
@@ -97,7 +91,7 @@ class EmbeddingQualityChecker:
         report.append(f"  Overall max:   {np.max(self.embedding_stats['max']):.6f}")
 
         # Check for issues
-        avg_std = np.mean(self.embedding_stats['std'])
+        avg_std = np.mean(self.embedding_stats["std"])
         if avg_std < 0.01:
             report.append(f"\n⚠️  WARNING: Very low std deviation ({avg_std:.6f})")
             report.append("   Embeddings may be too similar - model might not be working!")
@@ -111,18 +105,22 @@ class EmbeddingQualityChecker:
 
             high_sim = sum(1 for s in self.similarities if s > 0.95)
             if high_sim > len(self.similarities) * 0.5:
-                report.append(f"\n⚠️  WARNING: {high_sim}/{len(self.similarities)} pairs have >0.95 similarity")
+                report.append(
+                    f"\n⚠️  WARNING: {high_sim}/{len(self.similarities)} pairs have >0.95 similarity"
+                )
                 report.append("   This is unusually high!")
 
         # Sample embeddings
         report.append("\nSample embeddings (first 10 dimensions):")
         for i, sample in enumerate(self.embedding_samples[:3]):
-            report.append(f"\n  Sample {i+1}:")
+            report.append(f"\n  Sample {i + 1}:")
             report.append(f"    Text: {sample['text_preview']}")
             report.append(f"    First 10 dims: {sample['embedding']}")
-            report.append(f"    Full mean: {sample['full_mean']:.6f}, std: {sample['full_std']:.6f}")
+            report.append(
+                f"    Full mean: {sample['full_mean']:.6f}, std: {sample['full_std']:.6f}"
+            )
 
-        report.append("\n" + "="*80)
+        report.append("\n" + "=" * 80)
         return "\n".join(report)
 
 
@@ -138,39 +136,29 @@ class ChunkAnalyzer:
 
     def analyze_chunks(self, chunks: list, source: str) -> dict:
         """Analyze chunks from a document"""
-        analysis = {
-            'count': len(chunks),
-            'sizes': [],
-            'unique': 0,
-            'duplicates': 0,
-            'samples': []
-        }
+        analysis = {"count": len(chunks), "sizes": [], "unique": 0, "duplicates": 0, "samples": []}
 
         for i, chunk in enumerate(chunks):
             text = chunk.page_content
             size = len(text)
 
             # Track size
-            analysis['sizes'].append(size)
+            analysis["sizes"].append(size)
             self.chunk_sizes.append(size)
 
             # Check for duplicates
             chunk_hash = hashlib.md5(text.encode()).hexdigest()
             if chunk_hash in self.chunk_hashes:
-                analysis['duplicates'] += 1
+                analysis["duplicates"] += 1
                 self.duplicate_count += 1
                 logger.warning(f"  Duplicate chunk detected in {source}")
             else:
                 self.chunk_hashes.add(chunk_hash)
-                analysis['unique'] += 1
+                analysis["unique"] += 1
 
             # Store samples
             if i < 3:
-                analysis['samples'].append({
-                    'index': i,
-                    'size': size,
-                    'preview': text[:200]
-                })
+                analysis["samples"].append({"index": i, "size": size, "preview": text[:200]})
 
         self.chunks_by_source[source] = analysis
         return analysis
@@ -181,9 +169,9 @@ class ChunkAnalyzer:
             return "No chunks analyzed yet."
 
         report = []
-        report.append("\n" + "="*80)
+        report.append("\n" + "=" * 80)
         report.append("CHUNKING ANALYSIS REPORT")
-        report.append("="*80)
+        report.append("=" * 80)
 
         report.append(f"\nTotal chunks created: {len(self.chunk_sizes)}")
         report.append(f"Total unique chunks: {len(self.chunk_hashes)}")
@@ -198,7 +186,9 @@ class ChunkAnalyzer:
 
         # Check if chunking is working as expected
         if np.mean(self.chunk_sizes) > CHUNK_SIZE * 1.5:
-            report.append(f"\n⚠️  WARNING: Average chunk size ({np.mean(self.chunk_sizes):.0f}) >> configured size ({CHUNK_SIZE})")
+            report.append(
+                f"\n⚠️  WARNING: Average chunk size ({np.mean(self.chunk_sizes):.0f}) >> configured size ({CHUNK_SIZE})"
+            )
             report.append("   Chunking may not be working correctly!")
 
         # Per-source breakdown
@@ -209,7 +199,7 @@ class ChunkAnalyzer:
             report.append(f"    Unique: {analysis['unique']}, Duplicates: {analysis['duplicates']}")
             report.append(f"    Avg size: {np.mean(analysis['sizes']):.1f} chars")
 
-        report.append("\n" + "="*80)
+        report.append("\n" + "=" * 80)
         return "\n".join(report)
 
 
@@ -271,15 +261,19 @@ def test_embedding_model(embeddings: OllamaEmbeddings) -> bool:
         return False
 
 
-def process_document(filepath: str, text_splitter, embeddings,
-                     chunk_analyzer: ChunkAnalyzer,
-                     quality_checker: EmbeddingQualityChecker) -> tuple[list, bool]:
+def process_document(
+    filepath: str,
+    text_splitter,
+    embeddings,
+    chunk_analyzer: ChunkAnalyzer,
+    quality_checker: EmbeddingQualityChecker,
+) -> tuple[list, bool]:
     """Process a single document with detailed diagnostics"""
 
     filename = os.path.basename(filepath)
-    logger.info("="*80)
+    logger.info("=" * 80)
     logger.info(f"Processing: {filename}")
-    logger.info("="*80)
+    logger.info("=" * 80)
 
     try:
         # Step 1: Load document
@@ -305,7 +299,9 @@ def process_document(filepath: str, text_splitter, embeddings,
             logger.info(f"  Content preview: {preview}...")
 
         # Step 3: Split into chunks
-        logger.info(f"Step 3: Splitting into chunks (size={CHUNK_SIZE}, overlap={CHUNK_OVERLAP})...")
+        logger.info(
+            f"Step 3: Splitting into chunks (size={CHUNK_SIZE}, overlap={CHUNK_OVERLAP})..."
+        )
         splits = text_splitter.split_documents(filtered_documents)
         logger.info(f"✓ Created {len(splits)} chunks")
 
@@ -316,7 +312,7 @@ def process_document(filepath: str, text_splitter, embeddings,
         logger.info(f"  Avg chunk size: {np.mean(chunk_analysis['sizes']):.1f} chars")
 
         # Show sample chunks
-        for sample in chunk_analysis['samples']:
+        for sample in chunk_analysis["samples"]:
             logger.info(f"\n  Chunk {sample['index']} ({sample['size']} chars):")
             logger.info(f"    {sample['preview']}...")
 
@@ -361,6 +357,7 @@ def process_document(filepath: str, text_splitter, embeddings,
     except Exception as e:
         logger.error(f"✗ Failed to process {filename}: {e}")
         import traceback
+
         logger.error(traceback.format_exc())
         return [], False
 
@@ -368,9 +365,9 @@ def process_document(filepath: str, text_splitter, embeddings,
 def main():
     """Main ingestion process with comprehensive diagnostics"""
 
-    logger.info("="*80)
+    logger.info("=" * 80)
     logger.info("DIAGNOSTIC DOCUMENT INGESTION STARTED")
-    logger.info("="*80)
+    logger.info("=" * 80)
     logger.info(f"Log file: {log_filename}")
     logger.info(f"Timestamp: {datetime.now()}")
 
@@ -401,14 +398,11 @@ def main():
         logger.info(f"  - {f} ({size:,} bytes)")
 
     # Initialize embedding model
-    logger.info("\n" + "="*80)
+    logger.info("\n" + "=" * 80)
     logger.info("Initializing embedding model...")
-    logger.info("="*80)
+    logger.info("=" * 80)
 
-    embeddings = OllamaEmbeddings(
-        model=EMBEDDING_MODEL,
-        base_url=OLLAMA_BASE_URL
-    )
+    embeddings = OllamaEmbeddings(model=EMBEDDING_MODEL, base_url=OLLAMA_BASE_URL)
 
     # Test embedding model
     if not test_embedding_model(embeddings):
@@ -421,9 +415,9 @@ def main():
         return
 
     # Initialize vector store
-    logger.info("\n" + "="*80)
+    logger.info("\n" + "=" * 80)
     logger.info("Initializing ChromaDB vector store...")
-    logger.info("="*80)
+    logger.info("=" * 80)
 
     vectorstore = Chroma(
         collection_name=COLLECTION_NAME,
@@ -435,8 +429,7 @@ def main():
 
     # Initialize text splitter
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=CHUNK_SIZE,
-        chunk_overlap=CHUNK_OVERLAP
+        chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP
     )
 
     # Process each document
@@ -444,19 +437,15 @@ def main():
     total_chunks_created = 0
     failed_files = []
 
-    logger.info("\n" + "="*80)
+    logger.info("\n" + "=" * 80)
     logger.info("PROCESSING DOCUMENTS")
-    logger.info("="*80)
+    logger.info("=" * 80)
 
     for filename in sorted(files):
         filepath = os.path.join(DOCUMENTS_DIR, filename)
 
         splits, success = process_document(
-            filepath,
-            text_splitter,
-            embeddings,
-            chunk_analyzer,
-            quality_checker
+            filepath, text_splitter, embeddings, chunk_analyzer, quality_checker
         )
 
         if success and splits:
@@ -475,9 +464,9 @@ def main():
             failed_files.append(filename)
 
     # Final reports
-    logger.info("\n" + "="*80)
+    logger.info("\n" + "=" * 80)
     logger.info("INGESTION COMPLETE")
-    logger.info("="*80)
+    logger.info("=" * 80)
 
     logger.info("\nSummary:")
     logger.info(f"  Total files processed: {len(files)}")
@@ -496,7 +485,7 @@ def main():
     logger.info(quality_checker.get_report())
 
     logger.info(f"\n✓ Full log saved to: {log_filename}")
-    logger.info("="*80)
+    logger.info("=" * 80)
 
 
 if __name__ == "__main__":
