@@ -11,8 +11,6 @@ import operator
 from abc import ABC, abstractmethod
 from typing import Annotated, Any, TypedDict
 
-from langgraph.graph import StateGraph
-
 
 class BaseAgentState(TypedDict):
     """
@@ -50,7 +48,7 @@ class BaseGraphBuilder(ABC):
         pass
 
     @abstractmethod
-    def build(self) -> StateGraph:
+    def build(self) -> Any:
         """
         Build and return the compiled LangGraph workflow.
 
@@ -76,7 +74,7 @@ class BaseGraphBuilder(ABC):
             "supports_streaming": True,
         }
 
-    def get_uncompiled_graph(self) -> StateGraph:
+    def get_uncompiled_graph(self) -> Any:
         """
         Return the uncompiled StateGraph for external compilation.
 

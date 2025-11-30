@@ -36,7 +36,7 @@ class DuckDuckGoProvider(BaseSearchProvider):
             Exception: If search fails
         """
         try:
-            search = DuckDuckGoSearchResults(max_results=max_results)
+            search = DuckDuckGoSearchResults(num_results=max_results)
             raw_results = search.invoke({"query": query})
 
             # Convert to standardized format

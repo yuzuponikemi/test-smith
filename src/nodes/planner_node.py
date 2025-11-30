@@ -47,9 +47,9 @@ def check_kb_contents():
         # Sample some documents to understand content
         sample = collection.peek(limit=10)
         sources = set()
-        if sample and "metadatas" in sample:
+        if sample and "metadatas" in sample and sample["metadatas"] is not None:
             for meta in sample["metadatas"]:
-                if meta and "source" in meta:
+                if meta and "source" in meta and isinstance(meta["source"], str):
                     # Extract filename from path
                     source = os.path.basename(meta["source"])
                     sources.add(source)

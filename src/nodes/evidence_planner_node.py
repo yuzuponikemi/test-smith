@@ -44,8 +44,9 @@ def check_kb_contents() -> str:
         # Sample a few documents to understand content
         if count > 0:
             sample = collection.peek(limit=3)
-            sample_docs = sample.get("documents", [])[:3]
-            sample_preview = " | ".join([doc[:100] for doc in sample_docs])
+            sample_docs_raw = sample.get("documents", [])
+            sample_docs = sample_docs_raw[:3] if sample_docs_raw else []
+            sample_preview = " | ".join([doc[:100] for doc in sample_docs if isinstance(doc, str)])
 
             return f"""Knowledge Base: Available
 Total documents: {count} chunks

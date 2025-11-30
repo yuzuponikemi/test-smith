@@ -132,15 +132,15 @@ class CausalInferenceGraphBuilder(BaseGraphBuilder):
         workflow = StateGraph(CausalInferenceState)
 
         # Register all nodes
-        workflow.add_node("issue_analyzer", issue_analyzer_node)
-        workflow.add_node("brainstormer", brainstormer_node)
-        workflow.add_node("evidence_planner", evidence_planner_node)
-        workflow.add_node("searcher", searcher)
-        workflow.add_node("rag_retriever", rag_retriever)
-        workflow.add_node("causal_checker", causal_checker_node)
-        workflow.add_node("hypothesis_validator", hypothesis_validator_node)
-        workflow.add_node("causal_graph_builder", causal_graph_builder_node)
-        workflow.add_node("root_cause_synthesizer", root_cause_synthesizer_node)
+        workflow.add_node("issue_analyzer", issue_analyzer_node)  # type: ignore[arg-type]
+        workflow.add_node("brainstormer", brainstormer_node)  # type: ignore[arg-type]
+        workflow.add_node("evidence_planner", evidence_planner_node)  # type: ignore[arg-type]
+        workflow.add_node("searcher", searcher)  # type: ignore[arg-type]
+        workflow.add_node("rag_retriever", rag_retriever)  # type: ignore[arg-type]
+        workflow.add_node("causal_checker", causal_checker_node)  # type: ignore[arg-type]
+        workflow.add_node("hypothesis_validator", hypothesis_validator_node)  # type: ignore[arg-type]
+        workflow.add_node("causal_graph_builder", causal_graph_builder_node)  # type: ignore[arg-type]
+        workflow.add_node("root_cause_synthesizer", root_cause_synthesizer_node)  # type: ignore[arg-type]
 
         # Set up workflow
         workflow.set_entry_point("issue_analyzer")
@@ -184,15 +184,15 @@ class CausalInferenceGraphBuilder(BaseGraphBuilder):
         workflow = StateGraph(CausalInferenceState)
 
         # Register nodes
-        workflow.add_node("issue_analyzer", issue_analyzer_node)
-        workflow.add_node("brainstormer", brainstormer_node)
-        workflow.add_node("evidence_planner", evidence_planner_node)
-        workflow.add_node("searcher", searcher)
-        workflow.add_node("rag_retriever", rag_retriever)
-        workflow.add_node("causal_checker", causal_checker_node)
-        workflow.add_node("hypothesis_validator", hypothesis_validator_node)
-        workflow.add_node("causal_graph_builder", causal_graph_builder_node)
-        workflow.add_node("root_cause_synthesizer", root_cause_synthesizer_node)
+        workflow.add_node("issue_analyzer", issue_analyzer_node)  # type: ignore[arg-type]
+        workflow.add_node("brainstormer", brainstormer_node)  # type: ignore[arg-type]
+        workflow.add_node("evidence_planner", evidence_planner_node)  # type: ignore[arg-type]
+        workflow.add_node("searcher", searcher)  # type: ignore[arg-type]
+        workflow.add_node("rag_retriever", rag_retriever)  # type: ignore[arg-type]
+        workflow.add_node("causal_checker", causal_checker_node)  # type: ignore[arg-type]
+        workflow.add_node("hypothesis_validator", hypothesis_validator_node)  # type: ignore[arg-type]
+        workflow.add_node("causal_graph_builder", causal_graph_builder_node)  # type: ignore[arg-type]
+        workflow.add_node("root_cause_synthesizer", root_cause_synthesizer_node)  # type: ignore[arg-type]
 
         # Set up edges
         workflow.set_entry_point("issue_analyzer")

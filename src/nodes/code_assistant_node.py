@@ -53,7 +53,7 @@ def code_retriever(state):
         print(f"  Searching codebase for: {query}")
 
         try:
-            documents = retriever.get_relevant_documents(query)
+            documents = retriever.invoke(query)
 
             if documents:
                 doc_string = f"=== Code Results for '{query}' ===\n\n"
