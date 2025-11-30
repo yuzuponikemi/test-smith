@@ -13,20 +13,17 @@ from src.studio_graphs import code_execution
 def simulate_studio_execution(query: str):
     """Run graph and display Studio-like trace"""
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("🎬 LangGraph Studio - Execution Trace")
-    print("="*80)
+    print("=" * 80)
     print(f"\n📝 Query: {query}")
     print("🔧 Graph: code_execution")
     print(f"⏰ Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("\n" + "-"*80)
+    print("\n" + "-" * 80)
 
     # Initial state
     config = {"configurable": {"thread_id": "studio_demo"}}
-    inputs = {
-        "query": query,
-        "loop_count": 0
-    }
+    inputs = {"query": query, "loop_count": 0}
 
     print("\n📊 Execution Flow:\n")
 
@@ -44,12 +41,12 @@ def simulate_studio_execution(query: str):
             if "web_queries" in node_output:
                 print(f"  Web Queries: {node_output['web_queries']}")
             if "allocation_strategy" in node_output:
-                strategy = node_output['allocation_strategy']
+                strategy = node_output["allocation_strategy"]
                 print(f"  Strategy: {strategy[:100]}...")
             if "analyzed_data" in node_output:
                 print(f"  Analyzed: {len(node_output['analyzed_data'])} items")
             if "code_execution_results" in node_output:
-                results = node_output['code_execution_results']
+                results = node_output["code_execution_results"]
                 if results:
                     result = results[0]
                     print("  Code Execution:")
@@ -64,9 +61,9 @@ def simulate_studio_execution(query: str):
 
             print()
 
-    print("="*80)
+    print("=" * 80)
     print(f"✅ Execution completed - {node_count} nodes executed")
-    print("="*80)
+    print("=" * 80)
     print("\n💡 In LangGraph Studio, you would see:")
     print("  • Interactive graph visualization")
     print("  • Step-by-step execution with state changes")
@@ -87,4 +84,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()

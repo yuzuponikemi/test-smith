@@ -15,16 +15,14 @@ CHROMA_DB_DIR = "chroma_db"
 # Collection name
 COLLECTION_NAME = "research_agent_collection"
 
+
 def main():
     """
     Ingests documents from the DOCUMENTS_DIR, creates embeddings, and stores them in ChromaDB.
     """
     print("Starting document ingestion...")
 
-    embeddings = OllamaEmbeddings(
-        model="nomic-embed-text",
-        base_url="http://localhost:11434"
-    )
+    embeddings = OllamaEmbeddings(model="nomic-embed-text", base_url="http://localhost:11434")
 
     vectorstore = Chroma(
         collection_name=COLLECTION_NAME,

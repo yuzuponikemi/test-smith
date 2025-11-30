@@ -20,6 +20,7 @@ class BaseAgentState(TypedDict):
 
     Individual graphs can extend this by adding their own fields.
     """
+
     query: str  # Original user query
     report: str  # Final output report
 
@@ -96,6 +97,7 @@ class ExtendedAgentState(BaseAgentState):
     This is a convenience class that includes frequently-used fields.
     Graphs can use this instead of BaseAgentState to avoid redefining common fields.
     """
+
     # Query processing
     web_queries: list[str]
     rag_queries: list[str]
@@ -132,7 +134,4 @@ def create_simple_state(additional_fields: dict[str, type] = None) -> type:
         additional_fields = {}
 
     # Create new TypedDict class dynamically
-    return TypedDict(
-        "CustomAgentState",
-        {**BaseAgentState.__annotations__, **additional_fields}
-    )
+    return TypedDict("CustomAgentState", {**BaseAgentState.__annotations__, **additional_fields})

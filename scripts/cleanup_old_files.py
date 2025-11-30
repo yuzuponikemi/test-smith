@@ -13,7 +13,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Clean up old logs and reports")
     parser.add_argument("--days", type=int, default=30, help="Delete files older than N days")
-    parser.add_argument("--dry-run", action="store_true", help="Show what would be deleted without deleting")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Show what would be deleted without deleting"
+    )
 
     args = parser.parse_args()
 

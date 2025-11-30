@@ -17,6 +17,7 @@ load_dotenv()
 # Get all graphs from registry and compile them
 # This ensures we use the same graphs that main.py uses
 
+
 def _compile_graph(graph_name: str):
     """Helper to compile a graph by name"""
     try:
@@ -25,6 +26,7 @@ def _compile_graph(graph_name: str):
     except Exception as e:
         print(f"Warning: Could not compile {graph_name}: {e}")
         return None
+
 
 # Compile each registered graph
 deep_research = _compile_graph("deep_research")

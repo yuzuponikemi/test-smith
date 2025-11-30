@@ -8,9 +8,9 @@ Different document types benefit from different chunking approaches:
 - Academic papers: Section-based chunking
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 
 from langchain.schema import Document
 from langchain_text_splitters import (
@@ -21,6 +21,7 @@ from langchain_text_splitters import (
 
 class ChunkingMethod(Enum):
     """Available chunking methods"""
+
     RECURSIVE = "recursive"
     MARKDOWN_HEADERS = "markdown_headers"
     FIXED_SIZE = "fixed_size"
@@ -32,17 +33,14 @@ class ChunkingMethod(Enum):
 @dataclass
 class ChunkingConfig:
     """Configuration for chunking"""
+
     method: ChunkingMethod
     chunk_size: int
     chunk_overlap: int
     min_chunk_size: int = 100  # Minimum chunk size to keep
     separators: Optional[list[str]] = None
     headers_to_split_on: Optional[list[tuple]] = None
-    metadata: dict = None
-
-    def __post_init__(self):
-        if self.metadata is None:
-            self.metadata = {}
+    metadata: dict[Any, Any] = field(default_factory=dict)
 
 
 class ChunkingStrategy:
@@ -50,7 +48,7 @@ class ChunkingStrategy:
 
     # Default configurations for different document types
     DEFAULT_CONFIGS = {
-        'markdown': ChunkingConfig(
+        "markdown": ChunkingConfig(
             method=ChunkingMethod.MARKDOWN_HEADERS,
             chunk_size=1500,
             chunk_overlap=300,
@@ -59,22 +57,22 @@ class ChunkingStrategy:
                 ("#", "h1"),
                 ("##", "h2"),
                 ("###", "h3"),
-            ]
+            ],
         ),
-        'pdf': ChunkingConfig(
+        "pdf": ChunkingConfig(
             method=ChunkingMethod.RECURSIVE,
             chunk_size=1200,
             chunk_overlap=200,
             min_chunk_size=150,
-            separators=["\n\n", "\n", ". ", " ", ""]
+            separators=["\n\n", "\n", ". ", " ", ""],
         ),
-        'plain_text': ChunkingConfig(
+        "plain_text": ChunkingConfig(
             method=ChunkingMethod.RECURSIVE,
             chunk_size=1000,
             chunk_overlap=200,
             min_chunk_size=100,
         ),
-        'academic_paper': ChunkingConfig(
+        "academic_paper": ChunkingConfig(
             method=ChunkingMethod.HYBRID,
             chunk_size=1500,
             chunk_overlap=300,
@@ -87,29 +85,29 @@ class ChunkingStrategy:
                 ("Discussion", "section"),
                 ("Conclusion", "section"),
                 ("References", "section"),
-            ]
+            ],
         ),
-        'code': ChunkingConfig(
+        "code": ChunkingConfig(
             method=ChunkingMethod.CODE_AWARE,
             chunk_size=1500,
             chunk_overlap=200,
             min_chunk_size=50,  # Code can have smaller meaningful chunks
-        )
+        ),
     }
 
     # Language-specific separators for code-aware chunking
     CODE_SEPARATORS = {
-        'python': [
-            "\n\nclass ",      # Class definitions
-            "\n\ndef ",        # Function definitions
+        "python": [
+            "\n\nclass ",  # Class definitions
+            "\n\ndef ",  # Function definitions
             "\n\nasync def ",  # Async functions
-            "\n\n@",           # Decorators
-            "\n\n",            # Double newlines
-            "\n",              # Single newlines
+            "\n\n@",  # Decorators
+            "\n\n",  # Double newlines
+            "\n",  # Single newlines
             " ",
-            ""
+            "",
         ],
-        'javascript': [
+        "javascript": [
             "\n\nclass ",
             "\n\nfunction ",
             "\n\nexport ",
@@ -119,9 +117,9 @@ class ChunkingStrategy:
             "\n\n",
             "\n",
             " ",
-            ""
+            "",
         ],
-        'typescript': [
+        "typescript": [
             "\n\nclass ",
             "\n\ninterface ",
             "\n\ntype ",
@@ -131,9 +129,9 @@ class ChunkingStrategy:
             "\n\n",
             "\n",
             " ",
-            ""
+            "",
         ],
-        'java': [
+        "java": [
             "\n\npublic class ",
             "\n\nprivate class ",
             "\n\nclass ",
@@ -143,19 +141,10 @@ class ChunkingStrategy:
             "\n\n",
             "\n",
             " ",
-            ""
+            "",
         ],
-        'golang': [
-            "\n\nfunc ",
-            "\n\ntype ",
-            "\n\nvar ",
-            "\n\nconst ",
-            "\n\n",
-            "\n",
-            " ",
-            ""
-        ],
-        'rust': [
+        "golang": ["\n\nfunc ", "\n\ntype ", "\n\nvar ", "\n\nconst ", "\n\n", "\n", " ", ""],
+        "rust": [
             "\n\npub fn ",
             "\n\nfn ",
             "\n\npub struct ",
@@ -166,76 +155,72 @@ class ChunkingStrategy:
             "\n\n",
             "\n",
             " ",
-            ""
+            "",
         ],
-        'csharp': [
-            "\n\nnamespace ",       # Namespace declarations
-            "\n\npublic class ",    # Public class definitions
+        "csharp": [
+            "\n\nnamespace ",  # Namespace declarations
+            "\n\npublic class ",  # Public class definitions
             "\n\ninternal class ",  # Internal class definitions
-            "\n\nprivate class ",   # Private class definitions
+            "\n\nprivate class ",  # Private class definitions
             "\n\npublic partial class ",  # Partial classes (common in WinForms)
-            "\n\npublic interface ", # Interface definitions
-            "\n\npublic enum ",     # Enum definitions
-            "\n\npublic struct ",   # Struct definitions
-            "\n\npublic ",          # Public methods/properties
-            "\n\nprivate ",         # Private methods/properties
-            "\n\nprotected ",       # Protected methods/properties
-            "\n\ninternal ",        # Internal methods/properties
-            "\n\n#region ",         # Region markers (common in C#)
-            "\n\n#endregion",       # End region
-            "\n\n",                 # Double newlines
-            "\n",                   # Single newlines
+            "\n\npublic interface ",  # Interface definitions
+            "\n\npublic enum ",  # Enum definitions
+            "\n\npublic struct ",  # Struct definitions
+            "\n\npublic ",  # Public methods/properties
+            "\n\nprivate ",  # Private methods/properties
+            "\n\nprotected ",  # Protected methods/properties
+            "\n\ninternal ",  # Internal methods/properties
+            "\n\n#region ",  # Region markers (common in C#)
+            "\n\n#endregion",  # End region
+            "\n\n",  # Double newlines
+            "\n",  # Single newlines
             " ",
-            ""
+            "",
         ],
-        'xaml': [
-            "\n\n<Window ",         # XAML Window elements
-            "\n\n<UserControl ",    # UserControl elements
-            "\n\n<Page ",           # Page elements
-            "\n\n<Grid ",           # Grid containers
-            "\n\n<StackPanel ",     # StackPanel containers
-            "\n\n<Button ",         # UI elements
+        "xaml": [
+            "\n\n<Window ",  # XAML Window elements
+            "\n\n<UserControl ",  # UserControl elements
+            "\n\n<Page ",  # Page elements
+            "\n\n<Grid ",  # Grid containers
+            "\n\n<StackPanel ",  # StackPanel containers
+            "\n\n<Button ",  # UI elements
             "\n\n<TextBox ",
-            "\n\n<",                # Other elements
+            "\n\n<",  # Other elements
             "\n",
             " ",
-            ""
+            "",
         ],
-        'default': [
-            "\n\n",
-            "\n",
-            " ",
-            ""
-        ]
+        "default": ["\n\n", "\n", " ", ""],
     }
 
     def __init__(self):
         self.stats = {
-            'total_documents': 0,
-            'total_chunks': 0,
-            'chunks_by_method': {},
-            'filtered_small_chunks': 0,
+            "total_documents": 0,
+            "total_chunks": 0,
+            "chunks_by_method": {},
+            "filtered_small_chunks": 0,
         }
 
-    def select_config(self,
-                     structure_type: str,
-                     file_size: int,
-                     language: str = 'english',
-                     has_complex_structure: bool = False,
-                     programming_language: str = None) -> ChunkingConfig:
+    def select_config(
+        self,
+        structure_type: str,
+        file_size: int,
+        language: str = "english",
+        has_complex_structure: bool = False,
+        programming_language: str = None,
+    ) -> ChunkingConfig:
         """Select appropriate chunking configuration"""
 
         # Start with base config for structure type
         if structure_type in self.DEFAULT_CONFIGS:
             config = self.DEFAULT_CONFIGS[structure_type]
         else:
-            config = self.DEFAULT_CONFIGS['plain_text']
+            config = self.DEFAULT_CONFIGS["plain_text"]
 
         # Handle code files with language-specific separators
-        if structure_type == 'code' and programming_language:
+        if structure_type == "code" and programming_language:
             separators = self.CODE_SEPARATORS.get(
-                programming_language,
-                self.CODE_SEPARATORS['default']
+                programming_language, self.CODE_SEPARATORS["default"]
             )
             config = ChunkingConfig(
                 method=ChunkingMethod.CODE_AWARE,
@@ -243,11 +228,11 @@ class ChunkingStrategy:
                 chunk_overlap=config.chunk_overlap,
                 min_chunk_size=config.min_chunk_size,
                 separators=separators,
-                metadata={'programming_language': programming_language}
+                metadata={"programming_language": programming_language},
             )
 
         # Adjust for Japanese content (typically needs larger chunks)
-        if language in ('japanese', 'mixed'):
+        if language in ("japanese", "mixed"):
             config = ChunkingConfig(
                 method=config.method,
                 chunk_size=int(config.chunk_size * 1.2),  # 20% larger for Japanese
@@ -266,31 +251,31 @@ class ChunkingStrategy:
                 min_chunk_size=config.min_chunk_size,
                 separators=config.separators,
                 headers_to_split_on=config.headers_to_split_on,
-                metadata={'large_file': True}
+                metadata={"large_file": True},
             )
 
         # Use simpler strategy for simple documents
-        if structure_type == 'plain_text' or not has_complex_structure:
-            if config.method == ChunkingMethod.MARKDOWN_HEADERS:
-                config = ChunkingConfig(
-                    method=ChunkingMethod.RECURSIVE,
-                    chunk_size=config.chunk_size,
-                    chunk_overlap=config.chunk_overlap,
-                    min_chunk_size=config.min_chunk_size,
-                )
+        if (
+            structure_type == "plain_text" or not has_complex_structure
+        ) and config.method == ChunkingMethod.MARKDOWN_HEADERS:
+            config = ChunkingConfig(
+                method=ChunkingMethod.RECURSIVE,
+                chunk_size=config.chunk_size,
+                chunk_overlap=config.chunk_overlap,
+                min_chunk_size=config.min_chunk_size,
+            )
 
         return config
 
-    def chunk_documents(self,
-                       documents: list[Document],
-                       config: ChunkingConfig,
-                       source: str = "") -> list[Document]:
+    def chunk_documents(
+        self, documents: list[Document], config: ChunkingConfig, source: str = ""
+    ) -> list[Document]:
         """Apply chunking strategy to documents"""
 
         if not documents:
             return []
 
-        self.stats['total_documents'] += len(documents)
+        self.stats["total_documents"] += len(documents)
 
         # Select and create text splitter based on method
         if config.method == ChunkingMethod.MARKDOWN_HEADERS:
@@ -311,34 +296,34 @@ class ChunkingStrategy:
 
         # Filter out very small chunks
         original_count = len(chunks)
-        chunks = [
-            chunk for chunk in chunks
-            if len(chunk.page_content) >= config.min_chunk_size
-        ]
+        chunks = [chunk for chunk in chunks if len(chunk.page_content) >= config.min_chunk_size]
         filtered = original_count - len(chunks)
 
         if filtered > 0:
-            self.stats['filtered_small_chunks'] += filtered
+            self.stats["filtered_small_chunks"] += filtered
 
         # Update statistics
-        self.stats['total_chunks'] += len(chunks)
+        self.stats["total_chunks"] += len(chunks)
         method_name = config.method.value
-        self.stats['chunks_by_method'][method_name] = \
-            self.stats['chunks_by_method'].get(method_name, 0) + len(chunks)
+        self.stats["chunks_by_method"][method_name] = self.stats["chunks_by_method"].get(
+            method_name, 0
+        ) + len(chunks)
 
         # Add metadata
         for chunk in chunks:
-            chunk.metadata.update({
-                'chunking_method': config.method.value,
-                'chunk_size_config': config.chunk_size,
-                'source': source
-            })
+            chunk.metadata.update(
+                {
+                    "chunking_method": config.method.value,
+                    "chunk_size_config": config.chunk_size,
+                    "source": source,
+                }
+            )
 
         return chunks
 
-    def _chunk_with_markdown_headers(self,
-                                    documents: list[Document],
-                                    config: ChunkingConfig) -> list[Document]:
+    def _chunk_with_markdown_headers(
+        self, documents: list[Document], config: ChunkingConfig
+    ) -> list[Document]:
         """Chunk using markdown headers then recursively split large chunks"""
 
         if not config.headers_to_split_on:
@@ -380,9 +365,7 @@ class ChunkingStrategy:
 
         return final_chunks
 
-    def _chunk_hybrid(self,
-                     documents: list[Document],
-                     config: ChunkingConfig) -> list[Document]:
+    def _chunk_hybrid(self, documents: list[Document], config: ChunkingConfig) -> list[Document]:
         """Hybrid approach: try header splitting, fall back to recursive"""
 
         try:
@@ -390,13 +373,13 @@ class ChunkingStrategy:
         except Exception:
             return self._chunk_recursive(documents, config)
 
-    def _chunk_code_aware(self,
-                         documents: list[Document],
-                         config: ChunkingConfig) -> list[Document]:
+    def _chunk_code_aware(
+        self, documents: list[Document], config: ChunkingConfig
+    ) -> list[Document]:
         """Code-aware chunking that respects code structure"""
 
         # Use language-specific separators or defaults
-        separators = config.separators if config.separators else self.CODE_SEPARATORS['default']
+        separators = config.separators if config.separators else self.CODE_SEPARATORS["default"]
 
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=config.chunk_size,
@@ -409,15 +392,13 @@ class ChunkingStrategy:
         chunks = text_splitter.split_documents(documents)
 
         # Add programming language to metadata if available
-        if config.metadata and 'programming_language' in config.metadata:
+        if config.metadata and "programming_language" in config.metadata:
             for chunk in chunks:
-                chunk.metadata['programming_language'] = config.metadata['programming_language']
+                chunk.metadata["programming_language"] = config.metadata["programming_language"]
 
         return chunks
 
-    def _chunk_recursive(self,
-                        documents: list[Document],
-                        config: ChunkingConfig) -> list[Document]:
+    def _chunk_recursive(self, documents: list[Document], config: ChunkingConfig) -> list[Document]:
         """Standard recursive chunking"""
 
         text_splitter = RecursiveCharacterTextSplitter(
@@ -434,32 +415,40 @@ class ChunkingStrategy:
 
     def print_stats(self):
         """Print chunking statistics"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("CHUNKING STATISTICS")
-        print("="*80)
+        print("=" * 80)
 
         print(f"\nDocuments processed: {self.stats['total_documents']}")
         print(f"Total chunks created: {self.stats['total_chunks']}")
         print(f"Small chunks filtered: {self.stats['filtered_small_chunks']}")
 
-        if self.stats['chunks_by_method']:
+        if self.stats["chunks_by_method"]:
             print("\nChunks by method:")
-            for method, count in self.stats['chunks_by_method'].items():
-                percentage = (count / self.stats['total_chunks'] * 100) if self.stats['total_chunks'] > 0 else 0
+            for method, count in self.stats["chunks_by_method"].items():
+                percentage = (
+                    (count / self.stats["total_chunks"] * 100)
+                    if self.stats["total_chunks"] > 0
+                    else 0
+                )
                 print(f"  {method}: {count} ({percentage:.1f}%)")
 
-        avg_chunks = self.stats['total_chunks'] / self.stats['total_documents'] if self.stats['total_documents'] > 0 else 0
+        avg_chunks = (
+            self.stats["total_chunks"] / self.stats["total_documents"]
+            if self.stats["total_documents"] > 0
+            else 0
+        )
         print(f"\nAverage chunks per document: {avg_chunks:.1f}")
 
-        print("="*80)
+        print("=" * 80)
 
 
 def select_chunking_strategy(
     structure_type: str,
     file_size: int,
-    language: str = 'english',
+    language: str = "english",
     has_complex_structure: bool = False,
-    programming_language: str = None
+    programming_language: str = None,
 ) -> ChunkingConfig:
     """
     Convenience function to select chunking configuration
@@ -480,48 +469,48 @@ def select_chunking_strategy(
         file_size=file_size,
         language=language,
         has_complex_structure=has_complex_structure,
-        programming_language=programming_language
+        programming_language=programming_language,
     )
 
 
 # Example usage configurations
 EXAMPLE_CONFIGS = {
-    'simple_markdown': {
-        'description': 'Simple markdown files without complex headers',
-        'config': ChunkingConfig(
+    "simple_markdown": {
+        "description": "Simple markdown files without complex headers",
+        "config": ChunkingConfig(
             method=ChunkingMethod.RECURSIVE,
             chunk_size=1000,
             chunk_overlap=200,
             min_chunk_size=100,
-        )
+        ),
     },
-    'academic_paper_pdf': {
-        'description': 'Academic papers in PDF format',
-        'config': ChunkingConfig(
+    "academic_paper_pdf": {
+        "description": "Academic papers in PDF format",
+        "config": ChunkingConfig(
             method=ChunkingMethod.RECURSIVE,
             chunk_size=1500,
             chunk_overlap=300,
             min_chunk_size=200,
-            separators=["\n\n", "\n", ". ", " ", ""]
-        )
+            separators=["\n\n", "\n", ". ", " ", ""],
+        ),
     },
-    'structured_markdown': {
-        'description': 'Markdown with clear section headers',
-        'config': ChunkingConfig(
+    "structured_markdown": {
+        "description": "Markdown with clear section headers",
+        "config": ChunkingConfig(
             method=ChunkingMethod.MARKDOWN_HEADERS,
             chunk_size=1500,
             chunk_overlap=300,
             min_chunk_size=150,
-            headers_to_split_on=[("#", "h1"), ("##", "h2"), ("###", "h3")]
-        )
+            headers_to_split_on=[("#", "h1"), ("##", "h2"), ("###", "h3")],
+        ),
     },
-    'mixed_language': {
-        'description': 'Documents with English and Japanese',
-        'config': ChunkingConfig(
+    "mixed_language": {
+        "description": "Documents with English and Japanese",
+        "config": ChunkingConfig(
             method=ChunkingMethod.RECURSIVE,
             chunk_size=1200,
             chunk_overlap=250,
             min_chunk_size=120,
-        )
-    }
+        ),
+    },
 }

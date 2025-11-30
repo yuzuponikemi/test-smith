@@ -7,7 +7,13 @@ Generates Python code based on task requirements and research context.
 from langchain_core.prompts import PromptTemplate
 
 CODE_EXECUTOR_PROMPT = PromptTemplate(
-    input_variables=["task_description", "context", "input_data", "requirements", "expected_output"],
+    input_variables=[
+        "task_description",
+        "context",
+        "input_data",
+        "requirements",
+        "expected_output",
+    ],
     template="""You are a code generation expert. Generate clean, safe, and efficient Python code to accomplish the given task.
 
 **Task Description:**
@@ -42,5 +48,5 @@ CODE_EXECUTOR_PROMPT = PromptTemplate(
 - NO infinite loops or resource-intensive operations
 
 Generate the Python code below (code only, no additional explanation):
-"""
+""",
 )

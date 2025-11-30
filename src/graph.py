@@ -24,7 +24,7 @@ warnings.warn(
     "Please use 'from src.graphs import get_graph' instead. "
     "See src/graphs/__init__.py for migration guide.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # Backward compatibility: Export the deep_research graph as default

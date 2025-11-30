@@ -39,10 +39,12 @@ def causal_checker_node(state: dict) -> dict:
     structured_model = model.with_structured_output(CausalAnalysis)
 
     # Format hypotheses for prompt
-    hypotheses_str = "\n".join([
-        f"- {h['hypothesis_id']}: {h['description']}\n  Mechanism: {h['mechanism']}"
-        for h in hypotheses
-    ])
+    hypotheses_str = "\n".join(
+        [
+            f"- {h['hypothesis_id']}: {h['description']}\n  Mechanism: {h['mechanism']}"
+            for h in hypotheses
+        ]
+    )
 
     # Format prompt and invoke
     prompt = CAUSAL_CHECKER_PROMPT.format(
@@ -51,7 +53,7 @@ def causal_checker_node(state: dict) -> dict:
         symptoms=symptoms,
         hypotheses=hypotheses_str,
         web_results=web_results,
-        rag_results=rag_results
+        rag_results=rag_results,
     )
 
     analysis: CausalAnalysis = structured_model.invoke(prompt)

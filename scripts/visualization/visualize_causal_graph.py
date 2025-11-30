@@ -50,13 +50,15 @@ def generate_html_visualization(graph_data: dict, output_path: str = "causal_gra
                 color = "#adb5bd"  # Gray - low likelihood
             shape = "ellipse"
 
-        vis_nodes.append({
-            "id": node_id,
-            "label": label,
-            "color": color,
-            "shape": shape,
-            "title": node.get("full_text", label)  # Tooltip with full text
-        })
+        vis_nodes.append(
+            {
+                "id": node_id,
+                "label": label,
+                "color": color,
+                "shape": shape,
+                "title": node.get("full_text", label),  # Tooltip with full text
+            }
+        )
 
     # Convert edges to vis.js format
     vis_edges = []
@@ -79,14 +81,16 @@ def generate_html_visualization(graph_data: dict, output_path: str = "causal_gra
         else:
             color = "#dee2e6"  # Light gray
 
-        vis_edges.append({
-            "from": source,
-            "to": target,
-            "width": width,
-            "color": color,
-            "title": f"{rel_type} (strength: {strength:.2f})",
-            "arrows": "to"
-        })
+        vis_edges.append(
+            {
+                "from": source,
+                "to": target,
+                "width": width,
+                "color": color,
+                "title": f"{rel_type} (strength: {strength:.2f})",
+                "arrows": "to",
+            }
+        )
 
     # Generate HTML
     html_content = f"""
@@ -135,9 +139,9 @@ def generate_html_visualization(graph_data: dict, output_path: str = "causal_gra
 
     <div class="info">
         <h3>Graph Metadata</h3>
-        <p><strong>Total Hypotheses:</strong> {metadata.get('total_hypotheses', 'N/A')}</p>
-        <p><strong>Total Symptoms:</strong> {metadata.get('total_symptoms', 'N/A')}</p>
-        <p><strong>Total Relationships:</strong> {metadata.get('total_relationships', 'N/A')}</p>
+        <p><strong>Total Hypotheses:</strong> {metadata.get("total_hypotheses", "N/A")}</p>
+        <p><strong>Total Symptoms:</strong> {metadata.get("total_symptoms", "N/A")}</p>
+        <p><strong>Total Relationships:</strong> {metadata.get("total_relationships", "N/A")}</p>
     </div>
 
     <div class="legend">
@@ -212,7 +216,7 @@ def generate_html_visualization(graph_data: dict, output_path: str = "causal_gra
 """
 
     # Write to file
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         f.write(html_content)
 
     print(f"✓ Visualization saved to {output_path}")
@@ -237,7 +241,7 @@ def main():
         graph_data = json.load(f)
 
     # Generate visualization
-    output_path = input_path.replace('.json', '.html')
+    output_path = input_path.replace(".json", ".html")
     generate_html_visualization(graph_data, output_path)
 
 

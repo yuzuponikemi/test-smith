@@ -82,7 +82,9 @@ def drill_down_generator(state):
         # Further limit based on budget status
         max_children = min(max_children, 2 if budget["status"] == "caution" else 1)
         if len(drill_down_areas) > max_children:
-            print(f"  ⚠️  Budget constraint: Limiting drill-down from {len(drill_down_areas)} to {max_children} areas")
+            print(
+                f"  ⚠️  Budget constraint: Limiting drill-down from {len(drill_down_areas)} to {max_children} areas"
+            )
             drill_down_areas = drill_down_areas[:max_children]
 
     print(f"  Creating {len(drill_down_areas)} child subtasks for {current_subtask_id}")
@@ -101,7 +103,7 @@ def drill_down_generator(state):
             "focus_area": f"Drill-down: {area[:50]}...",
             "priority": len(all_subtasks) + idx,  # Append after existing subtasks
             "dependencies": [current_subtask_id],  # Depends on parent
-            "estimated_importance": current_subtask.get("estimated_importance", 0.7)
+            "estimated_importance": current_subtask.get("estimated_importance", 0.7),
         }
 
         child_subtasks.append(child_subtask)
@@ -129,9 +131,7 @@ def drill_down_generator(state):
         print(f"  ✓ Inserted {len(child_subtasks)} children after index {current_idx}")
         print(f"  Total subtasks: {len(all_subtasks)} → {len(updated_subtasks)}\n")
 
-        return {
-            "master_plan": updated_master_plan
-        }
+        return {"master_plan": updated_master_plan}
     else:
         print(f"  ⚠ Error: Could not find insertion point for {current_subtask_id}")
         return {}

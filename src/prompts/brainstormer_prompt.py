@@ -40,5 +40,5 @@ Provide hypotheses that are:
 
 BRAINSTORMER_PROMPT = PromptTemplate(
     template=BRAINSTORMER_TEMPLATE,
-    input_variables=["query", "issue_summary", "symptoms", "context", "scope"]
+    input_variables=["query", "issue_summary", "symptoms", "context", "scope"],
 )

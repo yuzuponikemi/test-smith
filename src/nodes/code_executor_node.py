@@ -36,11 +36,7 @@ from src.utils.logging_utils import print_node_header
 def check_docker_available() -> bool:
     """Check if Docker is available on the system"""
     try:
-        result = subprocess.run(
-            ["docker", "info"],
-            capture_output=True,
-            timeout=5
-        )
+        result = subprocess.run(["docker", "info"], capture_output=True, timeout=5)
         return result.returncode == 0
     except (subprocess.TimeoutExpired, FileNotFoundError):
         return False
@@ -73,31 +69,33 @@ def execute_code_in_docker(code: str, timeout: int = 60) -> tuple[bool, str, str
 
         # Docker run command with security restrictions
         docker_cmd = [
-            "docker", "run",
-            "--rm",                          # Remove container after execution
-            "--network=none",                # No network access
-            "--memory=512m",                 # Memory limit
-            "--cpus=1",                      # CPU limit
-            "--read-only",                   # Read-only filesystem
-            "--tmpfs", "/tmp:rw,size=100m", # Temporary writable space
-            "-v", f"{tmpdir}:/workspace:ro", # Mount code as read-only
-            "-w", "/workspace",
-            "python:3.11-slim",              # Lightweight Python image
-            "python", "script.py"
+            "docker",
+            "run",
+            "--rm",  # Remove container after execution
+            "--network=none",  # No network access
+            "--memory=512m",  # Memory limit
+            "--cpus=1",  # CPU limit
+            "--read-only",  # Read-only filesystem
+            "--tmpfs",
+            "/tmp:rw,size=100m",  # Temporary writable space
+            "-v",
+            f"{tmpdir}:/workspace:ro",  # Mount code as read-only
+            "-w",
+            "/workspace",
+            "python:3.11-slim",  # Lightweight Python image
+            "python",
+            "script.py",
         ]
 
         try:
-            result = subprocess.run(
-                docker_cmd,
-                capture_output=True,
-                timeout=timeout,
-                text=True
-            )
+            result = subprocess.run(docker_cmd, capture_output=True, timeout=timeout, text=True)
 
             execution_time = time.time() - start_time
 
             if result.returncode == 0:
-                output = result.stdout if result.stdout else "Code executed successfully (no output)"
+                output = (
+                    result.stdout if result.stdout else "Code executed successfully (no output)"
+                )
                 return True, output, "", execution_time
             else:
                 error = result.stderr if result.stderr else f"Exit code: {result.returncode}"
@@ -111,13 +109,13 @@ def execute_code_in_docker(code: str, timeout: int = 60) -> tuple[bool, str, str
             return False, "", f"Docker execution error: {str(e)}", execution_time
 
 
-def execute_code_safely(code: str, timeout: int = 10) -> tuple[bool, str, str, float]:
+def execute_code_safely(code: str, _timeout: int = 10) -> tuple[bool, str, str, float]:
     """
     Execute Python code in a restricted environment.
 
     Args:
         code: Python code to execute
-        timeout: Maximum execution time in seconds
+        _timeout: Maximum execution time in seconds (unused in current implementation)
 
     Returns:
         Tuple of (success, output, error, execution_time)
@@ -128,32 +126,32 @@ def execute_code_safely(code: str, timeout: int = 10) -> tuple[bool, str, str, f
 
     # Create restricted globals (no dangerous builtins)
     restricted_globals = {
-        '__builtins__': {
-            'abs': abs,
-            'all': all,
-            'any': any,
-            'bool': bool,
-            'dict': dict,
-            'enumerate': enumerate,
-            'filter': filter,
-            'float': float,
-            'int': int,
-            'len': len,
-            'list': list,
-            'map': map,
-            'max': max,
-            'min': min,
-            'print': print,
-            'range': range,
-            'reversed': reversed,
-            'round': round,
-            'set': set,
-            'sorted': sorted,
-            'str': str,
-            'sum': sum,
-            'tuple': tuple,
-            'type': type,
-            'zip': zip,
+        "__builtins__": {
+            "abs": abs,
+            "all": all,
+            "any": any,
+            "bool": bool,
+            "dict": dict,
+            "enumerate": enumerate,
+            "filter": filter,
+            "float": float,
+            "int": int,
+            "len": len,
+            "list": list,
+            "map": map,
+            "max": max,
+            "min": min,
+            "print": print,
+            "range": range,
+            "reversed": reversed,
+            "round": round,
+            "set": set,
+            "sorted": sorted,
+            "str": str,
+            "sum": sum,
+            "tuple": tuple,
+            "type": type,
+            "zip": zip,
         }
     }
 
@@ -167,7 +165,12 @@ def execute_code_safely(code: str, timeout: int = 10) -> tuple[bool, str, str, f
 
         execution_time = time.time() - start_time
         output = stdout_capture.getvalue()
-        return True, output if output else "Code executed successfully (no output)", "", execution_time
+        return (
+            True,
+            output if output else "Code executed successfully (no output)",
+            "",
+            execution_time,
+        )
 
     except Exception as e:
         execution_time = time.time() - start_time
@@ -237,7 +240,7 @@ def code_executor(state):
         context=context,
         input_data=input_data if input_data else "None",
         requirements="\n".join(f"- {req}" for req in requirements) if requirements else "None",
-        expected_output=expected_output if expected_output else "Any format"
+        expected_output=expected_output if expected_output else "Any format",
     )
 
     try:
@@ -282,7 +285,7 @@ def code_executor(state):
             "error": error if error else None,
             "execution_time": exec_time,
             "execution_mode": execution_mode,
-            "code": generated_code
+            "code": generated_code,
         }
 
         return {"code_execution_results": [result]}
@@ -295,6 +298,6 @@ def code_executor(state):
             "error": f"Code generation failed: {str(e)}",
             "execution_time": 0.0,
             "execution_mode": "failed",
-            "code": ""
+            "code": "",
         }
         return {"code_execution_results": [error_result]}

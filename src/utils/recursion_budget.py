@@ -5,6 +5,7 @@ Provides budget-aware control for drill-down and plan revision decisions
 to prevent hitting recursion limits.
 """
 
+
 def calculate_recursion_budget(state):
     """
     Calculate remaining recursion budget and provide recommendations.
@@ -52,11 +53,7 @@ def calculate_recursion_budget(state):
         message = f"🟢 HEALTHY: {usage_percent:.1f}% used ({remaining} remaining)"
 
     # Recommendations
-    recommendations = {
-        "allow_drill_down": True,
-        "allow_plan_revision": True,
-        "max_new_subtasks": 5
-    }
+    recommendations = {"allow_drill_down": True, "allow_plan_revision": True, "max_new_subtasks": 5}
 
     if status == "critical":
         recommendations["allow_drill_down"] = False
@@ -82,7 +79,7 @@ def calculate_recursion_budget(state):
         "avg_per_subtask": avg_per_subtask,
         "estimated_total_needed": estimated_total_needed,
         "will_exceed": estimated_total_needed > limit,
-        "recommendations": recommendations
+        "recommendations": recommendations,
     }
 
 

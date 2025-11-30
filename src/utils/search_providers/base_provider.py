@@ -31,7 +31,7 @@ class BaseSearchProvider(ABC):
 
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key
-        self._is_available = None  # Cache for availability status
+        self._is_available: Optional[bool] = None  # Cache for availability status
 
     @property
     @abstractmethod

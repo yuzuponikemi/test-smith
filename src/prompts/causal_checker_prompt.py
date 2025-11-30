@@ -58,5 +58,12 @@ Provide a thorough causal analysis for all hypotheses.
 
 CAUSAL_CHECKER_PROMPT = PromptTemplate(
     template=CAUSAL_CHECKER_TEMPLATE,
-    input_variables=["query", "issue_summary", "symptoms", "hypotheses", "web_results", "rag_results"]
+    input_variables=[
+        "query",
+        "issue_summary",
+        "symptoms",
+        "hypotheses",
+        "web_results",
+        "rag_results",
+    ],
 )

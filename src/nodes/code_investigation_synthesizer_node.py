@@ -49,23 +49,28 @@ def code_investigation_synthesizer_node(state):
     )
 
     # Format flow analysis
-    flow_analysis = _format_flow_analysis(
-        data_flow, control_flow, variable_usage, function_calls
-    )
+    flow_analysis = _format_flow_analysis(data_flow, control_flow, variable_usage, function_calls)
 
     # Combine code results
     code_context = "\n\n".join(code_results) if code_results else "No code retrieved"
 
     # Format key findings
-    findings_str = "\n".join(f"- {f}" for f in key_findings) if key_findings else "No specific findings"
+    findings_str = (
+        "\n".join(f"- {f}" for f in key_findings) if key_findings else "No specific findings"
+    )
 
     # Create prompt
     prompt = PromptTemplate(
         template=CODE_INVESTIGATION_SYNTHESIZER_PROMPT,
         input_variables=[
-            "query", "investigation_type", "target_elements",
-            "code_context", "dependency_analysis", "flow_analysis", "key_findings"
-        ]
+            "query",
+            "investigation_type",
+            "target_elements",
+            "code_context",
+            "dependency_analysis",
+            "flow_analysis",
+            "key_findings",
+        ],
     )
 
     # Get model
@@ -73,18 +78,22 @@ def code_investigation_synthesizer_node(state):
     chain = prompt | model
 
     try:
-        response = chain.invoke({
-            "query": query,
-            "investigation_type": investigation_type,
-            "target_elements": ", ".join(target_elements) if target_elements else "Not specified",
-            "code_context": code_context[:12000],  # Limit size
-            "dependency_analysis": dependency_analysis,
-            "flow_analysis": flow_analysis,
-            "key_findings": findings_str
-        })
+        response = chain.invoke(
+            {
+                "query": query,
+                "investigation_type": investigation_type,
+                "target_elements": ", ".join(target_elements)
+                if target_elements
+                else "Not specified",
+                "code_context": code_context[:12000],  # Limit size
+                "dependency_analysis": dependency_analysis,
+                "flow_analysis": flow_analysis,
+                "key_findings": findings_str,
+            }
+        )
 
         # Extract content
-        report = response.content if hasattr(response, 'content') else str(response)
+        report = response.content if hasattr(response, "content") else str(response)
 
         print(f"  Generated report ({len(report)} chars)")
 
@@ -100,8 +109,7 @@ def code_investigation_synthesizer_node(state):
         print(f"  Error generating report: {e}")
         # Generate basic report
         report = _generate_basic_report(
-            query, investigation_type, target_elements,
-            dependencies, key_findings, related_files
+            query, investigation_type, target_elements, dependencies, key_findings, related_files
         )
         return {"report": report}
 
@@ -136,8 +144,9 @@ def _format_dependency_analysis(dependencies: list, imports: list, patterns: lis
     return "\n".join(sections) if sections else "No dependency analysis available"
 
 
-def _format_flow_analysis(data_flow: list, control_flow: list,
-                         variable_usage: list, function_calls: list) -> str:
+def _format_flow_analysis(
+    data_flow: list, control_flow: list, variable_usage: list, function_calls: list
+) -> str:
     """Format flow analysis for the prompt"""
 
     sections = []
@@ -177,8 +186,14 @@ def _format_flow_analysis(data_flow: list, control_flow: list,
     return "\n".join(sections) if sections else "No flow analysis available"
 
 
-def _generate_basic_report(query: str, investigation_type: str, target_elements: list,
-                          dependencies: list, key_findings: list, related_files: list) -> str:
+def _generate_basic_report(
+    query: str,
+    investigation_type: str,
+    target_elements: list,
+    dependencies: list,
+    key_findings: list,
+    related_files: list,
+) -> str:
     """Generate a basic report when LLM fails"""
 
     report = f"""## Code Investigation Report
@@ -190,7 +205,7 @@ def _generate_basic_report(query: str, investigation_type: str, target_elements:
 {investigation_type}
 
 ### Target Elements
-{', '.join(target_elements) if target_elements else 'Not specified'}
+{", ".join(target_elements) if target_elements else "Not specified"}
 
 ### Dependencies Found
 """

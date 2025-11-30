@@ -46,7 +46,7 @@ def generate_graph_visualization(graph_name: str, builder, output_dir: Path):
         png_path = output_dir / f"{graph_name}_graph.png"
         try:
             png_data = graph_drawable.draw_mermaid_png()
-            with open(png_path, 'wb') as f:
+            with open(png_path, "wb") as f:
                 f.write(png_data)
             print(f"✓ Generated PNG: {png_path}")
         except Exception as e:
@@ -56,7 +56,7 @@ def generate_graph_visualization(graph_name: str, builder, output_dir: Path):
             # Try alternative PNG method
             try:
                 png_data = graph_drawable.draw_png()
-                with open(png_path, 'wb') as f:
+                with open(png_path, "wb") as f:
                     f.write(png_data)
                 print(f"✓ Generated PNG (graphviz): {png_path}")
             except Exception as e2:
@@ -65,7 +65,7 @@ def generate_graph_visualization(graph_name: str, builder, output_dir: Path):
                 # Fall back to saving Mermaid diagram
                 mermaid_path = output_dir / f"{graph_name}_graph.mmd"
                 mermaid_data = graph_drawable.draw_mermaid()
-                with open(mermaid_path, 'w') as f:
+                with open(mermaid_path, "w") as f:
                     f.write(mermaid_data)
                 print(f"✓ Saved Mermaid diagram: {mermaid_path}")
                 print("  View at: https://mermaid.live/")
@@ -73,7 +73,7 @@ def generate_graph_visualization(graph_name: str, builder, output_dir: Path):
         # Also generate ASCII representation
         ascii_path = output_dir / f"{graph_name}_graph.txt"
         ascii_data = graph_drawable.draw_ascii()
-        with open(ascii_path, 'w') as f:
+        with open(ascii_path, "w") as f:
             f.write(ascii_data)
         print(f"✓ Generated ASCII: {ascii_path}")
 
@@ -96,7 +96,7 @@ def generate_index(output_dir: Path, graphs: dict, results: dict):
     """
     index_file = output_dir / "README.md"
 
-    with open(index_file, 'w') as f:
+    with open(index_file, "w") as f:
         f.write("# Test-Smith Graph Visualizations\n\n")
         f.write("This directory contains visual diagrams for all registered graph workflows.\n\n")
         f.write(f"**Generated:** {sum(results.values())} / {len(graphs)} graphs\n\n")
@@ -128,9 +128,9 @@ def generate_index(output_dir: Path, graphs: dict, results: dict):
         f.write("|-------|-----------|----------|\n")
 
         for graph_name, metadata in graphs.items():
-            name = metadata.get('name', graph_name)
-            complexity = metadata.get('complexity', 'N/A')
-            use_case = metadata.get('use_cases', ['N/A'])[0] if metadata.get('use_cases') else 'N/A'
+            name = metadata.get("name", graph_name)
+            complexity = metadata.get("complexity", "N/A")
+            use_case = metadata.get("use_cases", ["N/A"])[0] if metadata.get("use_cases") else "N/A"
             f.write(f"| {name} | {complexity} | {use_case} |\n")
 
     print(f"✓ Generated index: {index_file}")

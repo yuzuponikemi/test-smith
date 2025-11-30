@@ -5,7 +5,6 @@ Free search provider with no API key required.
 Uses DuckDuckGo's instant answer API.
 """
 
-
 from langchain_community.tools import DuckDuckGoSearchResults
 
 from .base_provider import BaseSearchProvider, SearchResult
@@ -47,7 +46,9 @@ class DuckDuckGoProvider(BaseSearchProvider):
                 if isinstance(item, dict):
                     results.append(
                         SearchResult(
-                            title=item.get("title", item.get("snippet", "")[:50] if item.get("snippet") else ""),
+                            title=item.get(
+                                "title", item.get("snippet", "")[:50] if item.get("snippet") else ""
+                            ),
                             url=item.get("link", item.get("url", "")),
                             content=item.get("snippet", item.get("content", "")),
                         )

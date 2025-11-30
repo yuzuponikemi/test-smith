@@ -21,6 +21,7 @@ from src.graph import workflow
 
 load_dotenv()
 
+
 def test_dynamic_replanning():
     """
     Test adaptive research with a query that should trigger plan revision.
@@ -49,10 +50,8 @@ def test_dynamic_replanning():
 
         # Configure for test with higher recursion limit for dynamic replanning
         config = {
-            "configurable": {
-                "thread_id": "test-phase4-dynamic-replanning"
-            },
-            "recursion_limit": 150  # Higher limit needed for dynamic replanning
+            "configurable": {"thread_id": "test-phase4-dynamic-replanning"},
+            "recursion_limit": 150,  # Higher limit needed for dynamic replanning
         }
 
         print("\n🚀 Starting execution with dynamic replanning enabled...")
@@ -60,11 +59,7 @@ def test_dynamic_replanning():
 
         # Run the graph
         result = None
-        for event in app.stream(
-            {"query": test_query},
-            config=config,
-            stream_mode="values"
-        ):
+        for event in app.stream({"query": test_query}, config=config, stream_mode="values"):
             result = event
 
         print("\n" + "=" * 80)
@@ -96,8 +91,10 @@ def test_dynamic_replanning():
                         print(f"    Trigger: {rev.get('trigger_type', 'unknown')}")
                         print(f"    Reasoning: {rev.get('revision_reasoning', 'N/A')[:200]}...")
                         print(f"    New Subtasks Added: {len(rev.get('new_subtasks', []))}")
-                        for new_st in rev.get('new_subtasks', []):
-                            print(f"      + {new_st.get('subtask_id', 'unknown')}: {new_st.get('description', 'N/A')[:80]}...")
+                        for new_st in rev.get("new_subtasks", []):
+                            print(
+                                f"      + {new_st.get('subtask_id', 'unknown')}: {new_st.get('description', 'N/A')[:80]}..."
+                            )
                         print(f"    Impact: {rev.get('estimated_impact', 'N/A')[:150]}...")
 
                     revision_triggers = result.get("revision_triggers", [])
@@ -142,6 +139,7 @@ def test_dynamic_replanning():
 
         else:
             print("\n❌ ERROR: No result returned from graph execution")
+
 
 if __name__ == "__main__":
     test_dynamic_replanning()

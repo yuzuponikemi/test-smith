@@ -11,9 +11,9 @@ from .document_analyzer import DocumentAnalyzer
 from .quality_metrics import QualityMetrics
 
 __all__ = [
-    'DocumentAnalyzer',
-    'ChunkingStrategy',
-    'select_chunking_strategy',
-    'ContentCleaner',
-    'QualityMetrics'
+    "DocumentAnalyzer",
+    "ChunkingStrategy",
+    "select_chunking_strategy",
+    "ContentCleaner",
+    "QualityMetrics",
 ]
