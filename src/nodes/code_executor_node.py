@@ -268,7 +268,7 @@ def code_executor(state):
             success, output, error, exec_time = execute_code_in_docker(generated_code, timeout=60)
             execution_mode = "docker_sandbox"
         else:
-            success, output, error, exec_time = execute_code_safely(generated_code, timeout=10)
+            success, output, error, exec_time = execute_code_safely(generated_code)
             execution_mode = "restricted_fallback"
 
         if success:

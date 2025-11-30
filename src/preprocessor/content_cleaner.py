@@ -12,6 +12,7 @@ import hashlib
 import re
 from collections import Counter
 from difflib import SequenceMatcher
+from typing import Union
 
 from langchain.schema import Document
 
@@ -105,7 +106,7 @@ class ContentCleaner:
             return chunks
 
         unique_chunks = []
-        seen_contents = []
+        seen_contents: list[str] = []
 
         for chunk in chunks:
             is_duplicate = False
@@ -220,18 +221,18 @@ class ContentCleaner:
 
         return pattern_counts
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, Union[int, float]]:
         """Get cleaning statistics"""
-        stats = self.stats.copy()
+        stats_copy: dict[str, Union[int, float]] = dict(self.stats)
 
-        if stats["total_input_chunks"] > 0:
-            stats["removal_rate"] = (
-                stats["total_input_chunks"] - stats["total_output_chunks"]
-            ) / stats["total_input_chunks"]
+        if stats_copy["total_input_chunks"] > 0:
+            stats_copy["removal_rate"] = (
+                stats_copy["total_input_chunks"] - stats_copy["total_output_chunks"]
+            ) / stats_copy["total_input_chunks"]
         else:
-            stats["removal_rate"] = 0.0
+            stats_copy["removal_rate"] = 0.0
 
-        return stats
+        return stats_copy
 
     def print_stats(self):
         """Print cleaning statistics"""

@@ -194,7 +194,7 @@ class ChunkingStrategy:
     }
 
     def __init__(self):
-        self.stats = {
+        self.stats: dict[str, Any] = {
             "total_documents": 0,
             "total_chunks": 0,
             "chunks_by_method": {},

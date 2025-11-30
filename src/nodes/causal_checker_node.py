@@ -61,9 +61,9 @@ def causal_checker_node(state: dict) -> dict:
     print(f"  Evaluated {len(analysis.relationships)} causal relationships")
 
     # Show summary of relationship types
-    relationship_types = {}
+    relationship_types: dict[str, int] = {}
     for rel in analysis.relationships:
-        rel_type = rel.relationship_type
+        rel_type = str(rel.relationship_type)
         relationship_types[rel_type] = relationship_types.get(rel_type, 0) + 1
 
     for rel_type, count in relationship_types.items():

@@ -134,4 +134,6 @@ def create_simple_state(additional_fields: dict[str, type] = None) -> type:
         additional_fields = {}
 
     # Create new TypedDict class dynamically
-    return TypedDict("CustomAgentState", {**BaseAgentState.__annotations__, **additional_fields})
+    return TypedDict(  # type: ignore[operator]
+        "CustomAgentState", {**BaseAgentState.__annotations__, **additional_fields}
+    )
