@@ -11,7 +11,7 @@ Calculates metrics to assess the quality of preprocessed data:
 from collections import Counter
 
 import numpy as np
-from langchain.schema import Document
+from langchain_core.documents import Document
 
 
 class QualityMetrics:
@@ -141,7 +141,7 @@ class QualityMetrics:
         has_chunking_method = sum(1 for c in chunks if "chunking_method" in c.metadata)
 
         # Collect all metadata keys
-        all_metadata_keys = set()
+        all_metadata_keys: set[str] = set()
         for chunk in chunks:
             all_metadata_keys.update(chunk.metadata.keys())
 

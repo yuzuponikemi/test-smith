@@ -14,7 +14,7 @@ from collections import Counter
 from difflib import SequenceMatcher
 from typing import Union
 
-from langchain.schema import Document
+from langchain_core.documents import Document
 
 
 class ContentCleaner:
