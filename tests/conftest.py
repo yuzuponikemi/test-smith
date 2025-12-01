@@ -44,7 +44,7 @@ class MockChatModel:
         self,
         response: str = "Mock LLM response",
         structured_response: Optional[BaseModel] = None,
-        temperature: float = 0.7
+        temperature: float = 0.7,
     ):
         self.response = response
         self.structured_response = structured_response
@@ -63,11 +63,7 @@ class MockChatModel:
 
     def with_structured_output(self, schema: type) -> "MockStructuredModel":
         """Mock structured output binding."""
-        return MockStructuredModel(
-            schema=schema,
-            response=self.structured_response,
-            parent=self
-        )
+        return MockStructuredModel(schema=schema, response=self.structured_response, parent=self)
 
     @property
     def call_count(self) -> int:
@@ -83,7 +79,12 @@ class MockChatModel:
 class MockStructuredModel:
     """Mock structured output model."""
 
-    def __init__(self, schema: type, response: Optional[BaseModel] = None, parent: Optional[MockChatModel] = None):
+    def __init__(
+        self,
+        schema: type,
+        response: Optional[BaseModel] = None,
+        parent: Optional[MockChatModel] = None,
+    ):
         self.schema = schema
         self.response = response
         self.parent = parent
@@ -103,22 +104,21 @@ class MockStructuredModel:
     def _create_minimal_instance(self) -> BaseModel:
         """Create a minimal valid instance of the schema for testing."""
         # Default values for common schemas
-        if hasattr(self.schema, '__name__'):
+        if hasattr(self.schema, "__name__"):
             schema_name = self.schema.__name__
 
-            if schema_name == 'StrategicPlan':
+            if schema_name == "StrategicPlan":
                 from schemas import StrategicPlan
+
                 return StrategicPlan(
                     rag_queries=["test rag query"],
                     web_queries=["test web query"],
-                    strategy="Test strategy"
+                    strategy="Test strategy",
                 )
-            elif schema_name == 'Evaluation':
+            elif schema_name == "Evaluation":
                 from schemas import Evaluation
-                return Evaluation(
-                    is_sufficient=True,
-                    reason="Test evaluation"
-                )
+
+                return Evaluation(is_sufficient=True, reason="Test evaluation")
 
         # Fallback: try to instantiate with empty values
         try:
@@ -137,9 +137,9 @@ def test_env():
     original_env = os.environ.copy()
 
     # Set test environment variables
-    os.environ['MODEL_PROVIDER'] = 'ollama'  # Use mock, doesn't matter which
-    os.environ['TAVILY_API_KEY'] = 'test-tavily-key'
-    os.environ['LANGCHAIN_TRACING_V2'] = 'false'  # Disable tracing in tests
+    os.environ["MODEL_PROVIDER"] = "ollama"  # Use mock, doesn't matter which
+    os.environ["TAVILY_API_KEY"] = "test-tavily-key"
+    os.environ["LANGCHAIN_TRACING_V2"] = "false"  # Disable tracing in tests
 
     yield
 
@@ -165,7 +165,7 @@ def mock_planner_model():
     response = StrategicPlan(
         rag_queries=["rag query 1", "rag query 2"],
         web_queries=["web query 1"],
-        strategy="Mock strategic allocation: RAG for internal, web for external"
+        strategy="Mock strategic allocation: RAG for internal, web for external",
     )
     return MockChatModel(structured_response=response)
 
@@ -175,10 +175,7 @@ def mock_evaluator_model():
     """Mock evaluator model with Evaluation output."""
     from schemas import Evaluation
 
-    response = Evaluation(
-        is_sufficient=True,
-        reason="Mock evaluation: information is sufficient"
-    )
+    response = Evaluation(is_sufficient=True, reason="Mock evaluation: information is sufficient")
     return MockChatModel(structured_response=response)
 
 
@@ -214,7 +211,7 @@ def basic_agent_state() -> dict[str, Any]:
         "analyzed_data": [],
         "report": "",
         "evaluation": "",
-        "loop_count": 0
+        "loop_count": 0,
     }
 
 
@@ -222,18 +219,18 @@ def basic_agent_state() -> dict[str, Any]:
 def populated_agent_state(basic_agent_state) -> dict[str, Any]:
     """Provide an AgentState with populated search results."""
     state = basic_agent_state.copy()
-    state.update({
-        "web_queries": ["modern TDD practices", "TDD tools 2024"],
-        "rag_queries": ["test-driven development basics"],
-        "search_results": [
-            "Web search result 1: TDD is a software development process...",
-            "Web search result 2: Modern TDD tools include pytest, jest..."
-        ],
-        "rag_results": [
-            "KB result 1: Test-Driven Development (TDD) is a methodology..."
-        ],
-        "loop_count": 1
-    })
+    state.update(
+        {
+            "web_queries": ["modern TDD practices", "TDD tools 2024"],
+            "rag_queries": ["test-driven development basics"],
+            "search_results": [
+                "Web search result 1: TDD is a software development process...",
+                "Web search result 2: Modern TDD tools include pytest, jest...",
+            ],
+            "rag_results": ["KB result 1: Test-Driven Development (TDD) is a methodology..."],
+            "loop_count": 1,
+        }
+    )
     return state
 
 
@@ -254,7 +251,7 @@ def hierarchical_state() -> dict[str, Any]:
         "loop_count": 0,
         "depth_evaluation": "",
         "drill_down_needed": False,
-        "plan_revision": ""
+        "plan_revision": "",
     }
 
 
@@ -267,7 +264,7 @@ def sample_search_results() -> list[str]:
     return [
         "LangGraph is a library for building stateful, multi-actor applications with LLMs.",
         "LangGraph uses a graph structure where nodes are processing steps and edges define the flow.",
-        "The library integrates with LangChain and supports cyclic workflows."
+        "The library integrates with LangChain and supports cyclic workflows.",
     ]
 
 
@@ -277,7 +274,7 @@ def sample_rag_results() -> list[str]:
     return [
         "Document chunk 1: LangGraph provides StateGraph for defining workflows...",
         "Document chunk 2: Nodes in LangGraph are Python functions that process state...",
-        "Document chunk 3: Checkpointing allows persistence of conversation state..."
+        "Document chunk 3: Checkpointing allows persistence of conversation state...",
     ]
 
 
@@ -307,8 +304,9 @@ def assert_llm_called(mock_model: MockChatModel, min_calls: int = 1):
         mock_model: Mock model to check
         min_calls: Minimum number of expected calls
     """
-    assert mock_model.call_count >= min_calls, \
+    assert mock_model.call_count >= min_calls, (
         f"Expected at least {min_calls} LLM calls, got {mock_model.call_count}"
+    )
 
 
 def assert_state_updated(state: dict[str, Any], key: str, expected_type: type = None):
@@ -330,8 +328,9 @@ def assert_state_updated(state: dict[str, Any], key: str, expected_type: type = 
         assert isinstance(value, str), f"Expected {key} to be a string"
         assert len(value) > 0, f"Expected {key} to be non-empty"
     elif expected_type is not None:
-        assert isinstance(value, expected_type), \
+        assert isinstance(value, expected_type), (
             f"Expected {key} to be {expected_type}, got {type(value)}"
+        )
 
 
 # ==================== Pytest Configuration ====================

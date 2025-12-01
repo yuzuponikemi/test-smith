@@ -43,6 +43,7 @@ import structlog
 # Structlog Configuration
 # ==============================================
 
+
 def configure_structlog(json_logs: bool = None, log_level: str = None):
     """
     Configure structlog for the application.
@@ -82,16 +83,13 @@ def configure_structlog(json_logs: bool = None, log_level: str = None):
         # Human-readable console output for development
         processors.append(
             structlog.dev.ConsoleRenderer(
-                colors=True,
-                exception_formatter=structlog.dev.plain_traceback
+                colors=True, exception_formatter=structlog.dev.plain_traceback
             )
         )
 
     structlog.configure(
         processors=processors,  # type: ignore[arg-type]
-        wrapper_class=structlog.make_filtering_bound_logger(
-            _level_to_int(log_level)
-        ),
+        wrapper_class=structlog.make_filtering_bound_logger(_level_to_int(log_level)),
         context_class=dict,
         logger_factory=structlog.PrintLoggerFactory(file=sys.stdout),
         cache_logger_on_first_use=True,
@@ -117,6 +115,7 @@ configure_structlog()
 # ==============================================
 # Logger Factory
 # ==============================================
+
 
 def get_logger(name: str = None, **initial_context) -> structlog.BoundLogger:
     """
@@ -177,6 +176,7 @@ def get_node_logger(node_name: str, state: dict[str, Any]) -> structlog.BoundLog
 
     # Get model info
     from src.utils.logging_utils import get_current_model_info
+
     context["model"] = get_current_model_info()
 
     return get_logger(node_name, **context)
@@ -185,6 +185,7 @@ def get_node_logger(node_name: str, state: dict[str, Any]) -> structlog.BoundLog
 # ==============================================
 # Context Managers
 # ==============================================
+
 
 @contextmanager
 def log_node_execution(node_name: str, state: dict[str, Any]):
@@ -224,19 +225,23 @@ def log_node_execution(node_name: str, state: dict[str, Any]):
     try:
         yield logger
         execution_time_ms = (time.time() - start_time) * 1000
-        logger.info("node_end",
-                    node=node_name,
-                    execution_time_ms=round(execution_time_ms, 2),
-                    status="success")
+        logger.info(
+            "node_end",
+            node=node_name,
+            execution_time_ms=round(execution_time_ms, 2),
+            status="success",
+        )
 
     except Exception as e:
         execution_time_ms = (time.time() - start_time) * 1000
-        logger.error("node_end",
-                     node=node_name,
-                     execution_time_ms=round(execution_time_ms, 2),
-                     status="error",
-                     error_type=type(e).__name__,
-                     error_message=str(e))
+        logger.error(
+            "node_end",
+            node=node_name,
+            execution_time_ms=round(execution_time_ms, 2),
+            status="error",
+            error_type=type(e).__name__,
+            error_message=str(e),
+        )
         raise
 
 
@@ -266,15 +271,18 @@ def log_performance(logger: structlog.BoundLogger, operation: str, **extra_conte
         yield
     finally:
         duration_ms = (time.time() - start_time) * 1000
-        logger.info("operation_complete",
-                    operation=operation,
-                    duration_ms=round(duration_ms, 2),
-                    **extra_context)
+        logger.info(
+            "operation_complete",
+            operation=operation,
+            duration_ms=round(duration_ms, 2),
+            **extra_context,
+        )
 
 
 # ==============================================
 # Decorators
 # ==============================================
+
 
 def log_function_call(func):
     """
@@ -287,15 +295,18 @@ def log_function_call(func):
 
         # Logs: function_call, function_return (with execution time)
     """
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         logger = get_logger(func.__module__)
 
         # Log function call
-        logger.debug("function_call",
-                     function=func.__name__,
-                     args=args[:3] if len(args) <= 3 else f"{len(args)} args",  # Avoid logging huge args
-                     kwargs=list(kwargs.keys()))
+        logger.debug(
+            "function_call",
+            function=func.__name__,
+            args=args[:3] if len(args) <= 3 else f"{len(args)} args",  # Avoid logging huge args
+            kwargs=list(kwargs.keys()),
+        )
 
         start_time = time.time()
 
@@ -303,22 +314,26 @@ def log_function_call(func):
             result = func(*args, **kwargs)
             duration_ms = (time.time() - start_time) * 1000
 
-            logger.debug("function_return",
-                         function=func.__name__,
-                         duration_ms=round(duration_ms, 2),
-                         status="success")
+            logger.debug(
+                "function_return",
+                function=func.__name__,
+                duration_ms=round(duration_ms, 2),
+                status="success",
+            )
 
             return result
 
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
 
-            logger.error("function_return",
-                         function=func.__name__,
-                         duration_ms=round(duration_ms, 2),
-                         status="error",
-                         error_type=type(e).__name__,
-                         error_message=str(e))
+            logger.error(
+                "function_return",
+                function=func.__name__,
+                duration_ms=round(duration_ms, 2),
+                status="error",
+                error_type=type(e).__name__,
+                error_message=str(e),
+            )
             raise
 
     return wrapper
@@ -328,10 +343,10 @@ def log_function_call(func):
 # Helper Functions
 # ==============================================
 
-def log_query_allocation(logger: structlog.BoundLogger,
-                         rag_queries: list,
-                         web_queries: list,
-                         strategy: str):
+
+def log_query_allocation(
+    logger: structlog.BoundLogger, rag_queries: list, web_queries: list, strategy: str
+):
     """
     Log query allocation in a standardized format.
 
@@ -341,19 +356,20 @@ def log_query_allocation(logger: structlog.BoundLogger,
         web_queries: List of web queries
         strategy: Allocation strategy reasoning
     """
-    logger.info("query_allocation",
-                rag_query_count=len(rag_queries),
-                web_query_count=len(web_queries),
-                total_queries=len(rag_queries) + len(web_queries),
-                strategy=strategy[:200],  # Truncate long strategies
-                rag_queries=rag_queries,
-                web_queries=web_queries)
+    logger.info(
+        "query_allocation",
+        rag_query_count=len(rag_queries),
+        web_query_count=len(web_queries),
+        total_queries=len(rag_queries) + len(web_queries),
+        strategy=strategy[:200],  # Truncate long strategies
+        rag_queries=rag_queries,
+        web_queries=web_queries,
+    )
 
 
-def log_evaluation_result(logger: structlog.BoundLogger,
-                           is_sufficient: bool,
-                           reason: str,
-                           loop_count: int):
+def log_evaluation_result(
+    logger: structlog.BoundLogger, is_sufficient: bool, reason: str, loop_count: int
+):
     """
     Log evaluation result in a standardized format.
 
@@ -363,17 +379,21 @@ def log_evaluation_result(logger: structlog.BoundLogger,
         reason: Evaluation reasoning
         loop_count: Current iteration count
     """
-    logger.info("evaluation_complete",
-                is_sufficient=is_sufficient,
-                reason=reason[:200],  # Truncate long reasons
-                loop_count=loop_count,
-                decision="synthesize" if is_sufficient else "refine")
+    logger.info(
+        "evaluation_complete",
+        is_sufficient=is_sufficient,
+        reason=reason[:200],  # Truncate long reasons
+        loop_count=loop_count,
+        decision="synthesize" if is_sufficient else "refine",
+    )
 
 
-def log_analysis_summary(logger: structlog.BoundLogger,
-                         web_result_count: int,
-                         rag_result_count: int,
-                         code_result_count: int = 0):
+def log_analysis_summary(
+    logger: structlog.BoundLogger,
+    web_result_count: int,
+    rag_result_count: int,
+    code_result_count: int = 0,
+):
     """
     Log analysis summary in a standardized format.
 
@@ -383,11 +403,13 @@ def log_analysis_summary(logger: structlog.BoundLogger,
         rag_result_count: Number of RAG retrieval results
         code_result_count: Number of code execution results
     """
-    logger.info("analysis_start",
-                web_results=web_result_count,
-                rag_results=rag_result_count,
-                code_results=code_result_count,
-                total_results=web_result_count + rag_result_count + code_result_count)
+    logger.info(
+        "analysis_start",
+        web_results=web_result_count,
+        rag_results=rag_result_count,
+        code_results=code_result_count,
+        total_results=web_result_count + rag_result_count + code_result_count,
+    )
 
 
 def log_kb_status(logger: structlog.BoundLogger, kb_info: dict[str, Any]):
@@ -398,16 +420,19 @@ def log_kb_status(logger: structlog.BoundLogger, kb_info: dict[str, Any]):
         logger: Structured logger instance
         kb_info: Knowledge base information dictionary
     """
-    logger.info("kb_status",
-                available=kb_info.get('available', False),
-                total_chunks=kb_info.get('total_chunks', 0),
-                document_count=len(kb_info.get('document_types', [])),
-                summary=kb_info.get('summary', ''))
+    logger.info(
+        "kb_status",
+        available=kb_info.get("available", False),
+        total_chunks=kb_info.get("total_chunks", 0),
+        document_count=len(kb_info.get("document_types", [])),
+        summary=kb_info.get("summary", ""),
+    )
 
 
 # ==============================================
 # File Logging (for structured logs)
 # ==============================================
+
 
 def setup_file_logging(log_dir: str = "logs/structured", _json_format: bool = True):
     """
@@ -439,6 +464,7 @@ def setup_file_logging(log_dir: str = "logs/structured", _json_format: bool = Tr
 # Backward Compatibility
 # ==============================================
 
+
 def print_node_header_structured(node_name: str, state: Optional[dict[str, Any]] = None):
     """
     Structured logging version of print_node_header.
@@ -457,9 +483,7 @@ def print_node_header_structured(node_name: str, state: Optional[dict[str, Any]]
     model_info = get_current_model_info()
 
     # Log structured event
-    logger.info("node_header",
-                node=node_name,
-                model=model_info)
+    logger.info("node_header", node=node_name, model=model_info)
 
     # Also print for visual feedback (can be disabled in production)
     print(f"---{node_name} ({model_info})---")

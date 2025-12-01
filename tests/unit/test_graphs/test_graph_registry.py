@@ -22,12 +22,12 @@ class TestGraphRegistry:
 
         # Check expected graphs are registered
         expected_graphs = [
-            'deep_research',
-            'quick_research',
-            'fact_check',
-            'comparative',
-            'causal_inference',
-            'code_investigation'
+            "deep_research",
+            "quick_research",
+            "fact_check",
+            "comparative",
+            "causal_inference",
+            "code_investigation",
         ]
 
         for graph_name in expected_graphs:
@@ -40,24 +40,25 @@ class TestGraphRegistry:
         for name, metadata in graphs.items():
             assert isinstance(metadata, dict), f"Graph '{name}' metadata is not a dict"
             # Each graph should have at least a name field
-            assert 'name' in metadata or 'description' in metadata, \
+            assert "name" in metadata or "description" in metadata, (
                 f"Graph '{name}' missing metadata fields"
+            )
 
     def test_get_graph_returns_builder(self):
         """Test that get_graph returns a BaseGraphBuilder instance."""
-        builder = get_graph('deep_research')
+        builder = get_graph("deep_research")
 
         assert isinstance(builder, BaseGraphBuilder)
-        assert hasattr(builder, 'build')
-        assert hasattr(builder, 'get_metadata')
+        assert hasattr(builder, "build")
+        assert hasattr(builder, "get_metadata")
 
     def test_get_graph_raises_on_unknown(self):
         """Test that get_graph raises KeyError for unknown graphs."""
         with pytest.raises(KeyError) as exc_info:
-            get_graph('nonexistent_graph')
+            get_graph("nonexistent_graph")
 
-        assert 'not found' in str(exc_info.value).lower()
-        assert 'available graphs' in str(exc_info.value).lower()
+        assert "not found" in str(exc_info.value).lower()
+        assert "available graphs" in str(exc_info.value).lower()
 
     def test_get_default_graph_returns_valid_name(self):
         """Test that get_default_graph returns a registered graph name."""
@@ -65,7 +66,7 @@ class TestGraphRegistry:
 
         assert isinstance(default_name, str)
         assert default_name in list_graphs()
-        assert default_name == 'deep_research'  # Current default
+        assert default_name == "deep_research"  # Current default
 
     def test_each_graph_can_be_compiled(self):
         """Test that each registered graph can be compiled."""
@@ -77,8 +78,9 @@ class TestGraphRegistry:
 
             assert compiled_graph is not None, f"Graph '{name}' compilation returned None"
             # Should be a compiled StateGraph
-            assert hasattr(compiled_graph, 'invoke') or hasattr(compiled_graph, 'stream'), \
+            assert hasattr(compiled_graph, "invoke") or hasattr(compiled_graph, "stream"), (
                 f"Graph '{name}' missing invoke/stream methods"
+            )
 
 
 @pytest.mark.unit
@@ -87,56 +89,56 @@ class TestGraphBuilders:
 
     def test_deep_research_graph_structure(self):
         """Test deep_research graph has expected structure."""
-        builder = get_graph('deep_research')
+        builder = get_graph("deep_research")
         metadata = builder.get_metadata()
 
-        assert 'name' in metadata or 'description' in metadata
+        assert "name" in metadata or "description" in metadata
         # Should have complex, hierarchical workflow
         graph = builder.build()
         assert graph is not None
 
     def test_quick_research_graph_structure(self):
         """Test quick_research graph has expected structure."""
-        builder = get_graph('quick_research')
+        builder = get_graph("quick_research")
         metadata = builder.get_metadata()
 
-        assert 'name' in metadata or 'description' in metadata
+        assert "name" in metadata or "description" in metadata
         graph = builder.build()
         assert graph is not None
 
     def test_fact_check_graph_structure(self):
         """Test fact_check graph has expected structure."""
-        builder = get_graph('fact_check')
+        builder = get_graph("fact_check")
         metadata = builder.get_metadata()
 
-        assert 'name' in metadata or 'description' in metadata
+        assert "name" in metadata or "description" in metadata
         graph = builder.build()
         assert graph is not None
 
     def test_comparative_graph_structure(self):
         """Test comparative graph has expected structure."""
-        builder = get_graph('comparative')
+        builder = get_graph("comparative")
         metadata = builder.get_metadata()
 
-        assert 'name' in metadata or 'description' in metadata
+        assert "name" in metadata or "description" in metadata
         graph = builder.build()
         assert graph is not None
 
     def test_causal_inference_graph_structure(self):
         """Test causal_inference graph has expected structure."""
-        builder = get_graph('causal_inference')
+        builder = get_graph("causal_inference")
         metadata = builder.get_metadata()
 
-        assert 'name' in metadata or 'description' in metadata
+        assert "name" in metadata or "description" in metadata
         graph = builder.build()
         assert graph is not None
 
     def test_code_investigation_graph_structure(self):
         """Test code_investigation graph has expected structure."""
-        builder = get_graph('code_investigation')
+        builder = get_graph("code_investigation")
         metadata = builder.get_metadata()
 
-        assert 'name' in metadata or 'description' in metadata
+        assert "name" in metadata or "description" in metadata
         graph = builder.build()
         assert graph is not None
 
@@ -154,8 +156,9 @@ class TestGraphMetadata:
             assert isinstance(metadata, dict), f"Graph '{name}' metadata not a dict"
 
             # Should have at least name or description
-            assert any(key in metadata for key in ['name', 'description', 'use_cases']), \
+            assert any(key in metadata for key in ["name", "description", "use_cases"]), (
                 f"Graph '{name}' missing essential metadata fields"
+            )
 
     def test_metadata_contains_useful_information(self):
         """Test that metadata contains useful information."""
@@ -166,10 +169,9 @@ class TestGraphMetadata:
             assert len(metadata) > 0, f"Graph '{name}' has empty metadata"
 
             # If description exists, should be non-empty string
-            if 'description' in metadata:
-                assert isinstance(metadata['description'], str)
-                assert len(metadata['description']) > 10, \
-                    f"Graph '{name}' description too short"
+            if "description" in metadata:
+                assert isinstance(metadata["description"], str)
+                assert len(metadata["description"]) > 10, f"Graph '{name}' description too short"
 
 
 @pytest.mark.unit
@@ -184,10 +186,10 @@ class TestGraphStateClasses:
             builder = get_graph(name)
 
             # Should have get_state_class method
-            assert hasattr(builder, 'get_state_class'), \
+            assert hasattr(builder, "get_state_class"), (
                 f"Graph '{name}' builder missing get_state_class method"
+            )
 
             # Should return a class
             state_class = builder.get_state_class()
-            assert state_class is not None, \
-                f"Graph '{name}' get_state_class returned None"
+            assert state_class is not None, f"Graph '{name}' get_state_class returned None"

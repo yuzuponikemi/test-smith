@@ -17,9 +17,7 @@ def evaluator_node(state):
         analyzed_data = state.get("analyzed_data", [])
         loop_count = state.get("loop_count", 0)
 
-        logger.info("evaluation_start",
-                    data_count=len(analyzed_data),
-                    iteration=loop_count)
+        logger.info("evaluation_start", data_count=len(analyzed_data), iteration=loop_count)
         print(f"  Evaluating iteration {loop_count}")
 
         # Use structured output for reliable evaluation
@@ -29,7 +27,7 @@ def evaluator_node(state):
             original_query=original_query,
             allocation_strategy=allocation_strategy,
             analyzed_data=analyzed_data,
-            loop_count=loop_count
+            loop_count=loop_count,
         )
 
         try:
@@ -44,19 +42,11 @@ def evaluator_node(state):
             print(f"  Result: {result}")
             print(f"  Reason: {evaluation.reason[:100]}...")
 
-            return {
-                "evaluation": result,
-                "reason": evaluation.reason
-            }
+            return {"evaluation": result, "reason": evaluation.reason}
 
         except Exception as e:
-            logger.warning("evaluation_fallback",
-                           error_type=type(e).__name__,
-                           error_message=str(e))
+            logger.warning("evaluation_fallback", error_type=type(e).__name__, error_message=str(e))
             print(f"  Warning: Structured evaluation failed, using fallback: {e}")
 
             message = model.invoke(prompt)
-            return {
-                "evaluation": message.content,
-                "reason": "Fallback evaluation used"
-            }
+            return {"evaluation": message.content, "reason": "Fallback evaluation used"}

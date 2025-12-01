@@ -12,7 +12,9 @@ def analyzer_node(state):
 
         # Get strategic context
         original_query = state.get("query", "")
-        allocation_strategy = state.get("allocation_strategy", "No strategy provided") or "No strategy provided"
+        allocation_strategy = (
+            state.get("allocation_strategy", "No strategy provided") or "No strategy provided"
+        )
         web_queries = state.get("web_queries", []) or []
         rag_queries = state.get("rag_queries", []) or []
 
@@ -26,7 +28,9 @@ def analyzer_node(state):
         # Log analysis summary
         log_analysis_summary(logger, len(web_results), len(rag_results), len(code_results))
 
-        print(f"  Analyzing {len(web_results)} web results, {len(rag_results)} RAG results, {len(code_results)} code results")
+        print(
+            f"  Analyzing {len(web_results)} web results, {len(rag_results)} RAG results, {len(code_results)} code results"
+        )
         print(f"  Strategy: {allocation_strategy[:100]}...")
 
         # Format code results for inclusion in prompt
@@ -38,26 +42,30 @@ def analyzer_node(state):
                 code_results_str += f"- Success: {result.get('success', False)}\n"
                 code_results_str += f"- Output: {result.get('output', 'N/A')}\n"
                 code_results_str += f"- Execution Mode: {result.get('execution_mode', 'N/A')}\n"
-                if result.get('code'):
+                if result.get("code"):
                     code_results_str += f"- Code:\n```python\n{result['code']}\n```\n"
 
-        prompt = ANALYZER_PROMPT.format(
-            original_query=original_query,
-            allocation_strategy=allocation_strategy,
-            web_queries=web_queries,
-            rag_queries=rag_queries,
-            web_results=web_results,
-            rag_results=rag_results
-        ) + code_results_str
+        prompt = (
+            ANALYZER_PROMPT.format(
+                original_query=original_query,
+                allocation_strategy=allocation_strategy,
+                web_queries=web_queries,
+                rag_queries=rag_queries,
+                web_results=web_results,
+                rag_results=rag_results,
+            )
+            + code_results_str
+        )
 
-        logger.info("analysis_llm_invoke_start",
-                    strategy_length=len(allocation_strategy),
-                    has_code_results=len(code_results) > 0)
+        logger.info(
+            "analysis_llm_invoke_start",
+            strategy_length=len(allocation_strategy),
+            has_code_results=len(code_results) > 0,
+        )
 
         with log_performance(logger, "analysis_llm_call"):
             message = model.invoke(prompt)
 
-        logger.info("analysis_complete",
-                    analysis_length=len(message.content))
+        logger.info("analysis_complete", analysis_length=len(message.content))
 
         return {"analyzed_data": [message.content]}
