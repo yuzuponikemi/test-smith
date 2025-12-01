@@ -409,7 +409,7 @@ multidict==6.7.0
     #   yarl
 mypy-extensions==1.1.0
     # via typing-inspect
-narwhals==2.12.0
+narwhals==2.13.0
     # via plotly
 nbclient==0.10.2
     # via nbconvert
@@ -504,7 +504,7 @@ ollama==0.6.1
     # via
     #   -r requirements.in
     #   langchain-ollama
-onnx==1.19.1
+onnx==1.20.0
     # via unstructured-inference
 onnxruntime==1.23.2
     # via
