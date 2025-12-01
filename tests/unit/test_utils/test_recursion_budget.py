@@ -4,7 +4,7 @@ Unit tests for recursion_budget module.
 Tests budget calculation and tracking for recursion control.
 """
 
-import pytest
+from typing import Any
 
 from src.utils.recursion_budget import (
     calculate_recursion_budget,
@@ -18,7 +18,7 @@ class TestCalculateRecursionBudget:
 
     def test_calculate_budget_healthy_status(self):
         """Test budget calculation with healthy usage (<50%)."""
-        state = {
+        state: dict[str, Any] = {
             "node_execution_count": 30,
             "recursion_limit": 150,
             "master_plan": {"subtasks": ["task1", "task2", "task3"]},
@@ -38,7 +38,7 @@ class TestCalculateRecursionBudget:
 
     def test_calculate_budget_caution_status(self):
         """Test budget calculation with caution status (50-70%)."""
-        state = {
+        state: dict[str, Any] = {
             "node_execution_count": 90,  # 60% of 150
             "recursion_limit": 150,
             "master_plan": {"subtasks": ["task1", "task2", "task3", "task4", "task5"]},
@@ -55,7 +55,7 @@ class TestCalculateRecursionBudget:
 
     def test_calculate_budget_warning_status(self):
         """Test budget calculation with warning status (70-90%)."""
-        state = {
+        state: dict[str, Any] = {
             "node_execution_count": 120,  # 80% of 150
             "recursion_limit": 150,
             "master_plan": {"subtasks": ["task1", "task2"]},
@@ -72,7 +72,7 @@ class TestCalculateRecursionBudget:
 
     def test_calculate_budget_critical_status(self):
         """Test budget calculation with critical status (>=90%)."""
-        state = {
+        state: dict[str, Any] = {
             "node_execution_count": 140,  # 93% of 150
             "recursion_limit": 150,
             "master_plan": {"subtasks": ["task1"]},
@@ -89,7 +89,7 @@ class TestCalculateRecursionBudget:
 
     def test_calculate_budget_no_master_plan(self):
         """Test budget calculation without master plan."""
-        state = {
+        state: dict[str, Any] = {
             "node_execution_count": 50,
             "recursion_limit": 150,
         }
@@ -102,7 +102,7 @@ class TestCalculateRecursionBudget:
 
     def test_calculate_budget_default_limit(self):
         """Test budget calculation with default recursion limit."""
-        state = {
+        state: dict[str, Any] = {
             "node_execution_count": 50,
         }
 
@@ -113,7 +113,7 @@ class TestCalculateRecursionBudget:
 
     def test_calculate_budget_zero_limit(self):
         """Test budget calculation with zero limit (edge case)."""
-        state = {
+        state: dict[str, Any] = {
             "node_execution_count": 10,
             "recursion_limit": 0,
         }
@@ -125,7 +125,7 @@ class TestCalculateRecursionBudget:
 
     def test_calculate_budget_zero_current_index(self):
         """Test budget calculation when current_subtask_index is 0."""
-        state = {
+        state: dict[str, Any] = {
             "node_execution_count": 20,
             "recursion_limit": 150,
             "master_plan": {"subtasks": ["task1", "task2"]},
@@ -140,7 +140,7 @@ class TestCalculateRecursionBudget:
 
     def test_calculate_budget_will_exceed_prediction(self):
         """Test prediction of budget exceeding."""
-        state = {
+        state: dict[str, Any] = {
             "node_execution_count": 100,
             "recursion_limit": 150,
             "master_plan": {"subtasks": ["task1", "task2", "task3", "task4"]},
@@ -155,7 +155,7 @@ class TestCalculateRecursionBudget:
 
     def test_calculate_budget_will_not_exceed_prediction(self):
         """Test prediction of budget not exceeding."""
-        state = {
+        state: dict[str, Any] = {
             "node_execution_count": 30,
             "recursion_limit": 150,
             "master_plan": {"subtasks": ["task1", "task2", "task3"]},
@@ -226,7 +226,7 @@ class TestIncrementExecutionCount:
 
     def test_increment_from_zero(self):
         """Test incrementing from 0."""
-        state = {}
+        state: dict[str, Any] = {}
 
         result = increment_execution_count(state)
 
@@ -234,7 +234,7 @@ class TestIncrementExecutionCount:
 
     def test_increment_from_existing_count(self):
         """Test incrementing existing count."""
-        state = {"node_execution_count": 50}
+        state: dict[str, Any] = {"node_execution_count": 50}
 
         result = increment_execution_count(state)
 
@@ -242,9 +242,9 @@ class TestIncrementExecutionCount:
 
     def test_increment_multiple_times(self):
         """Test incrementing multiple times."""
-        state = {"node_execution_count": 10}
+        state: dict[str, Any] = {"node_execution_count": 10}
 
-        for i in range(5):
+        for _i in range(5):
             result = increment_execution_count(state)
             state["node_execution_count"] = result["node_execution_count"]
 
@@ -252,7 +252,7 @@ class TestIncrementExecutionCount:
 
     def test_increment_does_not_modify_other_state(self):
         """Test that increment only returns execution count."""
-        state = {
+        state: dict[str, Any] = {
             "node_execution_count": 5,
             "other_field": "value",
             "master_plan": {},

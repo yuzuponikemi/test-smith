@@ -5,11 +5,12 @@ Coverage target: High coverage on provider_manager.py
 Testing strategy: Mock provider classes and test fallback logic
 """
 
-import pytest
-from unittest.mock import MagicMock, patch, Mock
-from src.utils.search_providers.provider_manager import SearchProviderManager
-from src.utils.search_providers.base_provider import SearchResult
+from unittest.mock import MagicMock, patch
 
+import pytest
+
+from src.utils.search_providers.base_provider import SearchResult
+from src.utils.search_providers.provider_manager import SearchProviderManager
 
 # ============================================================================
 # Test Search Provider Manager
@@ -62,7 +63,7 @@ class TestSearchProviderManager:
     def test_initialization_with_api_keys(self, mock_ddg_class, mock_tavily_class):
         """Should pass API keys to providers from environment"""
         # Act
-        manager = SearchProviderManager()
+        SearchProviderManager()
 
         # Assert
         mock_tavily_class.assert_called_once_with(api_key="test-key")
@@ -153,7 +154,9 @@ class TestSearchProviderManager:
 
         mock_ddg = MagicMock()
         mock_ddg.is_configured.return_value = True
-        result_ddg = SearchResult(title="DDG Result", url="https://ddg.com/1", content="DDG Content")
+        result_ddg = SearchResult(
+            title="DDG Result", url="https://ddg.com/1", content="DDG Content"
+        )
         mock_ddg.search.return_value = [result_ddg]
         mock_ddg_class.return_value = mock_ddg
 
@@ -233,9 +236,10 @@ class TestSearchProviderManager:
         manager = SearchProviderManager()
 
         # Act & Assert
-        with pytest.raises(Exception):
+        with pytest.raises(Exception) as exc_info:
             manager.search("test query", max_results=5, attempt_all=False)
 
+        assert "Tavily error" in str(exc_info.value)
         mock_tavily.search.assert_called_once()
         mock_ddg.search.assert_not_called()  # Should NOT attempt second provider
 

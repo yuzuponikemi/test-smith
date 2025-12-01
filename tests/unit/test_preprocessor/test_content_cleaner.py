@@ -4,7 +4,6 @@ Unit tests for content_cleaner module.
 Tests the ContentCleaner class for document cleaning and deduplication.
 """
 
-import pytest
 from langchain_core.documents import Document
 
 from src.preprocessor.content_cleaner import ContentCleaner, clean_documents
@@ -79,7 +78,9 @@ class TestExactDuplicateRemoval:
         cleaner = ContentCleaner()
         chunks = [
             Document(page_content="Content", metadata={"source": "doc1.md"}),
-            Document(page_content="Content", metadata={"source": "doc2.md"}),  # Dup (different meta)
+            Document(
+                page_content="Content", metadata={"source": "doc2.md"}
+            ),  # Dup (different meta)
         ]
 
         result = cleaner._remove_exact_duplicates(chunks)
@@ -96,7 +97,9 @@ class TestNearDuplicateRemoval:
         cleaner = ContentCleaner(similarity_threshold=0.90)
         chunks = [
             Document(page_content="Python programming language documentation reference"),
-            Document(page_content="Python programming language documentation referenc"),  # 98%+ similar
+            Document(
+                page_content="Python programming language documentation referenc"
+            ),  # 98%+ similar
             Document(page_content="Completely different content about JavaScript"),
         ]
 
@@ -134,7 +137,7 @@ class TestNearDuplicateRemoval:
     def test_remove_near_duplicates_empty(self):
         """Test with empty list."""
         cleaner = ContentCleaner()
-        chunks = []
+        chunks: list[Document] = []
 
         result = cleaner._remove_near_duplicates(chunks)
 

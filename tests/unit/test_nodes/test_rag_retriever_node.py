@@ -5,11 +5,12 @@ Coverage target: 100%
 Testing strategy: Mock ChromaDB and embeddings, test all code paths
 """
 
-import pytest
-from unittest.mock import MagicMock, patch, Mock
-from langchain_core.documents import Document
-from src.nodes.rag_retriever_node import rag_retriever
+from typing import Any
+from unittest.mock import MagicMock, patch
 
+from langchain_core.documents import Document
+
+from src.nodes.rag_retriever_node import rag_retriever
 
 # ============================================================================
 # Test RAG Retriever Node
@@ -27,7 +28,7 @@ class TestRAGRetrieverNode:
     ):
         """Should skip retrieval when no rag_queries in state"""
         # Arrange
-        state = {"rag_queries": []}
+        state: dict[str, Any] = {"rag_queries": []}
 
         # Act
         result = rag_retriever(state)
@@ -46,7 +47,7 @@ class TestRAGRetrieverNode:
     ):
         """Should skip retrieval when rag_queries key is missing"""
         # Arrange
-        state = {}  # No rag_queries key
+        state: dict[str, Any] = {}  # No rag_queries key
 
         # Act
         result = rag_retriever(state)
@@ -60,12 +61,10 @@ class TestRAGRetrieverNode:
     @patch("src.nodes.rag_retriever_node.print_node_header")
     @patch("src.nodes.rag_retriever_node.Chroma")
     @patch("src.nodes.rag_retriever_node.get_embeddings_for_collection")
-    def test_successful_single_retrieval(
-        self, mock_get_embeddings, mock_chroma, mock_print_header
-    ):
+    def test_successful_single_retrieval(self, mock_get_embeddings, mock_chroma, mock_print_header):
         """Should execute successful retrieval with single query"""
         # Arrange
-        state = {"rag_queries": ["What is LangGraph?"]}
+        state: dict[str, Any] = {"rag_queries": ["What is LangGraph?"]}
 
         # Mock embeddings
         mock_embeddings = MagicMock()
@@ -129,7 +128,7 @@ class TestRAGRetrieverNode:
     ):
         """Should execute multiple successful retrievals"""
         # Arrange
-        state = {
+        state: dict[str, Any] = {
             "rag_queries": [
                 "What is LangGraph?",
                 "How does ChromaDB work?",
@@ -171,12 +170,10 @@ class TestRAGRetrieverNode:
     @patch("src.nodes.rag_retriever_node.print_node_header")
     @patch("src.nodes.rag_retriever_node.Chroma")
     @patch("src.nodes.rag_retriever_node.get_embeddings_for_collection")
-    def test_empty_retrieval_results(
-        self, mock_get_embeddings, mock_chroma, mock_print_header
-    ):
+    def test_empty_retrieval_results(self, mock_get_embeddings, mock_chroma, mock_print_header):
         """Should handle empty retrieval results (no documents found)"""
         # Arrange
-        state = {"rag_queries": ["Very obscure query"]}
+        state: dict[str, Any] = {"rag_queries": ["Very obscure query"]}
 
         # Mock embeddings
         mock_embeddings = MagicMock()
@@ -201,12 +198,10 @@ class TestRAGRetrieverNode:
     @patch("src.nodes.rag_retriever_node.print_node_header")
     @patch("src.nodes.rag_retriever_node.Chroma")
     @patch("src.nodes.rag_retriever_node.get_embeddings_for_collection")
-    def test_retrieval_error_handling(
-        self, mock_get_embeddings, mock_chroma, mock_print_header
-    ):
+    def test_retrieval_error_handling(self, mock_get_embeddings, mock_chroma, mock_print_header):
         """Should handle retrieval errors gracefully"""
         # Arrange
-        state = {"rag_queries": ["Query that will fail"]}
+        state: dict[str, Any] = {"rag_queries": ["Query that will fail"]}
 
         # Mock embeddings
         mock_embeddings = MagicMock()
@@ -232,12 +227,10 @@ class TestRAGRetrieverNode:
     @patch("src.nodes.rag_retriever_node.print_node_header")
     @patch("src.nodes.rag_retriever_node.Chroma")
     @patch("src.nodes.rag_retriever_node.get_embeddings_for_collection")
-    def test_mixed_success_and_failure(
-        self, mock_get_embeddings, mock_chroma, mock_print_header
-    ):
+    def test_mixed_success_and_failure(self, mock_get_embeddings, mock_chroma, mock_print_header):
         """Should handle mix of successful and failed retrievals"""
         # Arrange
-        state = {
+        state: dict[str, Any] = {
             "rag_queries": [
                 "Successful query 1",
                 "Failed query",
@@ -286,7 +279,7 @@ class TestRAGRetrieverNode:
     ):
         """Should handle documents without metadata gracefully"""
         # Arrange
-        state = {"rag_queries": ["Test query"]}
+        state: dict[str, Any] = {"rag_queries": ["Test query"]}
 
         # Mock embeddings
         mock_embeddings = MagicMock()
@@ -324,12 +317,10 @@ class TestRAGRetrieverNode:
     @patch("src.nodes.rag_retriever_node.print_node_header")
     @patch("src.nodes.rag_retriever_node.Chroma")
     @patch("src.nodes.rag_retriever_node.get_embeddings_for_collection")
-    def test_retrieval_k_parameter(
-        self, mock_get_embeddings, mock_chroma, mock_print_header
-    ):
+    def test_retrieval_k_parameter(self, mock_get_embeddings, mock_chroma, mock_print_header):
         """Should configure retriever with k=5 parameter"""
         # Arrange
-        state = {"rag_queries": ["Test query"]}
+        state: dict[str, Any] = {"rag_queries": ["Test query"]}
 
         # Mock embeddings
         mock_embeddings = MagicMock()
@@ -359,12 +350,10 @@ class TestRAGRetrieverNode:
     @patch("src.nodes.rag_retriever_node.print_node_header")
     @patch("src.nodes.rag_retriever_node.Chroma")
     @patch("src.nodes.rag_retriever_node.get_embeddings_for_collection")
-    def test_results_ordering_preserved(
-        self, mock_get_embeddings, mock_chroma, mock_print_header
-    ):
+    def test_results_ordering_preserved(self, mock_get_embeddings, mock_chroma, mock_print_header):
         """Should preserve order of retrieval results"""
         # Arrange
-        state = {
+        state: dict[str, Any] = {
             "rag_queries": [
                 "Query A",
                 "Query B",

@@ -4,7 +4,6 @@ Unit tests for chunking_strategy module.
 Tests the ChunkingStrategy class for intelligent chunk size selection.
 """
 
-import pytest
 from langchain_core.documents import Document
 
 from src.preprocessor.chunking_strategy import (

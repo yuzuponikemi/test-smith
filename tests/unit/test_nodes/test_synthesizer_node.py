@@ -5,10 +5,9 @@ Coverage target: 100%
 Testing strategy: Mock LLM model and prompts, test both execution modes
 """
 
-import pytest
-from unittest.mock import MagicMock, patch, Mock
-from src.nodes.synthesizer_node import synthesizer_node
+from unittest.mock import MagicMock, patch
 
+from src.nodes.synthesizer_node import synthesizer_node
 
 # ============================================================================
 # Test Synthesizer Node
@@ -36,7 +35,9 @@ class TestSynthesizerNode:
         # Mock model
         mock_model = MagicMock()
         mock_message = MagicMock()
-        mock_message.content = "LangGraph is a powerful framework for building stateful multi-agent workflows."
+        mock_message.content = (
+            "LangGraph is a powerful framework for building stateful multi-agent workflows."
+        )
         mock_model.invoke.return_value = mock_message
         mock_get_model.return_value = mock_model
 
@@ -45,7 +46,10 @@ class TestSynthesizerNode:
 
         # Assert
         assert "report" in result
-        assert result["report"] == "LangGraph is a powerful framework for building stateful multi-agent workflows."
+        assert (
+            result["report"]
+            == "LangGraph is a powerful framework for building stateful multi-agent workflows."
+        )
 
         mock_print_header.assert_called_once_with("SYNTHESIZER")
         mock_get_model.assert_called_once()
@@ -111,7 +115,11 @@ class TestSynthesizerNode:
             "code_execution_results": [
                 {"success": True, "output": "Mean: 42.5", "execution_mode": "calculate"},
                 {"success": True, "output": "Median: 40", "execution_mode": "calculate"},
-                {"success": False, "output": "Error: division by zero", "execution_mode": "calculate"},
+                {
+                    "success": False,
+                    "output": "Error: division by zero",
+                    "execution_mode": "calculate",
+                },
             ],
         }
 
@@ -123,7 +131,7 @@ class TestSynthesizerNode:
         mock_get_model.return_value = mock_model
 
         # Act
-        result = synthesizer_node(state)
+        synthesizer_node(state)
 
         # Assert
         invoke_args = mock_model.invoke.call_args[0][0]
@@ -297,7 +305,7 @@ class TestSynthesizerNode:
         mock_get_model.return_value = mock_model
 
         # Act
-        result = synthesizer_node(state)
+        synthesizer_node(state)
 
         # Assert
         invoke_args = mock_model.invoke.call_args[0][0]
@@ -344,7 +352,7 @@ class TestSynthesizerNode:
         mock_get_model.return_value = mock_model
 
         # Act
-        result = synthesizer_node(state)
+        synthesizer_node(state)
 
         # Assert
         invoke_args = mock_model.invoke.call_args[0][0]
@@ -384,7 +392,7 @@ class TestSynthesizerNode:
         assert result["report"] == "Default mode report"
 
         # Should use simple mode (default)
-        invoke_args = mock_model.invoke.call_args[0][0]
+        mock_model.invoke.call_args[0][0]
         # In simple mode, the prompt includes these state fields
         # (hierarchical mode has different prompt format)
         assert "query" in state  # Verify we're testing the right scenario

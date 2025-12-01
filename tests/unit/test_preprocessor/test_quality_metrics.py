@@ -4,7 +4,6 @@ Unit tests for quality_metrics module.
 Tests the QualityMetrics class for calculating document quality metrics.
 """
 
-import pytest
 from langchain_core.documents import Document
 
 from src.preprocessor.quality_metrics import QualityMetrics

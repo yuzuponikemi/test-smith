@@ -5,18 +5,15 @@ Coverage target: 100%
 Testing strategy: AAA pattern with comprehensive edge cases
 """
 
-import pytest
 from src.utils.graph_selector import (
-    GraphType,
-    detect_code_execution_need,
+    auto_select_graph,
     detect_causal_inference_need,
+    detect_code_execution_need,
     detect_comparative_need,
     detect_fact_check_need,
     detect_simple_query,
-    auto_select_graph,
     explain_selection,
 )
-
 
 # ============================================================================
 # Test detect_code_execution_need()
