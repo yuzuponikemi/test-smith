@@ -41,3 +41,5 @@ click==8.1.8
 
 # Testing (optional, but useful for CI)
 pytest==8.4.2
+structlog==25.1.0
+python-json-logger==3.3.0
