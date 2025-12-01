@@ -11,7 +11,7 @@ Calculates metrics to assess the quality of preprocessed data:
 from collections import Counter
 
 import numpy as np
-from langchain.schema import Document
+from langchain_core.documents import Document
 
 
 class QualityMetrics:
