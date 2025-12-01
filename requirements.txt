@@ -409,7 +409,7 @@ multidict==6.7.0
     #   yarl
 mypy-extensions==1.1.0
     # via typing-inspect
-narwhals==2.12.0
+narwhals==2.13.0
     # via plotly
 nbclient==0.10.2
     # via nbconvert
