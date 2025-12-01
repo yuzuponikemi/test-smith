@@ -504,7 +504,7 @@ ollama==0.6.1
     # via
     #   -r requirements.in
     #   langchain-ollama
-onnx==1.19.1
+onnx==1.20.0
     # via unstructured-inference
 onnxruntime==1.23.2
     # via
