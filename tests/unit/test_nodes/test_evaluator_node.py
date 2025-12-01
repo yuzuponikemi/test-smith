@@ -4,11 +4,13 @@ Unit tests for evaluator_node.
 Tests the evaluator's logic for assessing information sufficiency.
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from src.nodes.evaluator_node import evaluator_node
 from src.schemas import Evaluation
-from tests.conftest import MockChatModel, assert_state_updated
+from tests.conftest import MockChatModel
 
 
 class TestEvaluatorNode:

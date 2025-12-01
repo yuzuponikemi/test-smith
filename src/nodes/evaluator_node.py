@@ -1,12 +1,9 @@
 from src.models import get_evaluation_model
-from src.utils.logging_utils import print_node_header
-from src.utils.structured_logging import (
-    log_node_execution,
-    log_evaluation_result,
-    log_performance
-)
 from src.prompts.evaluator_prompt import EVALUATOR_PROMPT
 from src.schemas import Evaluation
+from src.utils.logging_utils import print_node_header
+from src.utils.structured_logging import log_evaluation_result, log_node_execution, log_performance
+
 
 def evaluator_node(state):
     print_node_header("EVALUATOR")

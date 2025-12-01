@@ -4,8 +4,10 @@ Unit tests for analyzer_node.
 Tests the analyzer's data merging and summarization logic.
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from src.nodes.analyzer_node import analyzer_node
 from tests.conftest import MockChatModel
 

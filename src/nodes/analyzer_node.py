@@ -1,11 +1,8 @@
 from src.models import get_analyzer_model
-from src.utils.logging_utils import print_node_header
-from src.utils.structured_logging import (
-    log_node_execution,
-    log_analysis_summary,
-    log_performance
-)
 from src.prompts.analyzer_prompt import ANALYZER_PROMPT
+from src.utils.logging_utils import print_node_header
+from src.utils.structured_logging import log_analysis_summary, log_node_execution, log_performance
+
 
 def analyzer_node(state):
     print_node_header("ANALYZER")

@@ -5,15 +5,9 @@ Tests graph discovery, registration, and retrieval.
 """
 
 import pytest
-from src.graphs import (
-    register_graph,
-    get_graph,
-    list_graphs,
-    get_default_graph,
-    _GRAPH_REGISTRY
-)
+
+from src.graphs import get_default_graph, get_graph, list_graphs
 from src.graphs.base_graph import BaseGraphBuilder
-from langgraph.graph import StateGraph
 
 
 class TestGraphRegistry:
@@ -77,7 +71,7 @@ class TestGraphRegistry:
         """Test that each registered graph can be compiled."""
         graphs = list_graphs()
 
-        for name in graphs.keys():
+        for name in graphs:
             builder = get_graph(name)
             compiled_graph = builder.build()
 
@@ -186,7 +180,7 @@ class TestGraphStateClasses:
         """Test that each graph builder provides a state class."""
         graphs = list_graphs()
 
-        for name in graphs.keys():
+        for name in graphs:
             builder = get_graph(name)
 
             # Should have get_state_class method

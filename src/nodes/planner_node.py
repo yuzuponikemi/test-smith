@@ -1,18 +1,21 @@
+import json
+import os
+import re
+
+from langchain_chroma import Chroma
+from langchain_ollama import OllamaEmbeddings
+
 from src.models import get_planner_model
 from src.prompts.planner_prompt import STRATEGIC_PLANNER_PROMPT
 from src.schemas import StrategicPlan
 from src.utils.logging_utils import print_node_header
 from src.utils.structured_logging import (
-    log_node_execution,
     log_kb_status,
+    log_node_execution,
+    log_performance,
     log_query_allocation,
-    log_performance
 )
-from langchain_chroma import Chroma
-from langchain_ollama import OllamaEmbeddings
-import os
-import re
-import json
+
 
 def check_kb_contents():
     """
@@ -50,9 +53,9 @@ def check_kb_contents():
         # Sample some documents to understand content
         sample = collection.peek(limit=10)
         sources = set()
-        if sample and 'metadatas' in sample:
+        if sample and 'metadatas' in sample and sample['metadatas'] is not None:
             for meta in sample['metadatas']:
-                if meta and 'source' in meta:
+                if meta and 'source' in meta and isinstance(meta['source'], str):
                     # Extract filename from path
                     source = os.path.basename(meta['source'])
                     sources.add(source)

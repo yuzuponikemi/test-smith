@@ -11,8 +11,8 @@ This module provides:
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-from unittest.mock import MagicMock, Mock
+from typing import Any, Optional
+from unittest.mock import Mock
 
 import pytest
 from pydantic import BaseModel
@@ -50,7 +50,7 @@ class MockChatModel:
         self.structured_response = structured_response
         self.temperature = temperature
         self._call_count = 0
-        self._call_history: List[Any] = []
+        self._call_history: list[Any] = []
 
     def invoke(self, messages: Any) -> MockLLMResponse:
         """Mock invoke method."""
@@ -75,7 +75,7 @@ class MockChatModel:
         return self._call_count
 
     @property
-    def call_history(self) -> List[Any]:
+    def call_history(self) -> list[Any]:
         """History of all invoke calls."""
         return self._call_history
 
@@ -202,7 +202,7 @@ def mock_synthesizer_model():
 
 
 @pytest.fixture
-def basic_agent_state() -> Dict[str, Any]:
+def basic_agent_state() -> dict[str, Any]:
     """Provide a basic AgentState for testing."""
     return {
         "query": "What is test-driven development?",
@@ -219,7 +219,7 @@ def basic_agent_state() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def populated_agent_state(basic_agent_state) -> Dict[str, Any]:
+def populated_agent_state(basic_agent_state) -> dict[str, Any]:
     """Provide an AgentState with populated search results."""
     state = basic_agent_state.copy()
     state.update({
@@ -238,7 +238,7 @@ def populated_agent_state(basic_agent_state) -> Dict[str, Any]:
 
 
 @pytest.fixture
-def hierarchical_state() -> Dict[str, Any]:
+def hierarchical_state() -> dict[str, Any]:
     """Provide a state for hierarchical research workflow testing."""
     return {
         "query": "What is LangGraph and how does it work?",
@@ -262,7 +262,7 @@ def hierarchical_state() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def sample_search_results() -> List[str]:
+def sample_search_results() -> list[str]:
     """Sample web search results for testing."""
     return [
         "LangGraph is a library for building stateful, multi-actor applications with LLMs.",
@@ -272,7 +272,7 @@ def sample_search_results() -> List[str]:
 
 
 @pytest.fixture
-def sample_rag_results() -> List[str]:
+def sample_rag_results() -> list[str]:
     """Sample RAG retrieval results for testing."""
     return [
         "Document chunk 1: LangGraph provides StateGraph for defining workflows...",
@@ -284,7 +284,7 @@ def sample_rag_results() -> List[str]:
 # ==================== Assertion Helpers ====================
 
 
-def assert_valid_state(state: Dict[str, Any], required_keys: Optional[List[str]] = None):
+def assert_valid_state(state: dict[str, Any], required_keys: Optional[list[str]] = None):
     """
     Assert that a state dictionary has valid structure.
 
@@ -311,7 +311,7 @@ def assert_llm_called(mock_model: MockChatModel, min_calls: int = 1):
         f"Expected at least {min_calls} LLM calls, got {mock_model.call_count}"
 
 
-def assert_state_updated(state: Dict[str, Any], key: str, expected_type: type = None):
+def assert_state_updated(state: dict[str, Any], key: str, expected_type: type = None):
     """
     Assert that a state key was updated.
 
@@ -323,10 +323,10 @@ def assert_state_updated(state: Dict[str, Any], key: str, expected_type: type = 
     assert key in state, f"State missing key: {key}"
 
     value = state[key]
-    if expected_type == list:
+    if expected_type is list:
         assert isinstance(value, list), f"Expected {key} to be a list"
         assert len(value) > 0, f"Expected {key} to be non-empty"
-    elif expected_type == str:
+    elif expected_type is str:
         assert isinstance(value, str), f"Expected {key} to be a string"
         assert len(value) > 0, f"Expected {key} to be non-empty"
     elif expected_type is not None:

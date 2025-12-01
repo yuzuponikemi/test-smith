@@ -31,13 +31,13 @@ Usage:
 import os
 import sys
 import time
-import structlog
 from contextlib import contextmanager
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, Optional
 from functools import wraps
+from pathlib import Path
+from typing import Any, Optional
 
+import structlog
 
 # ==============================================
 # Structlog Configuration
@@ -88,7 +88,7 @@ def configure_structlog(json_logs: bool = None, log_level: str = None):
         )
 
     structlog.configure(
-        processors=processors,
+        processors=processors,  # type: ignore[arg-type]
         wrapper_class=structlog.make_filtering_bound_logger(
             _level_to_int(log_level)
         ),
@@ -149,7 +149,7 @@ def get_logger(name: str = None, **initial_context) -> structlog.BoundLogger:
     return logger
 
 
-def get_node_logger(node_name: str, state: Dict[str, Any]) -> structlog.BoundLogger:
+def get_node_logger(node_name: str, state: dict[str, Any]) -> structlog.BoundLogger:
     """
     Get a logger with node execution context automatically bound.
 
@@ -187,7 +187,7 @@ def get_node_logger(node_name: str, state: Dict[str, Any]) -> structlog.BoundLog
 # ==============================================
 
 @contextmanager
-def log_node_execution(node_name: str, state: Dict[str, Any]):
+def log_node_execution(node_name: str, state: dict[str, Any]):
     """
     Context manager for logging node execution with automatic timing.
 
@@ -390,7 +390,7 @@ def log_analysis_summary(logger: structlog.BoundLogger,
                 total_results=web_result_count + rag_result_count + code_result_count)
 
 
-def log_kb_status(logger: structlog.BoundLogger, kb_info: Dict[str, Any]):
+def log_kb_status(logger: structlog.BoundLogger, kb_info: dict[str, Any]):
     """
     Log knowledge base status in a standardized format.
 
@@ -409,7 +409,7 @@ def log_kb_status(logger: structlog.BoundLogger, kb_info: Dict[str, Any]):
 # File Logging (for structured logs)
 # ==============================================
 
-def setup_file_logging(log_dir: str = "logs/structured", json_format: bool = True):
+def setup_file_logging(log_dir: str = "logs/structured", _json_format: bool = True):
     """
     Set up file-based structured logging.
 
@@ -439,7 +439,7 @@ def setup_file_logging(log_dir: str = "logs/structured", json_format: bool = Tru
 # Backward Compatibility
 # ==============================================
 
-def print_node_header_structured(node_name: str, state: Optional[Dict[str, Any]] = None):
+def print_node_header_structured(node_name: str, state: Optional[dict[str, Any]] = None):
     """
     Structured logging version of print_node_header.
 
@@ -452,10 +452,7 @@ def print_node_header_structured(node_name: str, state: Optional[Dict[str, Any]]
     """
     from src.utils.logging_utils import get_current_model_info
 
-    if state:
-        logger = get_node_logger(node_name, state)
-    else:
-        logger = get_logger(node_name)
+    logger = get_node_logger(node_name, state) if state else get_logger(node_name)
 
     model_info = get_current_model_info()
 

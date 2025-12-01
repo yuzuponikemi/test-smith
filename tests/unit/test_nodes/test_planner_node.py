@@ -4,9 +4,11 @@ Unit tests for planner_node.
 Tests the strategic planner's query allocation logic between RAG and web sources.
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from src.nodes.planner_node import planner, check_kb_contents
+
+from src.nodes.planner_node import check_kb_contents, planner
 from src.schemas import StrategicPlan
 from tests.conftest import MockChatModel
 
