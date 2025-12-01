@@ -31,6 +31,7 @@ def calculate_recursion_budget(state):
         remaining_subtasks = total_subtasks - current_index
     else:
         remaining_subtasks = 0
+        current_index = 0
 
     # Estimate average recursions per subtask
     avg_per_subtask = current_count / max(current_index, 1) if current_index > 0 else 10
