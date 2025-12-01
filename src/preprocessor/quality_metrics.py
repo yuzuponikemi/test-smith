@@ -141,7 +141,7 @@ class QualityMetrics:
         has_chunking_method = sum(1 for c in chunks if "chunking_method" in c.metadata)
 
         # Collect all metadata keys
-        all_metadata_keys = set()
+        all_metadata_keys: set[str] = set()
         for chunk in chunks:
             all_metadata_keys.update(chunk.metadata.keys())
 
