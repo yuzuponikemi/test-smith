@@ -4,16 +4,17 @@ Provenance機能のクイックデモ
 既存のレポートデータを使用して、Provenance機能を素早く実演します。
 """
 
-import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 
 def load_latest_report_data():
     """最新のテストレポートからソースデータを読み込む"""
 
     # Ultimate testの結果を使用 (script is in examples/provenance/)
-    report_file = Path("../../reports/report_20251202_230148_simple_Ultimate_test_complete_citation_system_verificati.md")
+    report_file = Path(
+        "../../reports/report_20251202_230148_simple_Ultimate_test_complete_citation_system_verificati.md"
+    )
 
     if not report_file.exists():
         print(f"❌ レポートファイルが見つかりません: {report_file}")
@@ -29,7 +30,7 @@ def load_latest_report_data():
         "query": "Ultimate test: complete citation system verification",
         "report": report_content,
         "web_sources": generate_mock_web_sources(35),
-        "rag_sources": generate_mock_rag_sources(35)
+        "rag_sources": generate_mock_rag_sources(35),
     }
 
     return mock_state
@@ -39,16 +40,18 @@ def generate_mock_web_sources(count: int):
     """モックWebソースを生成（テストデータ）"""
     sources = []
     for i in range(1, count + 1):
-        sources.append({
-            "source_id": f"web_{i}",
-            "source_type": "web",
-            "title": f"Citation Verification Best Practices {i}",
-            "url": f"https://example.com/citation-research-{i}",
-            "content_snippet": f"This article discusses citation verification methods and their importance in academic research. Key findings include...",
-            "relevance_score": 0.85 - (i * 0.01),
-            "query_used": "citation verification best practices",
-            "timestamp": datetime.now().isoformat()
-        })
+        sources.append(
+            {
+                "source_id": f"web_{i}",
+                "source_type": "web",
+                "title": f"Citation Verification Best Practices {i}",
+                "url": f"https://example.com/citation-research-{i}",
+                "content_snippet": "This article discusses citation verification methods and their importance in academic research. Key findings include...",
+                "relevance_score": 0.85 - (i * 0.01),
+                "query_used": "citation verification best practices",
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
     return sources
 
 
@@ -58,24 +61,26 @@ def generate_mock_rag_sources(count: int):
     kb_files = [
         "Causal Inference with Large Language Model A Survey.md",
         "Enhancing Ontologies with Large Language Models.pdf",
-        "rough-alignment-algorithms-full-workflow.md"
+        "rough-alignment-algorithms-full-workflow.md",
     ]
 
     for i in range(1, count + 1):
-        sources.append({
-            "source_id": f"rag_{i}",
-            "source_type": "rag",
-            "title": f"Internal Documentation: Citation Systems Part {i}",
-            "content_snippet": f"Our internal documentation on citation management systems highlights the importance of accuracy and consistency...",
-            "relevance_score": 0.80 - (i * 0.015),
-            "query_used": "citation system documentation",
-            "timestamp": datetime.now().isoformat(),
-            "metadata": {
-                "source_file": f"documents/{kb_files[i % len(kb_files)]}",
-                "chunk_index": i,
-                "full_content_length": 1500
+        sources.append(
+            {
+                "source_id": f"rag_{i}",
+                "source_type": "rag",
+                "title": f"Internal Documentation: Citation Systems Part {i}",
+                "content_snippet": "Our internal documentation on citation management systems highlights the importance of accuracy and consistency...",
+                "relevance_score": 0.80 - (i * 0.015),
+                "query_used": "citation system documentation",
+                "timestamp": datetime.now().isoformat(),
+                "metadata": {
+                    "source_file": f"documents/{kb_files[i % len(kb_files)]}",
+                    "chunk_index": i,
+                    "full_content_length": 1500,
+                },
             }
-        })
+        )
     return sources
 
 
@@ -102,7 +107,7 @@ def export_citations_simple(state: dict, format: str = "bibtex"):
   title = {{{title}}},
   url = {{{url}}},
   year = {{{year}}},
-  note = {{Accessed: {datetime.now().strftime('%Y-%m-%d')}}}
+  note = {{Accessed: {datetime.now().strftime("%Y-%m-%d")}}}
 }}"""
             else:
                 file_path = source.get("metadata", {}).get("source_file", "Unknown")
@@ -149,7 +154,9 @@ def export_citations_simple(state: dict, format: str = "bibtex"):
                 citation = f'{i}. "{title}." Web. {access_date}. <{url}>.'
             else:
                 file_path = source.get("metadata", {}).get("source_file", "Unknown")
-                citation = f'{i}. "{title}." Internal Knowledge Base. {access_date}. Source: {file_path}.'
+                citation = (
+                    f'{i}. "{title}." Internal Knowledge Base. {access_date}. Source: {file_path}.'
+                )
 
             citations.append(citation)
 
@@ -169,11 +176,7 @@ def query_claim_provenance_simple(state: dict, claim: str):
     report_lower = report.lower()
 
     if claim_lower not in report_lower:
-        return {
-            "claim": claim,
-            "found": False,
-            "message": "主張がレポート内に見つかりませんでした"
-        }
+        return {"claim": claim, "found": False, "message": "主張がレポート内に見つかりませんでした"}
 
     # 主張の周辺テキストを取得
     pos = report_lower.index(claim_lower)
@@ -183,26 +186,29 @@ def query_claim_provenance_simple(state: dict, claim: str):
 
     # 引用番号を検索 [1], [2], etc.
     import re
-    citation_pattern = r'\[(\d+)\]'
+
+    citation_pattern = r"\[(\d+)\]"
     citations = []
 
     for match in re.finditer(citation_pattern, context):
         cite_num = int(match.group(1))
         if 1 <= cite_num <= len(all_sources):
             source = all_sources[cite_num - 1]
-            citations.append({
-                "number": cite_num,
-                "title": source.get("title", "Unknown"),
-                "type": source.get("source_type", "unknown"),
-                "relevance": source.get("relevance_score", 0.5)
-            })
+            citations.append(
+                {
+                    "number": cite_num,
+                    "title": source.get("title", "Unknown"),
+                    "type": source.get("source_type", "unknown"),
+                    "relevance": source.get("relevance_score", 0.5),
+                }
+            )
 
     return {
         "claim": claim,
         "found": True,
         "context": context,
         "citations": citations,
-        "source_count": len(citations)
+        "source_count": len(citations),
     }
 
 
@@ -259,13 +265,13 @@ def main():
     print()
 
     claim_to_check = "Inaccurate citations can lead to errors"
-    print(f"確認する主張: \"{claim_to_check}\"")
+    print(f'確認する主張: "{claim_to_check}"')
     print()
 
     provenance = query_claim_provenance_simple(state, claim_to_check)
 
     if provenance.get("found"):
-        print(f"✅ 主張を発見")
+        print("✅ 主張を発見")
         print(f"📚 支持ソース数: {provenance['source_count']}")
         print()
 
@@ -359,4 +365,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\n❌ エラーが発生しました: {e}")
         import traceback
+
         traceback.print_exc()

@@ -1,6 +1,7 @@
-from langchain_chroma import Chroma
-from datetime import datetime
 import os
+from datetime import datetime
+
+from langchain_chroma import Chroma
 
 from src.utils.embedding_utils import get_embeddings_for_collection
 from src.utils.logging_utils import print_node_header
@@ -56,7 +57,9 @@ def rag_retriever(state):
             # Format the documents into a string (legacy format)
             doc_string = ""
             if docs_with_scores:
-                doc_string += f"=== Retrieved {len(docs_with_scores)} relevant chunks for '{query}' ===\n\n"
+                doc_string += (
+                    f"=== Retrieved {len(docs_with_scores)} relevant chunks for '{query}' ===\n\n"
+                )
 
                 for i, (doc, score) in enumerate(docs_with_scores, 1):
                     source_counter += 1
@@ -70,24 +73,30 @@ def rag_retriever(state):
                     doc_string += "---\n"
 
                     # Extract structured source metadata for provenance
-                    source_file = doc.metadata.get('source', 'Unknown') if doc.metadata else 'Unknown'
+                    source_file = (
+                        doc.metadata.get("source", "Unknown") if doc.metadata else "Unknown"
+                    )
 
                     # Create structured source reference
                     source_ref = {
                         "source_id": source_id,
                         "source_type": "rag",
                         "url": None,  # KB sources don't have URLs
-                        "title": os.path.basename(source_file) if source_file != 'Unknown' else 'Unknown Document',
+                        "title": os.path.basename(source_file)
+                        if source_file != "Unknown"
+                        else "Unknown Document",
                         "content_snippet": doc.page_content[:500] if doc.page_content else "",
                         "query_used": query,
                         "timestamp": timestamp,
-                        "relevance_score": float(1 - score) if score else 0.5,  # Convert distance to similarity
+                        "relevance_score": float(1 - score)
+                        if score
+                        else 0.5,  # Convert distance to similarity
                         "metadata": {
                             "source_file": source_file,
                             "chunk_index": i,
                             "full_content_length": len(doc.page_content) if doc.page_content else 0,
-                            **{k: v for k, v in (doc.metadata or {}).items() if k != 'source'}
-                        }
+                            **{k: v for k, v in (doc.metadata or {}).items() if k != "source"},
+                        },
                     }
                     rag_sources.append(source_ref)
             else:
@@ -103,7 +112,4 @@ def rag_retriever(state):
     print(f"  Completed {len(all_results)} KB searches")
     print(f"  Captured {len(rag_sources)} source references for provenance")
 
-    return {
-        "rag_results": all_results,
-        "rag_sources": rag_sources
-    }
+    return {"rag_results": all_results, "rag_sources": rag_sources}

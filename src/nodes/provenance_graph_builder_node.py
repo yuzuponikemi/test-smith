@@ -9,6 +9,7 @@ This node constructs a complete provenance graph showing:
 
 import json
 from datetime import datetime
+
 from src.models import get_analyzer_model
 from src.prompts.provenance_prompt import PROVENANCE_ANALYSIS_PROMPT
 from src.utils.logging_utils import print_node_header
@@ -44,14 +45,14 @@ def provenance_graph_builder_node(state: dict) -> dict:
 
     # Create sources summary for the prompt
     sources_summary = _create_sources_summary(all_sources)
-    analyzed_content = "\n\n---\n\n".join(analyzed_data) if analyzed_data else "No analyzed content available."
+    analyzed_content = (
+        "\n\n---\n\n".join(analyzed_data) if analyzed_data else "No analyzed content available."
+    )
 
     # Use LLM to extract claims and evidence
     model = get_analyzer_model()
     prompt = PROVENANCE_ANALYSIS_PROMPT.format(
-        query=query,
-        sources_summary=sources_summary,
-        analyzed_content=analyzed_content
+        query=query, sources_summary=sources_summary, analyzed_content=analyzed_content
     )
 
     try:
@@ -59,12 +60,18 @@ def provenance_graph_builder_node(state: dict) -> dict:
         provenance_data = _parse_provenance_response(response.content)
     except Exception as e:
         print(f"  Error extracting provenance: {e}")
-        provenance_data = {"claims": [], "evidence_items": [], "confidence_assessment": "Error during extraction"}
+        provenance_data = {
+            "claims": [],
+            "evidence_items": [],
+            "confidence_assessment": "Error during extraction",
+        }
 
     # Build the graph structure
     graph = _build_lineage_graph(all_sources, provenance_data)
 
-    print(f"  Built provenance graph with {len(graph['nodes'])} nodes and {len(graph['edges'])} edges")
+    print(
+        f"  Built provenance graph with {len(graph['nodes'])} nodes and {len(graph['edges'])} edges"
+    )
     print(f"  Extracted {len(provenance_data.get('claims', []))} claims")
 
     return {"provenance_graph": graph}
@@ -79,10 +86,7 @@ def _create_sources_summary(sources: list) -> str:
         title = source.get("title", "Unknown")
         snippet = source.get("content_snippet", "")[:200]
 
-        summary_parts.append(
-            f"[{source_id}] ({source_type}) {title}\n"
-            f"  Content: {snippet}..."
-        )
+        summary_parts.append(f"[{source_id}] ({source_type}) {title}\n  Content: {snippet}...")
 
     return "\n\n".join(summary_parts)
 
@@ -104,7 +108,7 @@ def _parse_provenance_response(response: str) -> dict:
         return {
             "claims": [],
             "evidence_items": [],
-            "confidence_assessment": "Failed to parse provenance data"
+            "confidence_assessment": "Failed to parse provenance data",
         }
 
 
@@ -116,70 +120,80 @@ def _build_lineage_graph(sources: list, provenance_data: dict) -> dict:
     # Add source nodes
     for source in sources:
         source_id = source.get("source_id", "unknown")
-        nodes.append({
-            "node_id": source_id,
-            "node_type": "source",
-            "label": source.get("title", "Unknown Source")[:50],
-            "full_content": source.get("content_snippet", ""),
-            "metadata": {
-                "source_type": source.get("source_type", "unknown"),
-                "url": source.get("url"),
-                "relevance_score": source.get("relevance_score", 0.5),
-                "query_used": source.get("query_used", ""),
-                "timestamp": source.get("timestamp", "")
+        nodes.append(
+            {
+                "node_id": source_id,
+                "node_type": "source",
+                "label": source.get("title", "Unknown Source")[:50],
+                "full_content": source.get("content_snippet", ""),
+                "metadata": {
+                    "source_type": source.get("source_type", "unknown"),
+                    "url": source.get("url"),
+                    "relevance_score": source.get("relevance_score", 0.5),
+                    "query_used": source.get("query_used", ""),
+                    "timestamp": source.get("timestamp", ""),
+                },
             }
-        })
+        )
 
     # Add evidence nodes and edges from sources
     evidence_items = provenance_data.get("evidence_items", [])
     for evidence in evidence_items:
         evidence_id = evidence.get("evidence_id", "unknown")
 
-        nodes.append({
-            "node_id": evidence_id,
-            "node_type": "evidence",
-            "label": evidence.get("content", "")[:50],
-            "full_content": evidence.get("content", ""),
-            "metadata": {
-                "extraction_method": evidence.get("extraction_method", "unknown"),
-                "confidence": evidence.get("confidence", 0.5)
+        nodes.append(
+            {
+                "node_id": evidence_id,
+                "node_type": "evidence",
+                "label": evidence.get("content", "")[:50],
+                "full_content": evidence.get("content", ""),
+                "metadata": {
+                    "extraction_method": evidence.get("extraction_method", "unknown"),
+                    "confidence": evidence.get("confidence", 0.5),
+                },
             }
-        })
+        )
 
         # Create edges from sources to evidence
         for source_id in evidence.get("source_ids", []):
-            edges.append({
-                "source_node_id": source_id,
-                "target_node_id": evidence_id,
-                "relationship": "derived_from",
-                "strength": evidence.get("confidence", 0.5)
-            })
+            edges.append(
+                {
+                    "source_node_id": source_id,
+                    "target_node_id": evidence_id,
+                    "relationship": "derived_from",
+                    "strength": evidence.get("confidence", 0.5),
+                }
+            )
 
     # Add claim nodes and edges from evidence
     claims = provenance_data.get("claims", [])
     for claim in claims:
         claim_id = claim.get("claim_id", "unknown")
 
-        nodes.append({
-            "node_id": claim_id,
-            "node_type": "claim",
-            "label": claim.get("statement", "")[:50],
-            "full_content": claim.get("statement", ""),
-            "metadata": {
-                "claim_type": claim.get("claim_type", "unknown"),
-                "confidence": claim.get("confidence", 0.5),
-                "location": claim.get("location_in_report", "")
+        nodes.append(
+            {
+                "node_id": claim_id,
+                "node_type": "claim",
+                "label": claim.get("statement", "")[:50],
+                "full_content": claim.get("statement", ""),
+                "metadata": {
+                    "claim_type": claim.get("claim_type", "unknown"),
+                    "confidence": claim.get("confidence", 0.5),
+                    "location": claim.get("location_in_report", ""),
+                },
             }
-        })
+        )
 
         # Create edges from evidence to claims
         for evidence_id in claim.get("evidence_ids", []):
-            edges.append({
-                "source_node_id": evidence_id,
-                "target_node_id": claim_id,
-                "relationship": "supports",
-                "strength": claim.get("confidence", 0.5)
-            })
+            edges.append(
+                {
+                    "source_node_id": evidence_id,
+                    "target_node_id": claim_id,
+                    "relationship": "supports",
+                    "strength": claim.get("confidence", 0.5),
+                }
+            )
 
     # Build complete graph structure
     graph = {
@@ -196,8 +210,8 @@ def _build_lineage_graph(sources: list, provenance_data: dict) -> dict:
             "total_edges": len(edges),
             "graph_type": "provenance_lineage",
             "created_at": datetime.now().isoformat(),
-            "confidence_assessment": provenance_data.get("confidence_assessment", "")
-        }
+            "confidence_assessment": provenance_data.get("confidence_assessment", ""),
+        },
     }
 
     return graph
@@ -219,8 +233,8 @@ def _create_empty_graph() -> dict:
             "total_edges": 0,
             "graph_type": "provenance_lineage",
             "created_at": datetime.now().isoformat(),
-            "confidence_assessment": "No sources available"
-        }
+            "confidence_assessment": "No sources available",
+        },
     }
 
 
@@ -244,7 +258,7 @@ def query_provenance(state: dict, claim_text: str = None, claim_id: str = None) 
     if not provenance_graph:
         return {
             "error": "No provenance graph available",
-            "explanation": "Research has not been completed or provenance tracking was not enabled."
+            "explanation": "Research has not been completed or provenance tracking was not enabled.",
         }
 
     claims = provenance_graph.get("claims", [])
@@ -270,7 +284,7 @@ def query_provenance(state: dict, claim_text: str = None, claim_id: str = None) 
         return {
             "error": "Claim not found",
             "explanation": f"Could not find a claim matching: {claim_text or claim_id}",
-            "available_claims": [c.get("statement", "")[:100] for c in claims[:5]]
+            "available_claims": [c.get("statement", "")[:100] for c in claims[:5]],
         }
 
     # Build evidence chain
@@ -297,22 +311,23 @@ def query_provenance(state: dict, claim_text: str = None, claim_id: str = None) 
     # Generate explanation using LLM
     from src.prompts.provenance_prompt import PROVENANCE_QUERY_PROMPT
 
-    evidence_text = "\n".join([
-        f"- [{e.get('evidence_id')}] {e.get('content')}"
-        for e in evidence_chain
-    ])
+    evidence_text = "\n".join(
+        [f"- [{e.get('evidence_id')}] {e.get('content')}" for e in evidence_chain]
+    )
 
-    source_text = "\n".join([
-        f"- [{s.get('source_id')}] {s.get('title')} ({s.get('source_type')})"
-        + (f"\n  URL: {s.get('url')}" if s.get('url') else "")
-        for s in source_chain
-    ])
+    source_text = "\n".join(
+        [
+            f"- [{s.get('source_id')}] {s.get('title')} ({s.get('source_type')})"
+            + (f"\n  URL: {s.get('url')}" if s.get("url") else "")
+            for s in source_chain
+        ]
+    )
 
     model = get_analyzer_model()
     prompt = PROVENANCE_QUERY_PROMPT.format(
         claim_statement=target_claim.get("statement", ""),
         evidence_items=evidence_text,
-        source_details=source_text
+        source_details=source_text,
     )
 
     try:
@@ -328,7 +343,13 @@ def query_provenance(state: dict, claim_text: str = None, claim_id: str = None) 
         "explanation": explanation,
         "confidence_breakdown": {
             "claim_confidence": target_claim.get("confidence", 0.5),
-            "avg_evidence_confidence": sum(e.get("confidence", 0.5) for e in evidence_chain) / len(evidence_chain) if evidence_chain else 0,
-            "avg_source_relevance": sum(s.get("relevance_score", 0.5) for s in source_chain) / len(source_chain) if source_chain else 0
-        }
+            "avg_evidence_confidence": sum(e.get("confidence", 0.5) for e in evidence_chain)
+            / len(evidence_chain)
+            if evidence_chain
+            else 0,
+            "avg_source_relevance": sum(s.get("relevance_score", 0.5) for s in source_chain)
+            / len(source_chain)
+            if source_chain
+            else 0,
+        },
     }

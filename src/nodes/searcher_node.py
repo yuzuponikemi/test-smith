@@ -1,6 +1,7 @@
+from datetime import datetime
+
 from src.utils.logging_utils import print_node_header
 from src.utils.search_providers import SearchProviderManager
-from datetime import datetime
 
 
 def searcher(state):
@@ -82,7 +83,7 @@ def searcher(state):
                         "metadata": {
                             "search_provider": "auto",  # Could be tavily, duckduckgo, etc.
                             "full_content_length": len(content) if content else 0,
-                        }
+                        },
                     }
                     web_sources.append(source_ref)
 
@@ -104,7 +105,4 @@ def searcher(state):
     print(f"  Completed {len(all_results)} web searches")
     print(f"  Captured {len(web_sources)} source references for provenance")
 
-    return {
-        "search_results": all_results,
-        "web_sources": web_sources
-    }
+    return {"search_results": all_results, "web_sources": web_sources}

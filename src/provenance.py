@@ -27,21 +27,13 @@ Usage:
 """
 
 import json
-from pathlib import Path
 from datetime import datetime
-from typing import Optional
+from pathlib import Path
 
-from src.nodes.provenance_graph_builder_node import (
-    provenance_graph_builder_node,
-    query_provenance
-)
+from src.nodes.provenance_graph_builder_node import provenance_graph_builder_node, query_provenance
 
 
-def query_claim_provenance(
-    state: dict,
-    claim_text: str = None,
-    claim_id: str = None
-) -> dict:
+def query_claim_provenance(state: dict, claim_text: str = None, claim_id: str = None) -> dict:
     """
     Query provenance for a specific claim ("Why do you say that?").
 
@@ -82,10 +74,7 @@ def build_provenance_graph(state: dict) -> dict:
     return provenance_graph_builder_node(state)
 
 
-def export_citations(
-    state: dict,
-    format: str = "markdown"
-) -> str:
+def export_citations(state: dict, format: str = "markdown") -> str:
     """
     Export citations from provenance data.
 
@@ -102,8 +91,9 @@ def export_citations(
     """
     # Import here to avoid circular imports
     import sys
+
     sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "utils"))
-    from export_citations import export_citations as _export
+    from export_citations import export_citations as _export  # type: ignore[import-not-found]
 
     # Build graph if needed
     if not state.get("provenance_graph"):
@@ -117,17 +107,13 @@ def export_citations(
         graph_data = {
             "sources": state.get("web_sources", []) + state.get("rag_sources", []),
             "evidence": [],
-            "claims": []
+            "claims": [],
         }
 
     return _export(graph_data, format)
 
 
-def save_provenance(
-    state: dict,
-    output_path: str = None,
-    include_full_state: bool = False
-) -> str:
+def save_provenance(state: dict, output_path: str = None, include_full_state: bool = False) -> str:
     """
     Save provenance data to a JSON file.
 
@@ -157,8 +143,8 @@ def save_provenance(
         "metadata": {
             "exported_at": datetime.now().isoformat(),
             "web_source_count": len(state.get("web_sources", [])),
-            "rag_source_count": len(state.get("rag_sources", []))
-        }
+            "rag_source_count": len(state.get("rag_sources", [])),
+        },
     }
 
     if include_full_state:
@@ -171,7 +157,7 @@ def save_provenance(
         output_path = f"provenance_{timestamp}.json"
 
     # Save to file
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump(export_data, f, indent=2, default=str)
 
     return output_path
@@ -221,7 +207,7 @@ def get_sources_summary(state: dict) -> dict:
                 "id": s.get("source_id"),
                 "title": s.get("title"),
                 "url": s.get("url"),
-                "relevance": s.get("relevance_score", 0.5)
+                "relevance": s.get("relevance_score", 0.5),
             }
             for s in web_sources
         ],
@@ -230,10 +216,10 @@ def get_sources_summary(state: dict) -> dict:
                 "id": s.get("source_id"),
                 "title": s.get("title"),
                 "file": s.get("metadata", {}).get("source_file", ""),
-                "relevance": s.get("relevance_score", 0.5)
+                "relevance": s.get("relevance_score", 0.5),
             }
             for s in rag_sources
-        ]
+        ],
     }
 
 
@@ -267,16 +253,13 @@ def list_claims(state: dict) -> list:
             "statement": c.get("statement"),
             "type": c.get("claim_type"),
             "confidence": c.get("confidence", 0.5),
-            "evidence_count": len(c.get("evidence_ids", []))
+            "evidence_count": len(c.get("evidence_ids", [])),
         }
         for c in claims
     ]
 
 
-def visualize_lineage(
-    state: dict,
-    output_path: str = "lineage_graph.html"
-) -> str:
+def visualize_lineage(state: dict, output_path: str = "lineage_graph.html") -> str:
     """
     Generate an interactive HTML visualization of the lineage graph.
 
@@ -292,8 +275,11 @@ def visualize_lineage(
         # Open path in browser to view
     """
     import sys
+
     sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "visualization"))
-    from visualize_provenance_graph import generate_html_visualization
+    from visualize_provenance_graph import (  # type: ignore[import-not-found]
+        generate_html_visualization,
+    )
 
     # Build graph if needed
     if not state.get("provenance_graph"):

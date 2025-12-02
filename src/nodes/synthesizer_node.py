@@ -2,7 +2,7 @@ from src.models import get_synthesizer_model
 from src.prompts.synthesizer_prompt import (
     HIERARCHICAL_SYNTHESIZER_PROMPT,
     SYNTHESIZER_PROMPT,
-    SYNTHESIZER_WITH_PROVENANCE_PROMPT
+    SYNTHESIZER_WITH_PROVENANCE_PROMPT,
 )
 from src.utils.logging_utils import print_node_header
 
@@ -20,7 +20,7 @@ def _format_source_summary(state: dict) -> str:
     if not web_sources and not rag_sources:
         return "No structured source data available."
 
-    all_sources = []
+    all_sources: list[dict] = []
     source_summary_lines = []
 
     # Add web sources
@@ -33,13 +33,9 @@ def _format_source_summary(state: dict) -> str:
         relevance = source.get("relevance_score", 0.5)
 
         # Store for summary
-        all_sources.append({
-            "num": source_num,
-            "title": title,
-            "type": "Web",
-            "url": url,
-            "relevance": relevance
-        })
+        all_sources.append(
+            {"num": source_num, "title": title, "type": "Web", "url": url, "relevance": relevance}
+        )
 
         # Format for LLM (verbose for clarity)
         source_entry = f"[{source_num}] {title}\n"
@@ -60,13 +56,15 @@ def _format_source_summary(state: dict) -> str:
         source_file = source.get("metadata", {}).get("source_file", "Unknown")
 
         # Store for summary
-        all_sources.append({
-            "num": source_num,
-            "title": title,
-            "type": "Knowledge Base",
-            "file": source_file,
-            "relevance": relevance
-        })
+        all_sources.append(
+            {
+                "num": source_num,
+                "title": title,
+                "type": "Knowledge Base",
+                "file": source_file,
+                "relevance": relevance,
+            }
+        )
 
         # Format for LLM (verbose for clarity)
         source_entry = f"[{source_num}] {title}\n"
@@ -84,12 +82,12 @@ def _format_source_summary(state: dict) -> str:
     for src in all_sources:
         if src["type"] == "Web":
             reference_template += f'{src["num"]}. "{src["title"]}" - Type: Web\n'
-            reference_template += f'   URL: {src["url"]}\n'
-            reference_template += f'   Relevance: {src["relevance"]:.2f}\n\n'
+            reference_template += f"   URL: {src['url']}\n"
+            reference_template += f"   Relevance: {src['relevance']:.2f}\n\n"
         else:
             reference_template += f'{src["num"]}. "{src["title"]}" - Type: Knowledge Base\n'
-            reference_template += f'   File: {src["file"]}\n'
-            reference_template += f'   Relevance: {src["relevance"]:.2f}\n\n'
+            reference_template += f"   File: {src['file']}\n"
+            reference_template += f"   Relevance: {src['relevance']:.2f}\n\n"
 
     reference_template += "=" * 80 + "\n"
 
@@ -200,7 +198,7 @@ def synthesizer_node(state):
                     original_query=original_query,
                     allocation_strategy=allocation_strategy,
                     source_summary=source_summary,
-                    analyzed_data=analyzed_data
+                    analyzed_data=analyzed_data,
                 )
                 + code_results_str
             )
@@ -228,7 +226,7 @@ def synthesizer_node(state):
         # Generate clean reference list programmatically
         reference_lines = ["\n\n**References**\n"]
 
-        all_sources_list = []
+        all_sources_list: list[dict] = []
 
         # Add web sources
         for source in web_sources:
@@ -237,13 +235,15 @@ def synthesizer_node(state):
             url = source.get("url", "N/A")
             relevance = source.get("relevance_score", 0.5)
 
-            all_sources_list.append({
-                "num": source_num,
-                "title": title,
-                "type": "Web",
-                "url": url,
-                "relevance": relevance
-            })
+            all_sources_list.append(
+                {
+                    "num": source_num,
+                    "title": title,
+                    "type": "Web",
+                    "url": url,
+                    "relevance": relevance,
+                }
+            )
 
         # Add RAG sources
         for source in rag_sources:
@@ -252,24 +252,26 @@ def synthesizer_node(state):
             relevance = source.get("relevance_score", 0.5)
             source_file = source.get("metadata", {}).get("source_file", "Unknown")
 
-            all_sources_list.append({
-                "num": source_num,
-                "title": title,
-                "type": "Knowledge Base",
-                "file": source_file,
-                "relevance": relevance
-            })
+            all_sources_list.append(
+                {
+                    "num": source_num,
+                    "title": title,
+                    "type": "Knowledge Base",
+                    "file": source_file,
+                    "relevance": relevance,
+                }
+            )
 
         # Format all sources
         for src in all_sources_list:
             if src["type"] == "Web":
                 reference_lines.append(f'{src["num"]}. "{src["title"]}" - Type: Web\n')
-                reference_lines.append(f'   URL: {src["url"]}\n')
-                reference_lines.append(f'   Relevance: {src["relevance"]:.2f}\n\n')
+                reference_lines.append(f"   URL: {src['url']}\n")
+                reference_lines.append(f"   Relevance: {src['relevance']:.2f}\n\n")
             else:
                 reference_lines.append(f'{src["num"]}. "{src["title"]}" - Type: Knowledge Base\n')
-                reference_lines.append(f'   File: {src["file"]}\n')
-                reference_lines.append(f'   Relevance: {src["relevance"]:.2f}\n\n')
+                reference_lines.append(f"   File: {src['file']}\n")
+                reference_lines.append(f"   Relevance: {src['relevance']:.2f}\n\n")
 
         # Check if report already has a References section
         if "**References**" in report_content or "## References" in report_content:

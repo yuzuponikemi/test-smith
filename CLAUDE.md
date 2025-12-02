@@ -346,6 +346,54 @@ cat ingestion_diagnostic_*.log
 
 ## Development
 
+### Development Workflow
+
+**IMPORTANT: Always run CI checks locally before considering implementation complete**
+
+When you finish implementing a feature or fix, **automatically** run the following CI checks locally:
+
+```bash
+# Run all CI checks (same as GitHub Actions)
+source .venv/bin/activate
+
+# 1. Ruff linter
+echo "=== Ruff Linter ==="
+ruff check .
+
+# 2. Ruff formatter
+echo "=== Ruff Formatter ==="
+ruff format --check .
+
+# 3. Mypy type checker
+echo "=== Mypy Type Checker ==="
+mypy src --no-error-summary
+
+# 4. Pytest
+echo "=== Pytest ==="
+python -m pytest -v --tb=short
+```
+
+**Auto-fix common issues:**
+```bash
+# Auto-fix linting errors
+ruff check --fix .
+
+# Auto-format code
+ruff format .
+```
+
+**Why this matters:**
+- Prevents CI failures in pull requests
+- Catches issues early before pushing
+- Maintains code quality standards
+- Saves time by avoiding CI feedback loops
+
+**When to run:**
+- ✅ After completing any feature implementation
+- ✅ After fixing bugs
+- ✅ Before creating a commit
+- ✅ When tests or linting might be affected by changes
+
 ### Project Structure
 
 ```

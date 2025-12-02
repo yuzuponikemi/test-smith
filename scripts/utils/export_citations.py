@@ -15,18 +15,18 @@ Usage:
     python scripts/utils/export_citations.py provenance_graph.json --format all
 """
 
-import json
 import argparse
-import sys
-from pathlib import Path
-from datetime import datetime
+import json
 import re
+import sys
+from datetime import datetime
+from pathlib import Path
 
 
 def sanitize_bibtex_key(title: str, index: int) -> str:
     """Generate a valid BibTeX key from title."""
     # Extract first word and clean it
-    words = re.sub(r'[^a-zA-Z0-9\s]', '', title).split()
+    words = re.sub(r"[^a-zA-Z0-9\s]", "", title).split()
     first_word = words[0].lower() if words else "source"
     year = datetime.now().year
     return f"{first_word}{year}_{index}"
@@ -45,9 +45,9 @@ def format_bibtex(sources: list) -> str:
 
         # Parse access date
         try:
-            access_date = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+            access_date = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
             access_str = access_date.strftime("%Y-%m-%d")
-        except:
+        except (ValueError, AttributeError):
             access_str = datetime.now().strftime("%Y-%m-%d")
 
         key = sanitize_bibtex_key(title, i)
@@ -85,10 +85,10 @@ def format_apa(sources: list) -> str:
 
         # Parse dates
         try:
-            access_date = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+            access_date = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
             access_str = access_date.strftime("%B %d, %Y")
             year = access_date.year
-        except:
+        except (ValueError, AttributeError):
             access_str = datetime.now().strftime("%B %d, %Y")
             year = datetime.now().year
 
@@ -114,9 +114,9 @@ def format_mla(sources: list) -> str:
 
         # Parse access date
         try:
-            access_date = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+            access_date = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
             access_str = access_date.strftime("%d %b. %Y")
-        except:
+        except (ValueError, AttributeError):
             access_str = datetime.now().strftime("%d %b. %Y")
 
         if source_type == "web" and url:
@@ -182,8 +182,8 @@ def format_json_export(graph_data: dict) -> str:
         "claims": graph_data.get("claims", []),
         "lineage": {
             "nodes": len(graph_data.get("nodes", [])),
-            "edges": len(graph_data.get("edges", []))
-        }
+            "edges": len(graph_data.get("edges", [])),
+        },
     }
     return json.dumps(export_data, indent=2)
 
@@ -211,23 +211,16 @@ def export_citations(graph_data: dict, format_type: str) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Export Research Citations to various formats"
-    )
+    parser = argparse.ArgumentParser(description="Export Research Citations to various formats")
+    parser.add_argument("input_file", help="Path to JSON file containing provenance graph data")
     parser.add_argument(
-        "input_file",
-        help="Path to JSON file containing provenance graph data"
-    )
-    parser.add_argument(
-        "--format", "-f",
+        "--format",
+        "-f",
         choices=["bibtex", "apa", "mla", "markdown", "json", "all"],
         default="bibtex",
-        help="Citation format (default: bibtex)"
+        help="Citation format (default: bibtex)",
     )
-    parser.add_argument(
-        "--output", "-o",
-        help="Output file path (default: stdout)"
-    )
+    parser.add_argument("--output", "-o", help="Output file path (default: stdout)")
 
     args = parser.parse_args()
 
@@ -256,18 +249,18 @@ def main():
                 "apa": ".txt",
                 "mla": ".txt",
                 "markdown": ".md",
-                "json": ".json"
+                "json": ".json",
             }[fmt]
 
             output_file = output_dir / f"citations_{fmt}{ext}"
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 f.write(content)
             print(f"Exported {fmt} to: {output_file}")
     else:
         content = export_citations(graph_data, args.format)
 
         if args.output:
-            with open(args.output, 'w') as f:
+            with open(args.output, "w") as f:
                 f.write(content)
             print(f"Exported to: {args.output}")
         else:

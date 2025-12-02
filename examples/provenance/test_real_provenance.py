@@ -5,9 +5,8 @@
 Provenance機能を実際に使用して、ソース追跡と引用エクスポートを実演します。
 """
 
-import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 
 def load_latest_report():
@@ -16,7 +15,9 @@ def load_latest_report():
     reports_dir = Path("../../reports")
 
     # 最新のレポートを探す
-    report_files = sorted(reports_dir.glob("report_*.md"), key=lambda p: p.stat().st_mtime, reverse=True)
+    report_files = sorted(
+        reports_dir.glob("report_*.md"), key=lambda p: p.stat().st_mtime, reverse=True
+    )
 
     if not report_files:
         print("❌ レポートファイルが見つかりません")
@@ -59,7 +60,7 @@ def extract_references(report_content: str) -> list:
             current_source = {
                 "number": int(line.split(".")[0]),
                 "title": title,
-                "type": source_type
+                "type": source_type,
             }
 
         # URL行
@@ -100,7 +101,7 @@ def export_citations_real(sources: list, format: str = "bibtex") -> str:
   title = {{{title}}},
   url = {{{url}}},
   year = {{{year}}},
-  note = {{Accessed: {datetime.now().strftime('%Y-%m-%d')}}}
+  note = {{Accessed: {datetime.now().strftime("%Y-%m-%d")}}}
 }}"""
             else:
                 file_path = source.get("file", "Unknown")
@@ -129,7 +130,9 @@ def export_citations_real(sources: list, format: str = "bibtex") -> str:
                 citation = f"{source_num}. {title}. ({year}). Retrieved from {url}"
             else:
                 file_path = source.get("file", "Unknown")
-                citation = f"{source_num}. {title}. ({year}). Internal Knowledge Base. Source: {file_path}"
+                citation = (
+                    f"{source_num}. {title}. ({year}). Internal Knowledge Base. Source: {file_path}"
+                )
 
             citations.append(citation)
 
@@ -164,11 +167,7 @@ def query_claim_in_report(report: str, sources: list, claim: str):
     claim_lower = claim.lower()
 
     if claim_lower not in report_lower:
-        return {
-            "claim": claim,
-            "found": False,
-            "message": "主張がレポート内に見つかりませんでした"
-        }
+        return {"claim": claim, "found": False, "message": "主張がレポート内に見つかりませんでした"}
 
     # 主張の周辺テキストを取得
     pos = report_lower.index(claim_lower)
@@ -178,7 +177,8 @@ def query_claim_in_report(report: str, sources: list, claim: str):
 
     # 引用番号を検索 [1], [2], etc.
     import re
-    citation_pattern = r'\[(\d+)\]'
+
+    citation_pattern = r"\[(\d+)\]"
     cited_sources = []
 
     for match in re.finditer(citation_pattern, context):
@@ -195,7 +195,7 @@ def query_claim_in_report(report: str, sources: list, claim: str):
         "found": True,
         "context": context.strip(),
         "sources": cited_sources,
-        "source_count": len(cited_sources)
+        "source_count": len(cited_sources),
     }
 
 
@@ -257,11 +257,7 @@ def main():
     print()
 
     # レポート内のキーワードを使って主張を探す
-    test_claims = [
-        "RAG",
-        "retrieval",
-        "accuracy"
-    ]
+    test_claims = ["RAG", "retrieval", "accuracy"]
 
     for claim_word in test_claims:
         if claim_word.lower() in report_content.lower():
@@ -274,7 +270,7 @@ def main():
             else:
                 continue
 
-            print(f"主張: \"{claim}...\"")
+            print(f'主張: "{claim}..."')
             print()
 
             provenance = query_claim_in_report(report_content, sources, claim)
@@ -364,4 +360,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\n❌ エラーが発生しました: {e}")
         import traceback
+
         traceback.print_exc()

@@ -13,8 +13,8 @@ Usage:
     python scripts/visualization/visualize_provenance_graph.py provenance_graph.json --output my_lineage.html
 """
 
-import json
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -108,15 +108,17 @@ def generate_html_visualization(graph_data: dict, output_path: str = "provenance
 
         tooltip = "".join(tooltip_parts)
 
-        vis_nodes.append({
-            "id": node_id,
-            "label": node.get("label", node_id)[:30],
-            "color": color,
-            "shape": shape,
-            "level": level,
-            "title": tooltip,
-            "font": {"size": 12}
-        })
+        vis_nodes.append(
+            {
+                "id": node_id,
+                "label": node.get("label", node_id)[:30],
+                "color": color,
+                "shape": shape,
+                "level": level,
+                "title": tooltip,
+                "font": {"size": 12},
+            }
+        )
 
     # Convert edges to vis.js format
     vis_edges = []
@@ -138,15 +140,17 @@ def generate_html_visualization(graph_data: dict, output_path: str = "provenance
         # Edge width based on strength
         width = 1 + (strength * 3)
 
-        vis_edges.append({
-            "from": edge.get("source_node_id"),
-            "to": edge.get("target_node_id"),
-            "color": {"color": edge_color, "opacity": 0.7 + (strength * 0.3)},
-            "width": width,
-            "dashes": dashes,
-            "arrows": {"to": {"enabled": True, "scaleFactor": 0.5}},
-            "title": f"{relationship} (strength: {strength:.2f})"
-        })
+        vis_edges.append(
+            {
+                "from": edge.get("source_node_id"),
+                "to": edge.get("target_node_id"),
+                "color": {"color": edge_color, "opacity": 0.7 + (strength * 0.3)},
+                "width": width,
+                "dashes": dashes,
+                "arrows": {"to": {"enabled": True, "scaleFactor": 0.5}},
+                "title": f"{relationship} (strength: {strength:.2f})",
+            }
+        )
 
     # Generate HTML
     html_content = f"""<!DOCTYPE html>
@@ -251,10 +255,10 @@ def generate_html_visualization(graph_data: dict, output_path: str = "provenance
     <div id="header">
         <h1>Research Provenance & Lineage Graph</h1>
         <div id="stats">
-            <span>Sources: {metadata.get('total_sources', 0)}</span>
-            <span>Evidence: {metadata.get('total_evidence', 0)}</span>
-            <span>Claims: {metadata.get('total_claims', 0)}</span>
-            <span>Relationships: {metadata.get('total_edges', 0)}</span>
+            <span>Sources: {metadata.get("total_sources", 0)}</span>
+            <span>Evidence: {metadata.get("total_evidence", 0)}</span>
+            <span>Claims: {metadata.get("total_claims", 0)}</span>
+            <span>Relationships: {metadata.get("total_edges", 0)}</span>
         </div>
     </div>
 
@@ -357,7 +361,7 @@ def generate_html_visualization(graph_data: dict, output_path: str = "provenance
 </body>
 </html>"""
 
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         f.write(html_content)
 
     print(f"Visualization saved to: {output_path}")
@@ -365,17 +369,13 @@ def generate_html_visualization(graph_data: dict, output_path: str = "provenance
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Visualize Research Provenance & Lineage Graph"
-    )
+    parser = argparse.ArgumentParser(description="Visualize Research Provenance & Lineage Graph")
+    parser.add_argument("input_file", help="Path to JSON file containing provenance graph data")
     parser.add_argument(
-        "input_file",
-        help="Path to JSON file containing provenance graph data"
-    )
-    parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         default="provenance_lineage.html",
-        help="Output HTML file path (default: provenance_lineage.html)"
+        help="Output HTML file path (default: provenance_lineage.html)",
     )
 
     args = parser.parse_args()

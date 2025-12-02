@@ -16,11 +16,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from src.graphs import get_graph
 from src.provenance import (
-    query_claim_provenance,
     export_citations,
     get_sources_summary,
-    list_claims,
-    save_provenance
+    query_claim_provenance,
+    save_provenance,
 )
 
 
@@ -39,9 +38,7 @@ def demo_provenance_features():
 
     graph = get_graph("quick_research")
 
-    initial_state = {
-        "query": "What are the key benefits of RAG systems?"
-    }
+    initial_state = {"query": "What are the key benefits of RAG systems?"}
 
     print("⏳ グラフを実行中... (1-2分かかります)")
     result = graph.invoke(initial_state)
@@ -59,17 +56,17 @@ def demo_provenance_features():
     print(f"  - Knowledge Base sources: {summary['rag_count']}\n")
 
     # Top 5 Web sources
-    if summary['web_sources']:
+    if summary["web_sources"]:
         print("🌐 Top 5 Web Sources:")
-        for source in summary['web_sources'][:5]:
+        for source in summary["web_sources"][:5]:
             print(f"  • {source['title']}")
             print(f"    URL: {source['url']}")
             print(f"    Relevance: {source['relevance']:.2f}\n")
 
     # Top 5 KB sources
-    if summary['rag_sources']:
+    if summary["rag_sources"]:
         print("📚 Top 5 Knowledge Base Sources:")
-        for source in summary['rag_sources'][:5]:
+        for source in summary["rag_sources"][:5]:
             print(f"  • {source['title']}")
             print(f"    File: {source['file']}")
             print(f"    Relevance: {source['relevance']:.2f}\n")
@@ -84,10 +81,10 @@ def demo_provenance_features():
     report = result.get("report", "")
 
     # 最初の実質的な文を取得
-    sentences = [s.strip() for s in report.split('.') if len(s.strip()) > 50]
+    sentences = [s.strip() for s in report.split(".") if len(s.strip()) > 50]
     if sentences:
-        claim_to_check = sentences[0] + '.'
-        print(f"主張を確認: \"{claim_to_check[:100]}...\"")
+        claim_to_check = sentences[0] + "."
+        print(f'主張を確認: "{claim_to_check[:100]}..."')
         print()
 
         # Provenance を確認
@@ -98,15 +95,15 @@ def demo_provenance_features():
         print(f"📚 支持ソース数: {provenance_result.get('source_count', 0)}")
         print()
 
-        sources = provenance_result.get('sources', [])
+        sources = provenance_result.get("sources", [])
         if sources:
             print("💡 この主張を支持するソース:")
             for source in sources[:3]:  # Top 3
                 print(f"\n  [{source['citation_number']}] {source['title']}")
                 print(f"      Type: {source['type']}")
-                if source.get('url'):
+                if source.get("url"):
                     print(f"      URL: {source['url']}")
-                if source.get('file'):
+                if source.get("file"):
                     print(f"      File: {source['file']}")
                 print(f"      Relevance: {source['relevance']:.2f}")
 
@@ -121,7 +118,7 @@ def demo_provenance_features():
     print("-" * 80)
     bibtex = export_citations(result, format="bibtex")
     # 最初の2エントリだけ表示
-    bibtex_entries = bibtex.split('\n\n')
+    bibtex_entries = bibtex.split("\n\n")
     for entry in bibtex_entries[:2]:
         print(entry)
         print()
@@ -132,7 +129,7 @@ def demo_provenance_features():
     print("📘 APA形式:")
     print("-" * 80)
     apa = export_citations(result, format="apa")
-    apa_entries = apa.split('\n\n')
+    apa_entries = apa.split("\n\n")
     for entry in apa_entries[:3]:
         print(entry)
     if len(apa_entries) > 3:
@@ -142,7 +139,7 @@ def demo_provenance_features():
     print("\n📗 MLA形式:")
     print("-" * 80)
     mla = export_citations(result, format="mla")
-    mla_entries = mla.split('\n\n')
+    mla_entries = mla.split("\n\n")
     for entry in mla_entries[:3]:
         print(entry)
     if len(mla_entries) > 3:
@@ -189,10 +186,10 @@ def demo_provenance_features():
     print()
     print("生成されたファイル:")
     print(f"  1. {report_path} - 完全な研究レポート（引用付き）")
-    print(f"  2. demo_provenance_output.json - プロベナンスデータ")
-    print(f"  3. demo_citations_bibtex.bib - BibTeX形式の引用")
-    print(f"  4. demo_citations_apa.txt - APA形式の引用")
-    print(f"  5. demo_citations_mla.txt - MLA形式の引用")
+    print("  2. demo_provenance_output.json - プロベナンスデータ")
+    print("  3. demo_citations_bibtex.bib - BibTeX形式の引用")
+    print("  4. demo_citations_apa.txt - APA形式の引用")
+    print("  5. demo_citations_mla.txt - MLA形式の引用")
     print()
     print("💡 これらのファイルを使って:")
     print("   - レポートを論文に含める")
@@ -209,4 +206,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\n❌ エラーが発生しました: {e}")
         import traceback
+
         traceback.print_exc()

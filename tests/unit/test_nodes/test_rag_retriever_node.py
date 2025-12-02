@@ -116,7 +116,9 @@ class TestRAGRetrieverNode:
         )
 
         # Verify similarity_search_with_score was called with correct query
-        mock_vectorstore.similarity_search_with_score.assert_called_once_with("What is LangGraph?", k=5)
+        mock_vectorstore.similarity_search_with_score.assert_called_once_with(
+            "What is LangGraph?", k=5
+        )
 
     @patch("src.nodes.rag_retriever_node.print_node_header")
     @patch("src.nodes.rag_retriever_node.Chroma")
@@ -203,7 +205,9 @@ class TestRAGRetrieverNode:
 
         # Mock vectorstore to raise exception
         mock_vectorstore = MagicMock()
-        mock_vectorstore.similarity_search_with_score.side_effect = Exception("ChromaDB connection failed")
+        mock_vectorstore.similarity_search_with_score.side_effect = Exception(
+            "ChromaDB connection failed"
+        )
         mock_chroma.return_value = mock_vectorstore
 
         # Act
