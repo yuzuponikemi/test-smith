@@ -34,7 +34,7 @@ class TestRAGRetrieverNode:
         result = rag_retriever(state)
 
         # Assert
-        assert result == {"rag_results": []}
+        assert result == {"rag_results": [], "rag_sources": []}
         mock_print_header.assert_called_once_with("RAG RETRIEVER")
         mock_get_embeddings.assert_not_called()
         mock_chroma.assert_not_called()
@@ -53,7 +53,7 @@ class TestRAGRetrieverNode:
         result = rag_retriever(state)
 
         # Assert
-        assert result == {"rag_results": []}
+        assert result == {"rag_results": [], "rag_sources": []}
         mock_print_header.assert_called_once_with("RAG RETRIEVER")
         mock_get_embeddings.assert_not_called()
         mock_chroma.assert_not_called()
@@ -70,7 +70,7 @@ class TestRAGRetrieverNode:
         mock_embeddings = MagicMock()
         mock_get_embeddings.return_value = mock_embeddings
 
-        # Mock retrieved documents
+        # Mock retrieved documents with scores
         mock_doc1 = Document(
             page_content="LangGraph is a framework for building stateful workflows.",
             metadata={"source": "docs/langgraph.md"},
@@ -80,13 +80,12 @@ class TestRAGRetrieverNode:
             metadata={"source": "docs/architecture.md"},
         )
 
-        # Mock retriever
-        mock_retriever = MagicMock()
-        mock_retriever.invoke.return_value = [mock_doc1, mock_doc2]
-
-        # Mock vectorstore
+        # Mock vectorstore with similarity_search_with_score
         mock_vectorstore = MagicMock()
-        mock_vectorstore.as_retriever.return_value = mock_retriever
+        mock_vectorstore.similarity_search_with_score.return_value = [
+            (mock_doc1, 0.15),  # (doc, distance_score)
+            (mock_doc2, 0.25),
+        ]
         mock_chroma.return_value = mock_vectorstore
 
         # Act
@@ -94,6 +93,8 @@ class TestRAGRetrieverNode:
 
         # Assert
         assert len(result["rag_results"]) == 1
+        assert "rag_sources" in result
+        assert len(result["rag_sources"]) == 2  # 2 documents retrieved
 
         # Check formatted output contains expected content
         formatted_output = result["rag_results"][0]
@@ -114,11 +115,10 @@ class TestRAGRetrieverNode:
             persist_directory="chroma_db",
         )
 
-        # Verify retriever was configured with k=5
-        mock_vectorstore.as_retriever.assert_called_once_with(search_kwargs={"k": 5})
-
-        # Verify invoke was called with correct query
-        mock_retriever.invoke.assert_called_once_with("What is LangGraph?")
+        # Verify similarity_search_with_score was called with correct query
+        mock_vectorstore.similarity_search_with_score.assert_called_once_with(
+            "What is LangGraph?", k=5
+        )
 
     @patch("src.nodes.rag_retriever_node.print_node_header")
     @patch("src.nodes.rag_retriever_node.Chroma")
@@ -140,17 +140,13 @@ class TestRAGRetrieverNode:
         mock_embeddings = MagicMock()
         mock_get_embeddings.return_value = mock_embeddings
 
-        # Mock retriever with different results for each query
-        mock_retriever = MagicMock()
-        mock_retriever.invoke.side_effect = [
-            [Document(page_content="LangGraph answer", metadata={"source": "doc1.md"})],
-            [Document(page_content="ChromaDB answer", metadata={"source": "doc2.md"})],
-            [Document(page_content="RAG answer", metadata={"source": "doc3.md"})],
-        ]
-
-        # Mock vectorstore
+        # Mock vectorstore with different results for each query
         mock_vectorstore = MagicMock()
-        mock_vectorstore.as_retriever.return_value = mock_retriever
+        mock_vectorstore.similarity_search_with_score.side_effect = [
+            [(Document(page_content="LangGraph answer", metadata={"source": "doc1.md"}), 0.1)],
+            [(Document(page_content="ChromaDB answer", metadata={"source": "doc2.md"}), 0.2)],
+            [(Document(page_content="RAG answer", metadata={"source": "doc3.md"}), 0.3)],
+        ]
         mock_chroma.return_value = mock_vectorstore
 
         # Act
@@ -158,14 +154,16 @@ class TestRAGRetrieverNode:
 
         # Assert
         assert len(result["rag_results"]) == 3
+        assert "rag_sources" in result
+        assert len(result["rag_sources"]) == 3  # 3 queries, each with 1 document
 
         # Check each result contains expected query
         assert "What is LangGraph?" in result["rag_results"][0]
         assert "How does ChromaDB work?" in result["rag_results"][1]
         assert "Explain RAG architecture" in result["rag_results"][2]
 
-        # Verify invoke was called 3 times
-        assert mock_retriever.invoke.call_count == 3
+        # Verify similarity_search_with_score was called 3 times
+        assert mock_vectorstore.similarity_search_with_score.call_count == 3
 
     @patch("src.nodes.rag_retriever_node.print_node_header")
     @patch("src.nodes.rag_retriever_node.Chroma")
@@ -179,13 +177,9 @@ class TestRAGRetrieverNode:
         mock_embeddings = MagicMock()
         mock_get_embeddings.return_value = mock_embeddings
 
-        # Mock retriever with empty results
-        mock_retriever = MagicMock()
-        mock_retriever.invoke.return_value = []  # No documents found
-
-        # Mock vectorstore
+        # Mock vectorstore with empty results
         mock_vectorstore = MagicMock()
-        mock_vectorstore.as_retriever.return_value = mock_retriever
+        mock_vectorstore.similarity_search_with_score.return_value = []  # No documents found
         mock_chroma.return_value = mock_vectorstore
 
         # Act
@@ -194,6 +188,8 @@ class TestRAGRetrieverNode:
         # Assert
         assert len(result["rag_results"]) == 1
         assert "No relevant chunks found for query: Very obscure query" in result["rag_results"][0]
+        assert "rag_sources" in result
+        assert len(result["rag_sources"]) == 0  # No documents found
 
     @patch("src.nodes.rag_retriever_node.print_node_header")
     @patch("src.nodes.rag_retriever_node.Chroma")
@@ -207,13 +203,11 @@ class TestRAGRetrieverNode:
         mock_embeddings = MagicMock()
         mock_get_embeddings.return_value = mock_embeddings
 
-        # Mock retriever to raise exception
-        mock_retriever = MagicMock()
-        mock_retriever.invoke.side_effect = Exception("ChromaDB connection failed")
-
-        # Mock vectorstore
+        # Mock vectorstore to raise exception
         mock_vectorstore = MagicMock()
-        mock_vectorstore.as_retriever.return_value = mock_retriever
+        mock_vectorstore.similarity_search_with_score.side_effect = Exception(
+            "ChromaDB connection failed"
+        )
         mock_chroma.return_value = mock_vectorstore
 
         # Act
@@ -223,6 +217,8 @@ class TestRAGRetrieverNode:
         assert len(result["rag_results"]) == 1
         assert "Error retrieving from knowledge base" in result["rag_results"][0]
         assert "ChromaDB connection failed" in result["rag_results"][0]
+        assert "rag_sources" in result
+        assert len(result["rag_sources"]) == 0  # Error occurred, no sources
 
     @patch("src.nodes.rag_retriever_node.print_node_header")
     @patch("src.nodes.rag_retriever_node.Chroma")
@@ -242,17 +238,13 @@ class TestRAGRetrieverNode:
         mock_embeddings = MagicMock()
         mock_get_embeddings.return_value = mock_embeddings
 
-        # Mock retriever with mixed results
-        mock_retriever = MagicMock()
-        mock_retriever.invoke.side_effect = [
-            [Document(page_content="Success 1", metadata={"source": "doc1.md"})],
-            Exception("Retrieval failed"),
-            [Document(page_content="Success 2", metadata={"source": "doc2.md"})],
-        ]
-
-        # Mock vectorstore
+        # Mock vectorstore with mixed results
         mock_vectorstore = MagicMock()
-        mock_vectorstore.as_retriever.return_value = mock_retriever
+        mock_vectorstore.similarity_search_with_score.side_effect = [
+            [(Document(page_content="Success 1", metadata={"source": "doc1.md"}), 0.1)],
+            Exception("Retrieval failed"),
+            [(Document(page_content="Success 2", metadata={"source": "doc2.md"}), 0.2)],
+        ]
         mock_chroma.return_value = mock_vectorstore
 
         # Act
@@ -260,6 +252,8 @@ class TestRAGRetrieverNode:
 
         # Assert
         assert len(result["rag_results"]) == 3
+        assert "rag_sources" in result
+        assert len(result["rag_sources"]) == 2  # Only 2 successful retrievals
 
         # First result: successful
         assert "Success 1" in result["rag_results"][0]
@@ -291,13 +285,9 @@ class TestRAGRetrieverNode:
             metadata={},  # Empty metadata
         )
 
-        # Mock retriever
-        mock_retriever = MagicMock()
-        mock_retriever.invoke.return_value = [mock_doc]
-
         # Mock vectorstore
         mock_vectorstore = MagicMock()
-        mock_vectorstore.as_retriever.return_value = mock_retriever
+        mock_vectorstore.similarity_search_with_score.return_value = [(mock_doc, 0.1)]
         mock_chroma.return_value = mock_vectorstore
 
         # Act
@@ -305,6 +295,9 @@ class TestRAGRetrieverNode:
 
         # Assert
         assert len(result["rag_results"]) == 1
+        assert "rag_sources" in result
+        assert len(result["rag_sources"]) == 1  # 1 document retrieved
+
         formatted_output = result["rag_results"][0]
 
         # Should contain content
@@ -326,26 +319,24 @@ class TestRAGRetrieverNode:
         mock_embeddings = MagicMock()
         mock_get_embeddings.return_value = mock_embeddings
 
-        # Mock retriever
-        mock_retriever = MagicMock()
-        mock_retriever.invoke.return_value = [
-            Document(page_content=f"Result {i}", metadata={}) for i in range(5)
-        ]
-
         # Mock vectorstore
         mock_vectorstore = MagicMock()
-        mock_vectorstore.as_retriever.return_value = mock_retriever
+        mock_vectorstore.similarity_search_with_score.return_value = [
+            (Document(page_content=f"Result {i}", metadata={}), 0.1 * i) for i in range(5)
+        ]
         mock_chroma.return_value = mock_vectorstore
 
         # Act
         result = rag_retriever(state)
 
         # Assert
-        # Verify k=5 was passed to retriever
-        mock_vectorstore.as_retriever.assert_called_once_with(search_kwargs={"k": 5})
+        # Verify k=5 was passed to similarity_search_with_score
+        mock_vectorstore.similarity_search_with_score.assert_called_once_with("Test query", k=5)
 
         # Should retrieve 5 documents
         assert "Retrieved 5 relevant chunks" in result["rag_results"][0]
+        assert "rag_sources" in result
+        assert len(result["rag_sources"]) == 5  # 5 documents retrieved
 
     @patch("src.nodes.rag_retriever_node.print_node_header")
     @patch("src.nodes.rag_retriever_node.Chroma")
@@ -365,23 +356,22 @@ class TestRAGRetrieverNode:
         mock_embeddings = MagicMock()
         mock_get_embeddings.return_value = mock_embeddings
 
-        # Mock retriever
-        mock_retriever = MagicMock()
-        mock_retriever.invoke.side_effect = [
-            [Document(page_content="Result A", metadata={})],
-            [Document(page_content="Result B", metadata={})],
-            [Document(page_content="Result C", metadata={})],
-        ]
-
         # Mock vectorstore
         mock_vectorstore = MagicMock()
-        mock_vectorstore.as_retriever.return_value = mock_retriever
+        mock_vectorstore.similarity_search_with_score.side_effect = [
+            [(Document(page_content="Result A", metadata={}), 0.1)],
+            [(Document(page_content="Result B", metadata={}), 0.2)],
+            [(Document(page_content="Result C", metadata={}), 0.3)],
+        ]
         mock_chroma.return_value = mock_vectorstore
 
         # Act
         result = rag_retriever(state)
 
         # Assert
+        assert "rag_sources" in result
+        assert len(result["rag_sources"]) == 3  # 3 documents retrieved
+
         # Results should be in same order as queries
         assert "Query A" in result["rag_results"][0]
         assert "Result A" in result["rag_results"][0]

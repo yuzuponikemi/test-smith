@@ -467,3 +467,192 @@ class CodeSearchQueries(BaseModel):
 
     queries: list[str] = Field(description="List of search queries to find relevant code")
     reasoning: str = Field(description="Explanation of query generation strategy")
+
+
+class SourceReference(BaseModel):
+    """
+    A reference to a single source of information.
+
+    This is the atomic unit of provenance tracking, representing where
+    a piece of information came from.
+    """
+
+    source_id: str = Field(
+        description="Unique identifier for this source (e.g., 'web_1', 'rag_3', 'kb_doc_5')"
+    )
+    source_type: Literal["web", "rag", "internal"] = Field(
+        description="Type of source: 'web' for internet, 'rag' for knowledge base, 'internal' for system-generated"
+    )
+    url: Optional[str] = Field(default=None, description="URL if web source")
+    title: str = Field(description="Title or name of the source")
+    content_snippet: str = Field(description="Relevant excerpt from the source (max 500 chars)")
+    query_used: str = Field(description="The query that retrieved this source")
+    timestamp: str = Field(description="ISO format timestamp when source was retrieved")
+    relevance_score: float = Field(
+        ge=0.0,
+        le=1.0,
+        default=0.5,
+        description="Relevance/similarity score from retrieval (0.0-1.0)",
+    )
+    metadata: dict = Field(
+        default_factory=dict,
+        description="Additional metadata (chunk_id, page_number, section, etc.)",
+    )
+
+
+class EvidenceItem(BaseModel):
+    """
+    A piece of evidence extracted from sources that supports a claim.
+
+    Links specific content from sources to claims made in the analysis.
+    """
+
+    evidence_id: str = Field(
+        description="Unique identifier for this evidence (e.g., 'ev_1', 'ev_2')"
+    )
+    content: str = Field(description="The actual evidence text/statement")
+    source_ids: list[str] = Field(description="List of source_ids this evidence comes from")
+    extraction_method: Literal["direct_quote", "paraphrase", "synthesis", "inference"] = Field(
+        description="How this evidence was derived from sources"
+    )
+    confidence: float = Field(ge=0.0, le=1.0, description="Confidence in this evidence (0.0-1.0)")
+
+
+class Claim(BaseModel):
+    """
+    A claim or assertion made in the research report.
+
+    Each claim is linked to its supporting evidence, enabling
+    'Why do you say that?' queries.
+    """
+
+    claim_id: str = Field(
+        description="Unique identifier for this claim (e.g., 'claim_1', 'claim_2')"
+    )
+    statement: str = Field(description="The claim/assertion being made")
+    evidence_ids: list[str] = Field(description="List of evidence_ids supporting this claim")
+    claim_type: Literal["fact", "analysis", "synthesis", "recommendation", "opinion"] = Field(
+        description="Type of claim being made"
+    )
+    confidence: float = Field(
+        ge=0.0, le=1.0, description="Confidence in this claim based on evidence strength (0.0-1.0)"
+    )
+    location_in_report: str = Field(
+        description="Where in the report this claim appears (e.g., 'section_2', 'conclusion')"
+    )
+
+
+class LineageNode(BaseModel):
+    """
+    A node in the provenance knowledge graph.
+
+    Represents either a source, evidence, or claim for graph visualization.
+    """
+
+    node_id: str = Field(description="Unique identifier for this node")
+    node_type: Literal["source", "evidence", "claim"] = Field(
+        description="Type of node in the lineage graph"
+    )
+    label: str = Field(description="Short label for display (max 50 chars)")
+    full_content: str = Field(description="Full content of the node")
+    metadata: dict = Field(default_factory=dict, description="Additional metadata for this node")
+
+
+class LineageEdge(BaseModel):
+    """
+    An edge in the provenance knowledge graph.
+
+    Represents a relationship between nodes (source→evidence, evidence→claim).
+    """
+
+    source_node_id: str = Field(description="ID of the source node")
+    target_node_id: str = Field(description="ID of the target node")
+    relationship: Literal["derived_from", "supports", "cites", "synthesizes"] = Field(
+        description="Type of relationship between nodes"
+    )
+    strength: float = Field(
+        ge=0.0, le=1.0, default=1.0, description="Strength of the relationship (0.0-1.0)"
+    )
+
+
+class ProvenanceGraph(BaseModel):
+    """
+    Complete provenance knowledge graph for a research report.
+
+    Contains all sources, evidence, and claims with their relationships,
+    enabling lineage queries and visualization.
+    """
+
+    sources: list[SourceReference] = Field(description="All sources consulted during research")
+    evidence: list[EvidenceItem] = Field(description="All evidence extracted from sources")
+    claims: list[Claim] = Field(description="All claims made in the report")
+    nodes: list[LineageNode] = Field(description="All nodes in the lineage graph")
+    edges: list[LineageEdge] = Field(description="All edges (relationships) in the lineage graph")
+    metadata: dict = Field(
+        default_factory=dict, description="Graph metadata (query, timestamp, stats)"
+    )
+
+
+class Citation(BaseModel):
+    """
+    A formatted citation for academic export.
+
+    Can be exported to various formats (BibTeX, APA, MLA, etc.).
+    """
+
+    citation_id: str = Field(description="Unique identifier for this citation")
+    source_id: str = Field(description="Reference to the original source")
+    title: str = Field(description="Title of the source")
+    authors: list[str] = Field(default_factory=list, description="Authors if available")
+    publication_date: Optional[str] = Field(
+        default=None, description="Publication date if available"
+    )
+    url: Optional[str] = Field(default=None, description="URL if web source")
+    access_date: str = Field(description="Date the source was accessed")
+    source_type: str = Field(description="Type of source (webpage, document, etc.)")
+
+
+class ProvenanceAnalysis(BaseModel):
+    """
+    LLM-generated analysis of sources with structured provenance tracking.
+
+    Used by the analyzer to return both the analysis text and the
+    provenance metadata.
+    """
+
+    analysis_text: str = Field(description="The main analysis/synthesis of the information")
+    claims: list[Claim] = Field(description="Claims made in this analysis with evidence links")
+    evidence_items: list[EvidenceItem] = Field(description="Evidence extracted from sources")
+    confidence_assessment: str = Field(
+        description="Overall assessment of evidence quality and confidence"
+    )
+
+
+class ProvenanceQuery(BaseModel):
+    """
+    A query for provenance information ('Why do you say that?').
+
+    Used to trace back from a claim to its supporting evidence and sources.
+    """
+
+    claim_id: Optional[str] = Field(default=None, description="Specific claim ID to query")
+    claim_text: Optional[str] = Field(default=None, description="Text of claim to find and explain")
+    query_type: Literal["explain", "sources", "evidence", "full_lineage"] = Field(
+        default="full_lineage", description="Type of provenance query"
+    )
+
+
+class ProvenanceResponse(BaseModel):
+    """
+    Response to a provenance query.
+
+    Provides the reasoning chain from claim back to original sources.
+    """
+
+    claim: Claim = Field(description="The claim being explained")
+    evidence_chain: list[EvidenceItem] = Field(description="Evidence supporting this claim")
+    source_chain: list[SourceReference] = Field(description="Original sources for the evidence")
+    explanation: str = Field(description="Natural language explanation of the reasoning chain")
+    confidence_breakdown: dict = Field(
+        default_factory=dict, description="Breakdown of confidence at each level"
+    )

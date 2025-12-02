@@ -220,6 +220,14 @@ reports/*
 !reports/.gitkeep
 visualizations/*
 !visualizations/.gitkeep
+citations/*
+!citations/.gitkeep
+
+# Citation output files (generated artifacts)
+*_citations_*.bib
+*_citations_*.txt
+demo_citations_*
+real_citations_*
 
 .DS_Store
 

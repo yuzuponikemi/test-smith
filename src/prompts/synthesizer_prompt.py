@@ -81,9 +81,8 @@ Organize logically based on the query. Use clear headings.
 - Bullet points of most important insights
 - Action items or recommendations (if applicable)
 
-**Sources Consulted**
-- Brief note on internal documentation consulted
-- Brief note on external sources researched
+**Sources & References**
+Include numbered inline citations [1], [2], etc. throughout the report, then list all sources at the end.
 
 ## Important Guidelines
 
@@ -93,8 +92,94 @@ Organize logically based on the query. Use clear headings.
 - **Write clearly** - Avoid jargon unless necessary; explain technical terms
 - **Be authoritative** - Present information confidently based on gathered data
 - **Stay neutral** - Present facts objectively
+- **Include citations** - Use inline citations like [1], [2] to reference sources
+- **Provide source list** - Include numbered reference list at the end
 
 Generate the final report now:"""
+
+SYNTHESIZER_WITH_PROVENANCE_PROMPT = """You are a research report synthesizer with citation capabilities. Your job is to create a comprehensive, well-structured final report with inline citations, similar to academic papers or Perplexity AI.
+
+## Original User Query
+{original_query}
+
+## Research Strategy Used
+{allocation_strategy}
+
+## Source Materials Available
+{source_summary}
+
+## Analyzed Information
+{analyzed_data}
+
+## Your Task
+
+Create a comprehensive final report that:
+
+### 1. Directly Answers the User's Query
+- Stay focused on what the user asked
+- Address all parts of their question
+- Provide concrete, actionable information
+
+### 2. Uses Inline Citations
+- Reference sources using [1], [2], [3] format throughout the text
+- Each claim or fact should cite its source
+- Use multiple citations for well-supported claims [1, 3]
+- Format: "According to recent research [1], the trend shows..."
+
+### 3. Maintains Clear Structure
+- Use clear headings and sections
+- Organize information logically
+- Make it easy to scan and read
+
+### 4. Provides Source Transparency
+- Clearly distinguish between knowledge base and web sources
+- Show confidence in claims based on source quality
+- Note when multiple sources agree
+
+## Report Format
+
+**[Clear Title Based on Query]**
+
+**Summary**
+2-3 sentences capturing the key findings with key citations.
+
+**[Main Content Sections]**
+Organize logically based on the query. Use inline citations [1], [2] for each claim.
+
+**Key Takeaways**
+- Bullet points of most important insights with citations
+- Action items or recommendations (if applicable)
+
+**References**
+
+⚠️ MANDATORY INSTRUCTION - DO NOT SKIP ⚠️
+
+The "Source Materials Available" section contains a "REFERENCE LIST FORMAT" section marked with ==== separator lines.
+
+YOU MUST copy that ENTIRE section VERBATIM below. Copy ALL source entries from [1] through [N], including:
+- Every source number
+- Every title
+- Every Type line
+- Every URL/File line
+- Every Relevance line
+- All blank lines between entries
+
+DO NOT:
+- Create your own references
+- Modify any formatting
+- Skip any sources
+- Add fictional sources
+- Use placeholder text
+
+Simply copy the complete REFERENCE LIST FORMAT section here:
+
+## Citation Guidelines
+
+- Use source numbers [1], [2], [3] from the Source Materials section
+- Every claim should cite its source
+- Combine sources: [1, 4, 7]
+
+Generate the final report with inline citations now:"""
 
 # === Hierarchical Synthesis Prompt (Phase 1) ===
 
