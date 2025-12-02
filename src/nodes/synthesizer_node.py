@@ -8,7 +8,12 @@ from src.utils.logging_utils import print_node_header
 
 
 def _format_source_summary(state: dict) -> str:
-    """Format source information for the synthesizer prompt with citations."""
+    """
+    Format source information for the synthesizer prompt with citations.
+
+    Creates a structured, easy-to-parse format that includes all metadata
+    needed for proper citation in the final report.
+    """
     web_sources = state.get("web_sources", [])
     rag_sources = state.get("rag_sources", [])
 
@@ -16,24 +21,34 @@ def _format_source_summary(state: dict) -> str:
         return "No structured source data available."
 
     all_sources = []
+    source_summary_lines = []
 
     # Add web sources
     for source in web_sources:
         source_num = len(all_sources) + 1
         source_id = source.get("source_id", f"web_{source_num}")
         title = source.get("title", "Unknown Title")
-        url = source.get("url", "")
+        url = source.get("url", "N/A")
         content = source.get("content_snippet", "")[:200]
         relevance = source.get("relevance_score", 0.5)
 
+        # Store for summary
+        all_sources.append({
+            "num": source_num,
+            "title": title,
+            "type": "Web",
+            "url": url,
+            "relevance": relevance
+        })
+
+        # Format for LLM (verbose for clarity)
         source_entry = f"[{source_num}] {title}\n"
         source_entry += f"    Type: Web | ID: {source_id}\n"
-        if url:
-            source_entry += f"    URL: {url}\n"
+        source_entry += f"    URL: {url}\n"
         source_entry += f"    Relevance: {relevance:.2f}\n"
         source_entry += f"    Content: {content}...\n"
 
-        all_sources.append(source_entry)
+        source_summary_lines.append(source_entry)
 
     # Add RAG sources
     for source in rag_sources:
@@ -42,18 +57,43 @@ def _format_source_summary(state: dict) -> str:
         title = source.get("title", "Unknown Document")
         content = source.get("content_snippet", "")[:200]
         relevance = source.get("relevance_score", 0.5)
-        source_file = source.get("metadata", {}).get("source_file", "")
+        source_file = source.get("metadata", {}).get("source_file", "Unknown")
 
+        # Store for summary
+        all_sources.append({
+            "num": source_num,
+            "title": title,
+            "type": "Knowledge Base",
+            "file": source_file,
+            "relevance": relevance
+        })
+
+        # Format for LLM (verbose for clarity)
         source_entry = f"[{source_num}] {title}\n"
         source_entry += f"    Type: Knowledge Base | ID: {source_id}\n"
-        if source_file:
-            source_entry += f"    File: {source_file}\n"
+        source_entry += f"    File: {source_file}\n"
         source_entry += f"    Relevance: {relevance:.2f}\n"
         source_entry += f"    Content: {content}...\n"
 
-        all_sources.append(source_entry)
+        source_summary_lines.append(source_entry)
 
-    return "\n".join(all_sources)
+    # Create reference template that LLM can directly copy
+    reference_template = "\n\nREFERENCE LIST FORMAT (copy this structure to References section):\n"
+    reference_template += "=" * 80 + "\n"
+
+    for src in all_sources:
+        if src["type"] == "Web":
+            reference_template += f'{src["num"]}. "{src["title"]}" - Type: Web\n'
+            reference_template += f'   URL: {src["url"]}\n'
+            reference_template += f'   Relevance: {src["relevance"]:.2f}\n\n'
+        else:
+            reference_template += f'{src["num"]}. "{src["title"]}" - Type: Knowledge Base\n'
+            reference_template += f'   File: {src["file"]}\n'
+            reference_template += f'   Relevance: {src["relevance"]:.2f}\n\n'
+
+    reference_template += "=" * 80 + "\n"
+
+    return "\n".join(source_summary_lines) + reference_template
 
 
 def synthesizer_node(state):
@@ -181,4 +221,69 @@ def synthesizer_node(state):
     message = model.invoke(prompt)
     print("  ✓ Report generated successfully\n")
 
-    return {"report": message.content}
+    # Post-process: Ensure proper references section if provenance data available
+    report_content = message.content
+
+    if execution_mode == "simple" and has_provenance:
+        # Generate clean reference list programmatically
+        reference_lines = ["\n\n**References**\n"]
+
+        all_sources_list = []
+
+        # Add web sources
+        for source in web_sources:
+            source_num = len(all_sources_list) + 1
+            title = source.get("title", "Unknown Title")
+            url = source.get("url", "N/A")
+            relevance = source.get("relevance_score", 0.5)
+
+            all_sources_list.append({
+                "num": source_num,
+                "title": title,
+                "type": "Web",
+                "url": url,
+                "relevance": relevance
+            })
+
+        # Add RAG sources
+        for source in rag_sources:
+            source_num = len(all_sources_list) + 1
+            title = source.get("title", "Unknown Document")
+            relevance = source.get("relevance_score", 0.5)
+            source_file = source.get("metadata", {}).get("source_file", "Unknown")
+
+            all_sources_list.append({
+                "num": source_num,
+                "title": title,
+                "type": "Knowledge Base",
+                "file": source_file,
+                "relevance": relevance
+            })
+
+        # Format all sources
+        for src in all_sources_list:
+            if src["type"] == "Web":
+                reference_lines.append(f'{src["num"]}. "{src["title"]}" - Type: Web\n')
+                reference_lines.append(f'   URL: {src["url"]}\n')
+                reference_lines.append(f'   Relevance: {src["relevance"]:.2f}\n\n')
+            else:
+                reference_lines.append(f'{src["num"]}. "{src["title"]}" - Type: Knowledge Base\n')
+                reference_lines.append(f'   File: {src["file"]}\n')
+                reference_lines.append(f'   Relevance: {src["relevance"]:.2f}\n\n')
+
+        # Check if report already has a References section
+        if "**References**" in report_content or "## References" in report_content:
+            # Remove existing incomplete references section
+            parts = report_content.split("**References**")
+            if len(parts) > 1:
+                report_content = parts[0].rstrip()
+            else:
+                parts = report_content.split("## References")
+                if len(parts) > 1:
+                    report_content = parts[0].rstrip()
+
+        # Append complete references
+        report_content += "".join(reference_lines)
+        print(f"  ✓ Added {len(all_sources_list)} references programmatically\n")
+
+    return {"report": report_content}

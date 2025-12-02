@@ -151,18 +151,33 @@ Organize logically based on the query. Use inline citations [1], [2] for each cl
 - Action items or recommendations (if applicable)
 
 **References**
-List all sources in numbered format:
-1. [Source title] - [Type: Web/KB] - [URL if available]
-2. [Source title] - [Type: Web/KB] - [URL if available]
-...
+
+⚠️ MANDATORY INSTRUCTION - DO NOT SKIP ⚠️
+
+The "Source Materials Available" section contains a "REFERENCE LIST FORMAT" section marked with ==== separator lines.
+
+YOU MUST copy that ENTIRE section VERBATIM below. Copy ALL source entries from [1] through [N], including:
+- Every source number
+- Every title
+- Every Type line
+- Every URL/File line
+- Every Relevance line
+- All blank lines between entries
+
+DO NOT:
+- Create your own references
+- Modify any formatting
+- Skip any sources
+- Add fictional sources
+- Use placeholder text
+
+Simply copy the complete REFERENCE LIST FORMAT section here:
 
 ## Citation Guidelines
 
-- Every factual claim needs a citation
-- Use the source_id numbers provided in the source materials
-- Combine multiple sources: "This is supported by multiple studies [1, 4, 7]"
-- For direct quotes: "exact quote" [3]
-- For paraphrases: Information suggests this trend [2, 5]
+- Use source numbers [1], [2], [3] from the Source Materials section
+- Every claim should cite its source
+- Combine sources: [1, 4, 7]
 
 Generate the final report with inline citations now:"""
 

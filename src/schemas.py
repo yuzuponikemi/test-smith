@@ -519,7 +519,7 @@ class EvidenceItem(BaseModel):
     content: str = Field(
         description="The actual evidence text/statement"
     )
-    source_ids: List[str] = Field(
+    source_ids: list[str] = Field(
         description="List of source_ids this evidence comes from"
     )
     extraction_method: Literal["direct_quote", "paraphrase", "synthesis", "inference"] = Field(
@@ -544,7 +544,7 @@ class Claim(BaseModel):
     statement: str = Field(
         description="The claim/assertion being made"
     )
-    evidence_ids: List[str] = Field(
+    evidence_ids: list[str] = Field(
         description="List of evidence_ids supporting this claim"
     )
     claim_type: Literal["fact", "analysis", "synthesis", "recommendation", "opinion"] = Field(
@@ -611,19 +611,19 @@ class ProvenanceGraph(BaseModel):
     Contains all sources, evidence, and claims with their relationships,
     enabling lineage queries and visualization.
     """
-    sources: List[SourceReference] = Field(
+    sources: list[SourceReference] = Field(
         description="All sources consulted during research"
     )
-    evidence: List[EvidenceItem] = Field(
+    evidence: list[EvidenceItem] = Field(
         description="All evidence extracted from sources"
     )
-    claims: List[Claim] = Field(
+    claims: list[Claim] = Field(
         description="All claims made in the report"
     )
-    nodes: List[LineageNode] = Field(
+    nodes: list[LineageNode] = Field(
         description="All nodes in the lineage graph"
     )
-    edges: List[LineageEdge] = Field(
+    edges: list[LineageEdge] = Field(
         description="All edges (relationships) in the lineage graph"
     )
     metadata: dict = Field(
@@ -646,7 +646,7 @@ class Citation(BaseModel):
     title: str = Field(
         description="Title of the source"
     )
-    authors: List[str] = Field(
+    authors: list[str] = Field(
         default_factory=list,
         description="Authors if available"
     )
@@ -675,10 +675,10 @@ class ProvenanceAnalysis(BaseModel):
     analysis_text: str = Field(
         description="The main analysis/synthesis of the information"
     )
-    claims: List[Claim] = Field(
+    claims: list[Claim] = Field(
         description="Claims made in this analysis with evidence links"
     )
-    evidence_items: List[EvidenceItem] = Field(
+    evidence_items: list[EvidenceItem] = Field(
         description="Evidence extracted from sources"
     )
     confidence_assessment: str = Field(
@@ -713,10 +713,10 @@ class ProvenanceResponse(BaseModel):
     claim: Claim = Field(
         description="The claim being explained"
     )
-    evidence_chain: List[EvidenceItem] = Field(
+    evidence_chain: list[EvidenceItem] = Field(
         description="Evidence supporting this claim"
     )
-    source_chain: List[SourceReference] = Field(
+    source_chain: list[SourceReference] = Field(
         description="Original sources for the evidence"
     )
     explanation: str = Field(
