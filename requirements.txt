@@ -359,11 +359,11 @@ langgraph-prebuilt==1.0.5
     # via
     #   -r requirements.in
     #   langgraph
-langgraph-sdk==0.2.10
+langgraph-sdk==0.2.12
     # via
     #   -r requirements.in
     #   langgraph
-langsmith==0.4.49
+langsmith==0.4.52
     # via
     #   -r requirements.in
     #   langchain-classic
