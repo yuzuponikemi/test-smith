@@ -29,7 +29,7 @@ class TestSearcherNode:
         result = searcher(state)
 
         # Assert
-        assert result == {"search_results": []}
+        assert result == {"search_results": [], "web_sources": []}
         mock_print_header.assert_called_once_with("SEARCHER")
         mock_manager_class.assert_not_called()  # Should not initialize manager
 
@@ -44,7 +44,7 @@ class TestSearcherNode:
         result = searcher(state)
 
         # Assert
-        assert result == {"search_results": []}
+        assert result == {"search_results": [], "web_sources": []}
         mock_print_header.assert_called_once_with("SEARCHER")
         mock_manager_class.assert_not_called()
 
@@ -134,7 +134,7 @@ class TestSearcherNode:
         result = searcher(state)
 
         # Assert
-        assert result == {"search_results": []}
+        assert result == {"search_results": [], "web_sources": []}
         mock_manager_class.assert_called_once()
 
     @patch("src.nodes.searcher_node.print_node_header")
