@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Test-Smith is a **LangGraph-based multi-agent research assistant** that autonomously conducts deep research and generates comprehensive reports. It uses an advanced "Hierarchical Plan-and-Execute" strategy with **dynamic replanning** capabilities, featuring specialized agents that collaborate through a state-based workflow.
 
-**Version:** v2.3 (Multi-Graph Architecture with 6 Specialized Workflows)
+**Version:** v2.4 (Multi-Graph Architecture with 7 Specialized Workflows)
 
 **Key Technologies:**
 - LangGraph 0.6.11 (orchestration)
@@ -47,10 +47,17 @@ Test-Smith now supports **multiple graph workflows** that can be selected based 
    - Features: Hypothesis generation, evidence validation, causal graph, probability ranking
    - Complexity: Medium | Avg time: 60-90 seconds
 
-6. **code_investigation** ⭐ NEW - Deep codebase analysis and investigation
+6. **code_investigation** - Deep codebase analysis and investigation
    - Best for: Understanding code structure, finding dependencies, tracing data flow
    - Features: Dependency tracking, flow analysis, variable usage, architecture patterns
    - Complexity: Medium | Avg time: 45-90 seconds
+
+7. **feature_dev** ⭐ NEW - Systematic feature development workflow
+   - Best for: Building new features, complex implementations requiring planning
+   - Features: 7-phase workflow (Discovery → Exploration → Clarification → Architecture → Implementation → Review → Summary)
+   - Complexity: High | Avg time: 10-20 minutes
+   - User interaction: High - multiple approval gates (questions, architecture choice, implementation approval, review)
+   - Parallel agents: Yes (2 explorers, 3 architects, 3 reviewers)
 
 ### Graph Selection
 

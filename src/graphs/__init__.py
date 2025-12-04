@@ -150,6 +150,13 @@ def _auto_register_graphs():
     except ImportError as e:
         print(f"[GraphRegistry] Warning: Could not load code_investigation graph: {e}")
 
+    try:
+        from .feature_dev_graph import FeatureDevGraphBuilder
+
+        register_graph("feature_dev", FeatureDevGraphBuilder())
+    except ImportError as e:
+        print(f"[GraphRegistry] Warning: Could not load feature_dev graph: {e}")
+
 
 # Auto-register graphs on module import
 _auto_register_graphs()
