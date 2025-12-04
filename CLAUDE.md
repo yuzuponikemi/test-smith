@@ -56,16 +56,16 @@ Test-Smith now supports **multiple graph workflows** that can be selected based 
 
 ```bash
 # List all available graphs with descriptions
-python main.py graphs
+uv run python main.py graphs
 
 # List with detailed information
-python main.py graphs --detailed
+uv run python main.py graphs --detailed
 
 # Run with specific graph
-python main.py run "Your query" --graph <graph_name>
+uv run python main.py run "Your query" --graph <graph_name>
 
 # Default to deep_research (backward compatible)
-python main.py run "Your query"
+uv run python main.py run "Your query"
 ```
 
 ### Creating Custom Graphs
@@ -187,41 +187,41 @@ For codebase research and understanding, uses a **5-node specialized workflow**:
 **Usage:**
 ```bash
 # Investigate code dependencies
-python main.py run "What classes depend on AuthService?" --graph code_investigation
+uv run python main.py run "What classes depend on AuthService?" --graph code_investigation
 
 # Trace data flow
-python main.py run "How does user input flow through the validation system?" --graph code_investigation
+uv run python main.py run "How does user input flow through the validation system?" --graph code_investigation
 
 # Find function usages
-python main.py run "Where is the calculate_total function used?" --graph code_investigation
+uv run python main.py run "Where is the calculate_total function used?" --graph code_investigation
 ```
 
 **Testing the Code Investigation Graph:**
 ```bash
 # Full test: ingest test-smith repo + run test queries
-python scripts/testing/test_code_investigation.py
+uv run python scripts/testing/test_code_investigation.py
 
 # Skip ingestion (use existing codebase_collection)
-python scripts/testing/test_code_investigation.py --skip-ingest
+uv run python scripts/testing/test_code_investigation.py --skip-ingest
 
 # Run specific test
-python scripts/testing/test_code_investigation.py --test dependency
-python scripts/testing/test_code_investigation.py --test flow
-python scripts/testing/test_code_investigation.py --test usage
-python scripts/testing/test_code_investigation.py --test architecture
-python scripts/testing/test_code_investigation.py --test implementation
+uv run python scripts/testing/test_code_investigation.py --test dependency
+uv run python scripts/testing/test_code_investigation.py --test flow
+uv run python scripts/testing/test_code_investigation.py --test usage
+uv run python scripts/testing/test_code_investigation.py --test architecture
+uv run python scripts/testing/test_code_investigation.py --test implementation
 ```
 
 **Ingest Your Own Codebase:**
 ```bash
 # Ingest any repository
-python scripts/ingest/ingest_codebase.py /path/to/your/repo
+uv run python scripts/ingest/ingest_codebase.py /path/to/your/repo
 
 # With custom collection name
-python scripts/ingest/ingest_codebase.py . --collection my_project_code
+uv run python scripts/ingest/ingest_codebase.py . --collection my_project_code
 
 # Then query it
-python main.py run "How does auth work?" --graph code_investigation
+uv run python main.py run "How does auth work?" --graph code_investigation
 ```
 
 ### State Management
@@ -248,32 +248,62 @@ State persists via **SQLite checkpointing** (`langgraph-checkpoint-sqlite`) for 
 
 ### Prerequisites
 
-```bash
-# 1. Ensure Ollama is running
-ollama list  # Should show llama3, command-r, nomic-embed-text
+**Using uv (Recommended):**
 
-# 2. Pull models if missing
+```bash
+# 1. Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. Install dependencies
+uv sync
+
+# 3. (Optional) Ensure Ollama is running if using local models
+ollama list  # Should show llama3, command-r, nomic-embed-text
 ollama pull llama3
 ollama pull command-r
 ollama pull nomic-embed-text
+```
 
-# 3. Activate virtual environment
-source .venv/bin/activate
+**Traditional setup:**
+
+```bash
+# 1. Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# 2. Install dependencies
+pip install -e ".[dev]"
+
+# 3. (Optional) Pull Ollama models if needed
 ```
 
 ### Main Commands
 
+**Using uv (Recommended):**
+
 ```bash
 # Basic research query
-python main.py run "YOUR_QUERY_HERE"
+uv run python main.py run "YOUR_QUERY_HERE"
 
 # Continue conversation with thread ID
-python main.py run "Follow-up question" --thread-id abc-123
+uv run python main.py run "Follow-up question" --thread-id abc-123
 
 # Use causal inference graph for troubleshooting
-python main.py run "Why is my application experiencing high latency?" --graph causal_inference
+uv run python main.py run "Why is my application experiencing high latency?" --graph causal_inference
 
 # Check version
+uv run python main.py --version
+```
+
+**Traditional Python:**
+
+```bash
+# Activate venv first
+source .venv/bin/activate
+
+# Then run commands
+python main.py run "YOUR_QUERY_HERE"
+python main.py run "Follow-up question" --thread-id abc-123
 python main.py --version
 ```
 
@@ -303,13 +333,13 @@ LangGraph Studioを使用すると、グラフをビジュアルに確認・デ�
 
 ```bash
 # RECOMMENDED: Production ingestion with intelligent preprocessing
-python scripts/ingest/ingest_with_preprocessor.py
+uv run python scripts/ingest/ingest_with_preprocessor.py
 
 # With quality filtering (skip files with score < 0.5)
-python scripts/ingest/ingest_with_preprocessor.py --min-quality 0.5
+uv run python scripts/ingest/ingest_with_preprocessor.py --min-quality 0.5
 
 # Diagnostic ingestion (use for debugging embedding issues)
-python scripts/ingest/ingest_diagnostic.py
+uv run python scripts/ingest/ingest_diagnostic.py
 
 # Automated clean re-ingest with validation
 ./scripts/ingest/clean_and_reingest.sh
@@ -352,34 +382,49 @@ cat ingestion_diagnostic_*.log
 
 When you finish implementing a feature or fix, **automatically** run the following CI checks locally:
 
+**Using uv (Recommended):**
+
 ```bash
 # Run all CI checks (same as GitHub Actions)
-source .venv/bin/activate
+# No need to activate venv with uv!
 
 # 1. Ruff linter
 echo "=== Ruff Linter ==="
-ruff check .
+uv run ruff check .
 
 # 2. Ruff formatter
 echo "=== Ruff Formatter ==="
-ruff format --check .
+uv run ruff format --check .
 
 # 3. Mypy type checker
 echo "=== Mypy Type Checker ==="
-mypy src --no-error-summary
+uv run mypy src --no-error-summary
 
 # 4. Pytest
 echo "=== Pytest ==="
-python -m pytest -v --tb=short
+uv run pytest -v --tb=short
 ```
 
 **Auto-fix common issues:**
 ```bash
 # Auto-fix linting errors
-ruff check --fix .
+uv run ruff check --fix .
 
 # Auto-format code
-ruff format .
+uv run ruff format .
+```
+
+**Traditional Python:**
+
+```bash
+# Activate venv first
+source .venv/bin/activate
+
+# Run checks
+ruff check .
+ruff format --check .
+mypy src --no-error-summary
+pytest -v --tb=short
 ```
 
 **Why this matters:**
@@ -554,15 +599,36 @@ Follow guidelines in `docs/WRITING_RAG_FRIENDLY_DOCUMENTATION.md`:
 
 ### Dependencies
 
-Install with pinned versions:
+**Using uv (Recommended):**
+
 ```bash
+# Install all dependencies
+uv sync
+
+# Install with dev dependencies
+uv sync --all-extras
+
+# Add a new dependency
+uv add langchain-openai
+
+# Add a dev dependency
+uv add --dev pytest-asyncio
+
+# Update dependencies
+uv lock --upgrade
+```
+
+**Traditional pip:**
+
+```bash
+# Install from pyproject.toml
+pip install -e ".[dev]"
+
+# Or install from requirements.txt (legacy)
 pip install -r requirements.txt
 ```
 
-Edit high-level deps in `requirements.in`, then recompile:
-```bash
-pip-compile requirements.in
-```
+**Note:** Dependencies are now managed in `pyproject.toml`. The old `requirements.in` and `requirements.txt` files are kept for backward compatibility but are not recommended for new development.
 
 ## Important Implementation Details
 

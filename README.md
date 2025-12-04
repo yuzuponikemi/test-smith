@@ -82,6 +82,25 @@ ollama pull nomic-embed-text
 
 ### Installation
 
+**Recommended: Using uv (Fast & Modern)**
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd test-smith
+
+# Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create virtual environment and install dependencies
+uv sync
+
+# Or install with all extras (dev tools included)
+uv sync --all-extras
+```
+
+**Alternative: Using pip (Traditional)**
+
 ```bash
 # Clone the repository
 git clone <repository-url>
@@ -92,15 +111,19 @@ python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -e .
 
-# For CI/testing only (lightweight, no ML packages):
-# pip install -r requirements-ci.txt
+# For development dependencies
+pip install -e ".[dev]"
 ```
 
-**Note on Requirements Files:**
-- `requirements.txt` - Full dependencies including document preprocessing (vision, OCR, ML models)
-- `requirements-ci.txt` - Lightweight dependencies for CI/testing (graph compilation and execution only)
+**Why uv?**
+- ⚡ **10-100x faster** than pip
+- 🔒 **Reproducible builds** with uv.lock
+- 🎯 **Better dependency resolution**
+- 💾 **Global cache** for faster installs
+
+See [.github/UV_GUIDE.md](.github/UV_GUIDE.md) for detailed uv usage guide.
 
 ### Configuration
 
@@ -224,14 +247,28 @@ You can manually trigger the workflow with custom parameters:
 
 ### Running Research Queries
 
+**Using uv (Recommended):**
+
 ```bash
 # Basic research query
-python main.py run "What are the latest advancements in AI-powered drug discovery?"
+uv run python main.py run "What are the latest advancements in AI-powered drug discovery?"
 
 # Continue conversation with thread ID
-python main.py run "Follow-up question" --thread-id abc-123
+uv run python main.py run "Follow-up question" --thread-id abc-123
 
 # Check version
+uv run python main.py --version
+```
+
+**Using traditional Python:**
+
+```bash
+# Activate virtual environment first
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Then run commands
+python main.py run "What are the latest advancements in AI-powered drug discovery?"
+python main.py run "Follow-up question" --thread-id abc-123
 python main.py --version
 ```
 
@@ -239,21 +276,35 @@ python main.py --version
 
 Test-Smith includes a comprehensive test suite with unit tests for nodes, graphs, and integration tests.
 
+**Using uv (Recommended):**
+
 ```bash
 # Run all tests
-pytest
+uv run pytest
 
 # Run only unit tests
-pytest tests/unit -v
+uv run pytest tests/unit -v
 
 # Run specific test file
-pytest tests/unit/test_nodes/test_planner_node.py -v
+uv run pytest tests/unit/test_nodes/test_planner_node.py -v
 
-# Run tests with coverage report (requires pytest-cov)
-pytest --cov=src --cov-report=html
+# Run tests with coverage report
+uv run pytest --cov=src --cov-report=html
 
 # Run tests excluding slow/API-dependent tests
-pytest -m "not slow and not requires_api"
+uv run pytest -m "not slow and not requires_api"
+```
+
+**Using traditional Python:**
+
+```bash
+# Activate virtual environment first
+source .venv/bin/activate
+
+# Then run tests
+pytest
+pytest tests/unit -v
+pytest --cov=src --cov-report=html
 ```
 
 **Test Structure:**
@@ -273,19 +324,19 @@ Tests run automatically on pull requests. View test results in the Actions tab.
 ```bash
 # Place documents in documents/ directory
 # Run intelligent preprocessing pipeline
-python scripts/ingest/ingest_with_preprocessor.py
+uv run python scripts/ingest/ingest_with_preprocessor.py
 
 # With quality filtering (skip files with score < 0.5)
-python scripts/ingest/ingest_with_preprocessor.py --min-quality 0.5
+uv run python scripts/ingest/ingest_with_preprocessor.py --min-quality 0.5
 
 # Disable specific cleaning steps if needed
-python scripts/ingest/ingest_with_preprocessor.py --disable-deduplication
+uv run python scripts/ingest/ingest_with_preprocessor.py --disable-deduplication
 ```
 
 **Diagnostic Ingestion (For Debugging):**
 ```bash
 # Use for investigating embedding issues
-python scripts/ingest/ingest_diagnostic.py
+uv run python scripts/ingest/ingest_diagnostic.py
 ```
 
 **Automated Clean Re-ingest:**

@@ -23,14 +23,14 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.11"
-          cache: "pip"
-          cache-dependency-path: |
-            requirements.txt
-            requirements-dev.txt
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        run: uv python install 3.11
 
       - name: Install system dependencies
         run: |
@@ -38,50 +38,10 @@ jobs:
           sudo apt-get install -y sqlite3 libsqlite3-dev
 
       # ======================================================================
-      # Dependency Management: Auto-update requirements.txt
+      # Install Dependencies with uv
       # ======================================================================
-      - name: Install uv (fast dependency compiler)
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Compile requirements.txt from requirements.in
-        run: |
-          uv pip compile requirements.in -o requirements.txt.new
-
-      - name: Check for requirements.txt changes
-        id: check-requirements
-        run: |
-          if diff -q requirements.txt requirements.txt.new >/dev/null 2>&1; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "ℹ️  No changes in requirements.txt"
-            rm requirements.txt.new
-          else
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "📝 requirements.txt has changes"
-            mv requirements.txt.new requirements.txt
-          fi
-
-      - name: Commit updated requirements.txt
-        if: steps.check-requirements.outputs.changed == 'true' && github.event_name == 'push'
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add requirements.txt
-          git commit -m "chore: Auto-update requirements.txt from requirements.in [skip ci]"
-          git push
-
-      # ======================================================================
-      # Install Dependencies
-      # ======================================================================
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Install development dependencies
-        run: |
-          pip install -r requirements-dev.txt
+      - name: Install dependencies
+        run: uv sync --all-extras
 
       # ======================================================================
       # Code Quality Checks (continue-on-error to run all checks)
@@ -91,7 +51,7 @@ jobs:
         continue-on-error: true
         run: |
           echo "🔍 Running ruff linter..."
-          ruff check . 2>&1 | tee ruff-check.log
+          uv run ruff check . 2>&1 | tee ruff-check.log
           exit ${PIPESTATUS[0]}
 
       - name: Run ruff formatter check
@@ -99,7 +59,7 @@ jobs:
         continue-on-error: true
         run: |
           echo "🎨 Checking code formatting..."
-          ruff format --check . 2>&1 | tee ruff-format.log
+          uv run ruff format --check . 2>&1 | tee ruff-format.log
           exit ${PIPESTATUS[0]}
 
       - name: Run mypy type checker
@@ -107,7 +67,7 @@ jobs:
         continue-on-error: true
         run: |
           echo "🔍 Running mypy type checker..."
-          mypy src --no-error-summary 2>&1 | tee mypy.log
+          uv run mypy src --no-error-summary 2>&1 | tee mypy.log
           exit ${PIPESTATUS[0]}
 
       - name: Run pytest
@@ -115,7 +75,7 @@ jobs:
         continue-on-error: true
         run: |
           echo "🧪 Running pytest..."
-          python -m pytest -v --tb=short --cov=src --cov-report=term-missing 2>&1 | tee pytest.log
+          uv run pytest -v --tb=short --cov=src --cov-report=term-missing 2>&1 | tee pytest.log
           exit ${PIPESTATUS[0]}
 
       # ======================================================================
