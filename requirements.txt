@@ -139,7 +139,7 @@ frozenlist==1.8.0
     # via
     #   aiohttp
     #   aiosignal
-fsspec==2025.10.0
+fsspec==2025.12.0
     # via
     #   huggingface-hub
     #   torch
@@ -221,7 +221,7 @@ ipykernel==7.1.0
     #   jupyter
     #   jupyter-console
     #   jupyterlab
-ipython==9.7.0
+ipython==9.8.0
     # via
     #   ipykernel
     #   ipywidgets
@@ -363,7 +363,7 @@ langgraph-sdk==0.2.12
     # via
     #   -r requirements.in
     #   langgraph
-langsmith==0.4.52
+langsmith==0.4.53
     # via
     #   -r requirements.in
     #   langchain-classic
@@ -512,25 +512,25 @@ onnxruntime==1.23.2
     #   unstructured-inference
 opencv-python==4.12.0.88
     # via unstructured-inference
-opentelemetry-api==1.38.0
+opentelemetry-api==1.39.0
     # via
     #   chromadb
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
-opentelemetry-exporter-otlp-proto-common==1.38.0
+opentelemetry-exporter-otlp-proto-common==1.39.0
     # via opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-exporter-otlp-proto-grpc==1.38.0
+opentelemetry-exporter-otlp-proto-grpc==1.39.0
     # via chromadb
-opentelemetry-proto==1.38.0
+opentelemetry-proto==1.39.0
     # via
     #   opentelemetry-exporter-otlp-proto-common
     #   opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-sdk==1.38.0
+opentelemetry-sdk==1.39.0
     # via
     #   chromadb
     #   opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-semantic-conventions==0.59b0
+opentelemetry-semantic-conventions==0.60b0
     # via opentelemetry-sdk
 orjson==3.11.4
     # via
@@ -952,6 +952,8 @@ urllib3==2.3.0
     # via
     #   kubernetes
     #   requests
+uuid-utils==0.12.0
+    # via langsmith
 uvicorn==0.38.0
     # via chromadb
 uvloop==0.22.1
