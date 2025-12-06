@@ -94,11 +94,18 @@ ipython_config.py
 #   install all needed dependencies.
 #Pipfile.lock
 
-# UV
-#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
+# UV (Modern Python Package Manager)
+#   uv.lock should be committed for reproducibility (similar to package-lock.json)
+#   DO NOT commit uv.lock for libraries (only for applications)
 #uv.lock
+
+# Legacy pip/pip-tools files (DEPRECATED - project uses UV)
+#   These files should NOT be committed as the project uses pyproject.toml + uv.lock
+requirements.txt
+requirements.in
+requirements-dev.txt
+requirements-ci.txt
+requirements*.txt
 
 # poetry
 #   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.

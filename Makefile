@@ -1,42 +1,31 @@
-.PHONY: help compile install install-dev test lint format typecheck ci clean
+.PHONY: help install install-dev sync test lint format typecheck ci clean
 
 # ============================================================================
-# Test-Smith Makefile - Task Automation
+# Test-Smith Makefile - UV-based Task Automation
 # ============================================================================
 
 help:  ## Show this help message
-	@echo "Test-Smith Development Tasks"
-	@echo "=============================="
+	@echo "Test-Smith Development Tasks (UV-based)"
+	@echo "========================================="
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 # ----------------------------------------------------------------------------
-# Dependency Management
+# Dependency Management (UV)
 # ----------------------------------------------------------------------------
 
-compile:  ## Compile requirements.in to requirements.txt with pinned versions
-	@echo "📦 Compiling requirements.in → requirements.txt..."
-	@if command -v uv >/dev/null 2>&1; then \
-		uv pip compile requirements.in -o requirements.txt; \
-	elif command -v pip-compile >/dev/null 2>&1; then \
-		pip-compile requirements.in -o requirements.txt; \
-	else \
-		echo "❌ Error: Neither 'uv' nor 'pip-tools' found."; \
-		echo "Install one of them:"; \
-		echo "  - uv:        curl -LsSf https://astral.sh/uv/install.sh | sh"; \
-		echo "  - pip-tools: pip install pip-tools"; \
-		exit 1; \
-	fi
-	@echo "✅ requirements.txt updated"
+sync:  ## Sync dependencies from pyproject.toml (UV)
+	@echo "📦 Syncing dependencies with UV..."
+	uv sync --all-extras
+	@echo "✅ Dependencies synced"
 
-install:  ## Install production dependencies from requirements.txt
-	@echo "📦 Installing production dependencies..."
-	pip install -r requirements.txt
-	@echo "✅ Production dependencies installed"
+install: sync  ## Install all dependencies (alias for sync)
 
-install-dev:  ## Install development dependencies (ruff, mypy, pytest)
-	@echo "📦 Installing development dependencies..."
-	pip install ruff>=0.3.0 mypy>=1.8.0 pytest>=8.4.2 pytest-cov>=4.1.0
-	@echo "✅ Development dependencies installed"
+install-dev: sync  ## Install development dependencies (alias for sync)
+
+lock:  ## Update uv.lock file
+	@echo "🔒 Updating uv.lock..."
+	uv lock --upgrade
+	@echo "✅ Lock file updated"
 
 # ----------------------------------------------------------------------------
 # Code Quality Checks
@@ -44,19 +33,19 @@ install-dev:  ## Install development dependencies (ruff, mypy, pytest)
 
 lint:  ## Run ruff linter
 	@echo "🔍 Running ruff linter..."
-	ruff check .
+	uv run ruff check .
 
 format:  ## Run ruff formatter
 	@echo "🎨 Running ruff formatter..."
-	ruff format .
+	uv run ruff format .
 
 format-check:  ## Check if code is formatted (CI mode)
 	@echo "🎨 Checking code formatting..."
-	ruff format --check .
+	uv run ruff format --check .
 
 typecheck:  ## Run mypy type checker
 	@echo "🔍 Running mypy type checker..."
-	mypy src
+	uv run mypy src --no-error-summary
 
 # ----------------------------------------------------------------------------
 # Testing
@@ -64,15 +53,15 @@ typecheck:  ## Run mypy type checker
 
 test:  ## Run pytest with coverage
 	@echo "🧪 Running pytest..."
-	python -m pytest -v
+	uv run pytest -v
 
 test-fast:  ## Run pytest without slow tests
 	@echo "🧪 Running fast tests only..."
-	python -m pytest -v -m "not slow"
+	uv run pytest -v -m "not slow and not requires_api"
 
 test-cov:  ## Run pytest with coverage report
 	@echo "🧪 Running pytest with coverage..."
-	python -m pytest -v --cov=src --cov-report=term-missing --cov-report=html
+	uv run pytest -v --cov=src --cov-report=term-missing --cov-report=html
 
 # ----------------------------------------------------------------------------
 # CI Simulation
@@ -102,6 +91,33 @@ ci:  ## Run all CI checks locally (lint, format, typecheck, test)
 	@$(MAKE) test || (echo "❌ Pytest failed" && exit 1)
 	@echo ""
 	@echo "✅ All CI checks passed!"
+
+# ----------------------------------------------------------------------------
+# Application
+# ----------------------------------------------------------------------------
+
+run:  ## Run the application (usage: make run QUERY="your question")
+	@if [ -z "$(QUERY)" ]; then \
+		echo "Usage: make run QUERY=\"your question\""; \
+		exit 1; \
+	fi
+	uv run python main.py run "$(QUERY)"
+
+graphs:  ## List available graph workflows
+	@echo "📊 Available graph workflows:"
+	uv run python main.py graphs
+
+# ----------------------------------------------------------------------------
+# Knowledge Base
+# ----------------------------------------------------------------------------
+
+ingest:  ## Ingest documents into knowledge base
+	@echo "📚 Ingesting documents..."
+	uv run python scripts/ingest/ingest_with_preprocessor.py
+
+ingest-diagnostic:  ## Run diagnostic ingestion
+	@echo "🔬 Running diagnostic ingestion..."
+	uv run python scripts/ingest/ingest_diagnostic.py
 
 # ----------------------------------------------------------------------------
 # Cleanup

@@ -39,8 +39,10 @@ LangGraph Studioは、LangGraphワークフローを視覚的に確認・デバ�
 
 ```bash
 # Python 3.11+環境で
-pip install -U "langgraph-cli[inmem]"
-langgraph dev --port 8123
+uv run langgraph dev --port 8123
+# または
+uv add "langgraph-cli[inmem]"
+uv run langgraph dev --port 8123
 
 # ブラウザで開く
 open http://localhost:8123

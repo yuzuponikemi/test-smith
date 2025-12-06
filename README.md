@@ -82,6 +82,34 @@ ollama pull nomic-embed-text
 
 ### Installation
 
+**Using uv (Recommended)**
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd test-smith
+
+# Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create virtual environment and install dependencies
+uv sync --all-extras
+```
+
+**Why uv?**
+- ⚡ **10-100x faster** than pip
+- 🔒 **Reproducible builds** with uv.lock
+- 🎯 **Better dependency resolution**
+- 💾 **Global cache** for faster installs
+- ✨ **No manual venv activation** with `uv run`
+
+**See [.github/UV_GUIDE.md](.github/UV_GUIDE.md) for complete uv usage guide.**
+
+<details>
+<summary>Legacy: Using pip (Not Recommended)</summary>
+
+**⚠️ Note:** pip support is deprecated. Please use uv for better performance and reproducibility.
+
 ```bash
 # Clone the repository
 git clone <repository-url>
@@ -92,15 +120,9 @@ python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies
-pip install -r requirements.txt
-
-# For CI/testing only (lightweight, no ML packages):
-# pip install -r requirements-ci.txt
+pip install -e ".[dev]"
 ```
-
-**Note on Requirements Files:**
-- `requirements.txt` - Full dependencies including document preprocessing (vision, OCR, ML models)
-- `requirements-ci.txt` - Lightweight dependencies for CI/testing (graph compilation and execution only)
+</details>
 
 ### Configuration
 
@@ -131,7 +153,7 @@ LOG_LEVEL="INFO"  # DEBUG, INFO, WARNING, ERROR
 1. Get a free API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
 2. Set `MODEL_PROVIDER=gemini` in your `.env` file
 3. Add your `GOOGLE_API_KEY`
-4. Run: `pip install langchain-google-genai`
+4. Dependencies are already installed via `uv sync`
 
 **Using Local Ollama Models:**
 1. Install [Ollama](https://ollama.ai/)
@@ -224,37 +246,73 @@ You can manually trigger the workflow with custom parameters:
 
 ### Running Research Queries
 
+**Using uv (Recommended):**
+
 ```bash
 # Basic research query
-python main.py run "What are the latest advancements in AI-powered drug discovery?"
+uv run python main.py run "What are the latest advancements in AI-powered drug discovery?"
 
 # Continue conversation with thread ID
-python main.py run "Follow-up question" --thread-id abc-123
+uv run python main.py run "Follow-up question" --thread-id abc-123
 
 # Check version
+uv run python main.py --version
+```
+
+<details>
+<summary>Legacy: Using traditional Python (Not Recommended)</summary>
+
+**⚠️ Note:** Manual venv activation is deprecated. Use `uv run` for cleaner workflows.
+
+```bash
+# Activate virtual environment first
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Then run commands
+python main.py run "What are the latest advancements in AI-powered drug discovery?"
+python main.py run "Follow-up question" --thread-id abc-123
 python main.py --version
 ```
+</details>
 
 ### Running Tests
 
 Test-Smith includes a comprehensive test suite with unit tests for nodes, graphs, and integration tests.
 
+**Using uv (Recommended):**
+
 ```bash
 # Run all tests
-pytest
+uv run pytest
 
 # Run only unit tests
-pytest tests/unit -v
+uv run pytest tests/unit -v
 
 # Run specific test file
-pytest tests/unit/test_nodes/test_planner_node.py -v
+uv run pytest tests/unit/test_nodes/test_planner_node.py -v
 
-# Run tests with coverage report (requires pytest-cov)
-pytest --cov=src --cov-report=html
+# Run tests with coverage report
+uv run pytest --cov=src --cov-report=html
 
 # Run tests excluding slow/API-dependent tests
-pytest -m "not slow and not requires_api"
+uv run pytest -m "not slow and not requires_api"
 ```
+
+<details>
+<summary>Legacy: Using traditional Python (Not Recommended)</summary>
+
+**⚠️ Note:** Manual venv activation is deprecated. Use `uv run` instead.
+
+```bash
+# Activate virtual environment first
+source .venv/bin/activate
+
+# Then run tests
+pytest
+pytest tests/unit -v
+pytest --cov=src --cov-report=html
+```
+</details>
 
 **Test Structure:**
 - `tests/unit/test_nodes/` - Unit tests for individual nodes
@@ -273,19 +331,19 @@ Tests run automatically on pull requests. View test results in the Actions tab.
 ```bash
 # Place documents in documents/ directory
 # Run intelligent preprocessing pipeline
-python scripts/ingest/ingest_with_preprocessor.py
+uv run python scripts/ingest/ingest_with_preprocessor.py
 
 # With quality filtering (skip files with score < 0.5)
-python scripts/ingest/ingest_with_preprocessor.py --min-quality 0.5
+uv run python scripts/ingest/ingest_with_preprocessor.py --min-quality 0.5
 
 # Disable specific cleaning steps if needed
-python scripts/ingest/ingest_with_preprocessor.py --disable-deduplication
+uv run python scripts/ingest/ingest_with_preprocessor.py --disable-deduplication
 ```
 
 **Diagnostic Ingestion (For Debugging):**
 ```bash
 # Use for investigating embedding issues
-python scripts/ingest/ingest_diagnostic.py
+uv run python scripts/ingest/ingest_diagnostic.py
 ```
 
 **Automated Clean Re-ingest:**
@@ -298,7 +356,7 @@ python scripts/ingest/ingest_diagnostic.py
 
 ```bash
 # Launch Jupyter notebook for interactive analysis
-jupyter notebook chroma_explorer.ipynb
+uv run jupyter notebook chroma_explorer.ipynb
 ```
 
 **Key Notebook Sections:**
