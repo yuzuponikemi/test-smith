@@ -7,7 +7,7 @@ name = "test-smith"
 version = "2.3.0"
 description = "LangGraph-based multi-agent research assistant with hierarchical plan-and-execute strategy"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.9.2"
 license = {text = "MIT"}
 authors = [
     {name = "Test-Smith Team"}
@@ -296,6 +296,12 @@ exclude_lines = [
 [tool.bandit]
 exclude_dirs = ["tests", "benchmarks", "examples", ".venv", "venv"]
 skips = ["B101"]  # assert_used - expected in tests
+
+# ============================================================================
+# Hatchling Build Configuration
+# ============================================================================
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
 
 # ============================================================================
 # UV Configuration
