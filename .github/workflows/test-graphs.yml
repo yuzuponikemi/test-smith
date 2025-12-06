@@ -44,24 +44,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: ${{ github.event.inputs.python_version || '3.11' }}
-          cache: 'pip'
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        run: uv python install ${{ github.event.inputs.python_version || '3.11' }}
 
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y sqlite3 libsqlite3-dev
 
-      - name: Install Python dependencies
+      - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          # Use lightweight CI requirements to avoid heavy ML packages
-          pip install -r requirements-ci.txt
-          # Install pytest for running tests
-          pip install pytest pytest-mock
+          # Install all dependencies via uv
+          uv sync --all-extras
 
       - name: Create .env file
         run: |
@@ -82,7 +82,7 @@ jobs:
       - name: Verify environment setup
         run: |
           echo "Testing environment configuration..."
-          python -c "
+          uv run python -c "
           import os
           from dotenv import load_dotenv
 
@@ -99,20 +99,20 @@ jobs:
       - name: Run unit tests with pytest
         run: |
           echo "Running unit tests..."
-          pytest tests/unit -v --tb=short -m "not slow and not requires_api"
+          uv run pytest tests/unit -v --tb=short -m "not slow and not requires_api"
           echo "✓ Unit tests passed"
 
       - name: Run graph tests with pytest
         run: |
           echo "Running graph compilation and structure tests..."
-          pytest tests/unit/test_graphs -v --tb=short
+          uv run pytest tests/unit/test_graphs -v --tb=short
           echo "✓ Graph tests passed"
 
       - name: Test graph imports and compilation
         if: ${{ github.event.inputs.run_full_suite != 'false' }}
         run: |
           echo "Testing graph imports and compilation..."
-          python -c "
+          uv run python -c "
           from src.graphs import list_graphs, get_graph, get_default_graph
 
           # List all available graphs
@@ -134,7 +134,7 @@ jobs:
       - name: Test model initialization
         run: |
           echo "Testing Gemini model initialization..."
-          python -c "
+          uv run python -c "
           from dotenv import load_dotenv
           load_dotenv()
 
@@ -167,7 +167,7 @@ jobs:
 
           echo "Running test query with $GRAPH_TYPE graph..."
           echo "Query: $TEST_QUERY"
-          python main.py run "$TEST_QUERY" --graph "$GRAPH_TYPE" > test_output.txt 2>&1 || true
+          uv run python main.py run "$TEST_QUERY" --graph "$GRAPH_TYPE" > test_output.txt 2>&1 || true
 
           echo "Test output:"
           cat test_output.txt
@@ -183,15 +183,15 @@ jobs:
       - name: Test graph listing command
         run: |
           echo "Testing graph listing command..."
-          python main.py graphs
+          uv run python main.py graphs
 
           echo "Testing detailed graph listing..."
-          python main.py graphs --detailed
+          uv run python main.py graphs --detailed
 
       - name: Verify graph structure
         run: |
           echo "Verifying graph node structure..."
-          python -c "
+          uv run python -c "
           from src.graphs import get_graph
 
           # Test deep_research graph structure

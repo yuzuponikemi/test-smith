@@ -19,7 +19,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 if [ ! -d ".venv" ]; then
     echo "❌ エラー: 仮想環境が見つかりません (.venv)"
     echo "   以下のコマンドで環境をセットアップしてください:"
-    echo "   python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"
+    echo "   uv sync --all-extras"
     exit 1
 fi
 

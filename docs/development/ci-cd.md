@@ -31,15 +31,17 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        run: uv sync --all-extras
 
       - name: Run linter
-        run: |
-          pip install flake8
-          flake8 src/ --max-line-length=120
+        run: uv run ruff check .
 ```
 
 ---
@@ -68,7 +70,7 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: uv sync --all-extras
 
       - name: Run evaluation
         run: |
@@ -95,7 +97,7 @@ Configure in repository settings:
 ### Setup
 
 ```bash
-pip install pre-commit
+uv add --dev pre-commit
 pre-commit install
 ```
 
