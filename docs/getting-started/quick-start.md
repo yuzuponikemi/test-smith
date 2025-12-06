@@ -1,183 +1,183 @@
-# Quick Start Guide
+# クイックスタートガイド
 
-Get Test-Smith running in 5 minutes.
-
----
-
-## Prerequisites
-
-Ensure you've completed the [Installation](installation.md) steps:
-- Ollama running with required models
-- `.env` file configured with Tavily API key
-- Virtual environment activated
+5分でTest-Smithを実行できます。
 
 ---
 
-## Your First Query
+## 前提条件
 
-### Basic Research Query
+[インストール](installation.md)手順が完了していることを確認してください:
+- 必要なモデルでOllamaが実行中
+- Tavily APIキーで`.env`ファイルが設定済み
+- 仮想環境が起動中
+
+---
+
+## 最初のクエリ
+
+### 基本的な研究クエリ
 
 ```bash
-python main.py run "What are the key differences between transformers and RNNs?"
+python main.py run "TransformerとRNNの主な違いは何ですか？"
 ```
 
-This uses the default `deep_research` workflow, which:
-1. Analyzes query complexity
-2. Decomposes into subtasks if complex
-3. Searches web and/or knowledge base
-4. Synthesizes a comprehensive report
+これはデフォルトの`deep_research`ワークフローを使用し、以下を実行します:
+1. クエリの複雑さを分析
+2. 複雑な場合はサブタスクに分解
+3. Webおよび/または知識ベースを検索
+4. 包括的なレポートを統合
 
-### Quick Lookup
+### クイック検索
 
-For simple questions, use the faster `quick_research` workflow:
+シンプルな質問には、より高速な`quick_research`ワークフローを使用:
 
 ```bash
-python main.py run "What is the capital of France?" --graph quick_research
+python main.py run "フランスの首都は？" --graph quick_research
 ```
 
 ---
 
-## Available Workflows
+## 利用可能なワークフロー
 
-List all available workflows:
+すべての利用可能なワークフローを一覧表示:
 
 ```bash
 python main.py graphs
 ```
 
-### Choose the Right Workflow
+### 適切なワークフローの選択
 
-| Workflow | Use When | Example |
+| ワークフロー | 使用タイミング | 例 |
 |----------|----------|---------|
-| `deep_research` | Complex, multi-faceted questions | "Compare AI frameworks for production use" |
-| `quick_research` | Simple lookups, time-sensitive | "What is BERT?" |
-| `fact_check` | Verifying claims | "Is it true that Python was created in 1991?" |
-| `comparative` | Comparing options | "React vs Vue for a new project" |
-| `causal_inference` | Troubleshooting, root cause | "Why is my app running slowly?" |
+| `deep_research` | 複雑で多面的な質問 | "本番用AIフレームワークを比較" |
+| `quick_research` | シンプルな検索、時間に敏感 | "BERTとは？" |
+| `fact_check` | 主張の検証 | "Pythonは1991年に作成されたというのは本当か？" |
+| `comparative` | オプションの比較 | "新しいプロジェクトにReact vs Vue" |
+| `causal_inference` | トラブルシューティング、根本原因 | "なぜアプリが遅く動作しているのか？" |
 
-### Example Commands
+### コマンド例
 
 ```bash
-# Deep research (default)
-python main.py run "Analyze multi-agent AI systems"
+# 深い研究（デフォルト）
+python main.py run "マルチエージェントAIシステムを分析"
 
-# Quick research
-python main.py run "What is ChromaDB?" --graph quick_research
+# クイック研究
+python main.py run "ChromaDBとは？" --graph quick_research
 
-# Fact checking
-python main.py run "Verify: GPT-4 was released in March 2023" --graph fact_check
+# ファクトチェック
+python main.py run "検証: GPT-4は2023年3月にリリースされた" --graph fact_check
 
-# Comparison
-python main.py run "PostgreSQL vs MySQL for web applications" --graph comparative
+# 比較
+python main.py run "WebアプリケーションにPostgreSQL vs MySQL" --graph comparative
 
-# Root cause analysis
-python main.py run "Why does my API return 500 errors intermittently?" --graph causal_inference
+# 根本原因分析
+python main.py run "なぜAPIが断続的に500エラーを返すのか？" --graph causal_inference
 ```
 
 ---
 
-## Understanding Output
+## 出力の理解
 
-### Console Output
+### コンソール出力
 
-During execution, you'll see:
-- Node execution progress
-- Query allocation (web vs RAG)
-- Subtask decomposition (for hierarchical mode)
-- Final report
+実行中、以下が表示されます:
+- ノード実行の進捗
+- クエリ割り当て（web vs RAG）
+- サブタスク分解（階層モード用）
+- 最終レポート
 
-### Generated Files
+### 生成されたファイル
 
-Each run creates:
+各実行で以下が作成されます:
 
-1. **Execution Log** (`logs/execution_*.log`)
-   - Complete execution trace
-   - Useful for debugging
+1. **実行ログ** (`logs/execution_*.log`)
+   - 完全な実行トレース
+   - デバッグに便利
 
-2. **Research Report** (`reports/report_*.md`)
-   - Final synthesized report
-   - Markdown format with metadata
+2. **研究レポート** (`reports/report_*.md`)
+   - 最終統合レポート
+   - メタデータ付きMarkdown形式
 
 ```bash
-# List recent reports
+# 最近のレポートを一覧表示
 python main.py list reports --limit 5
 
-# List recent logs
+# 最近のログを一覧表示
 python main.py list logs --limit 5
 ```
 
 ---
 
-## Conversation Continuity
+## 会話の継続
 
-Use thread IDs for follow-up questions:
+フォローアップ質問にスレッドIDを使用:
 
 ```bash
-# First query
-python main.py run "What is LangGraph?" --thread-id my-session
+# 最初のクエリ
+python main.py run "LangGraphとは？" --thread-id my-session
 
-# Follow-up in same context
-python main.py run "How does it compare to AutoGen?" --thread-id my-session
+# 同じコンテキストでフォローアップ
+python main.py run "AutoGenと比較してどうですか？" --thread-id my-session
 ```
 
 ---
 
-## Common Options
+## 一般的なオプション
 
 ```bash
-# Disable logging (console only)
-python main.py run "Quick test" --no-log --no-report
+# ロギングを無効化（コンソールのみ）
+python main.py run "クイックテスト" --no-log --no-report
 
-# Specify graph
-python main.py run "Your query" --graph quick_research
+# グラフを指定
+python main.py run "あなたのクエリ" --graph quick_research
 
-# Use thread ID
-python main.py run "Follow-up" --thread-id abc123
+# スレッドIDを使用
+python main.py run "フォローアップ" --thread-id abc123
 ```
 
 ---
 
-## Tips for Better Results
+## より良い結果のためのヒント
 
-### 1. Be Specific
+### 1. 具体的に
 
 ```bash
-# Vague - may produce generic results
-python main.py run "Tell me about AI"
+# 曖昧 - 一般的な結果を生成する可能性
+python main.py run "AIについて教えて"
 
-# Specific - better results
-python main.py run "Explain transformer attention mechanisms and their advantages over RNN architectures"
+# 具体的 - より良い結果
+python main.py run "Transformerのアテンションメカニズムとそのアドバンテージを説明してください"
 ```
 
-### 2. Use Appropriate Workflow
+### 2. 適切なワークフローを使用
 
-Don't use `deep_research` for simple facts - it's slower and overkill.
+シンプルな事実に`deep_research`を使用しないでください - より遅く、過剰です。
 
-### 3. Add Context
+### 3. コンテキストを追加
 
 ```bash
-# Good: includes context
-python main.py run "Compare React and Vue for building a large e-commerce application with server-side rendering needs"
+# 良い: コンテキストを含む
+python main.py run "サーバーサイドレンダリングが必要な大規模eコマースアプリケーション用にReactとVueを比較"
 
-# Less context
+# コンテキストが少ない
 python main.py run "React vs Vue"
 ```
 
-### 4. Check the Knowledge Base
+### 4. 知識ベースを確認
 
-If you have domain-specific documents:
+ドメイン固有のドキュメントがある場合:
 ```bash
-# Add documents to knowledge base first
+# 最初に知識ベースにドキュメントを追加
 python scripts/ingest/ingest_with_preprocessor.py
 
-# Then query
-python main.py run "How does our authentication system work?"
+# その後クエリ
+python main.py run "当社の認証システムはどのように機能しますか？"
 ```
 
 ---
 
-## Next Steps
+## 次のステップ
 
-- **[Model Providers](model-providers.md)** - Configure Ollama or Gemini for different performance
-- **[Multi-Graph Workflows](../architecture/multi-graph-workflows.md)** - Deep dive into workflow options
-- **[RAG Guide](../knowledge-base/rag-guide.md)** - Add your own documents to the knowledge base
+- **[モデルプロバイダー](model-providers.md)** - 異なるパフォーマンスのためOllamaまたはGeminiを設定
+- **[マルチグラフワークフロー](../architecture/multi-graph-workflows.md)** - ワークフローオプションの詳細
+- **[RAGガイド](../knowledge-base/rag-guide.md)** - 独自のドキュメントを知識ベースに追加

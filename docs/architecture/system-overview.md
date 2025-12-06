@@ -1,142 +1,142 @@
-# System Overview
+# システム概要
 
-**Test-Smith v2.2** - LangGraph Multi-Agent Research System
-
----
-
-## Architecture Summary
-
-Test-Smith is a **hierarchical multi-agent research system** that orchestrates specialized agents to autonomously conduct research and generate comprehensive reports.
-
-### Key Characteristics
-
-- **Multi-Graph Architecture**: 5 specialized workflows for different research needs
-- **Hierarchical Task Decomposition**: Complex queries broken into manageable subtasks
-- **Dynamic Replanning**: Adapts research plan based on discoveries
-- **Strategic Query Allocation**: Routes queries to optimal source (RAG vs Web)
-- **Cumulative Learning**: Results accumulate across iterations
+**Test-Smith v2.2** - LangGraphマルチエージェント研究システム
 
 ---
 
-## Core Components
+## アーキテクチャ概要
 
-### 1. Workflow Orchestration (`src/graphs/`)
+Test-Smithは、専門化されたエージェントを統合して自律的に研究を実施し、包括的なレポートを生成する**階層的マルチエージェント研究システム**です。
 
-Multiple graph workflows, each tailored for specific use cases:
+### 主な特徴
 
-| Graph | Purpose | Nodes |
+- **マルチグラフアーキテクチャ**: 異なる研究ニーズに対応する5つの専門ワークフロー
+- **階層的タスク分解**: 複雑なクエリを管理可能なサブタスクに分解
+- **動的再計画**: 発見に基づいて研究計画を適応
+- **戦略的クエリ割り当て**: 最適なソース（RAG vs Web）にクエリをルーティング
+- **累積学習**: 反復にわたって結果を蓄積
+
+---
+
+## コアコンポーネント
+
+### 1. ワークフローオーケストレーション (`src/graphs/`)
+
+特定のユースケースに合わせた複数のグラフワークフロー:
+
+| グラフ | 目的 | ノード数 |
 |-------|---------|-------|
-| `deep_research` | Complex multi-faceted research | 12 nodes |
-| `quick_research` | Fast single-pass lookup | 6 nodes |
-| `fact_check` | Claim verification | 7 nodes |
-| `comparative` | Side-by-side analysis | 8 nodes |
-| `causal_inference` | Root cause analysis | 9 nodes |
+| `deep_research` | 複雑で多面的な研究 | 12ノード |
+| `quick_research` | 高速シングルパス検索 | 6ノード |
+| `fact_check` | 主張検証 | 7ノード |
+| `comparative` | サイドバイサイド分析 | 8ノード |
+| `causal_inference` | 根本原因分析 | 9ノード |
 
-### 2. Processing Nodes (`src/nodes/`)
+### 2. 処理ノード (`src/nodes/`)
 
-Reusable node functions shared across graphs:
+グラフ間で共有される再利用可能なノード関数:
 
-**Core Nodes:**
-- `planner` - Strategic query allocation
-- `searcher` - Web search (Tavily)
-- `rag_retriever` - Knowledge base retrieval (ChromaDB)
-- `analyzer` - Result synthesis
-- `evaluator` - Sufficiency assessment
-- `synthesizer` - Report generation
+**コアノード:**
+- `planner` - 戦略的クエリ割り当て
+- `searcher` - Web検索（Tavily）
+- `rag_retriever` - 知識ベース検索（ChromaDB）
+- `analyzer` - 結果統合
+- `evaluator` - 十分性評価
+- `synthesizer` - レポート生成
 
-**Hierarchical Nodes:**
-- `master_planner` - Task decomposition
-- `depth_evaluator` - Depth quality assessment
-- `drill_down_generator` - Recursive subtask creation
-- `plan_revisor` - Dynamic plan adaptation
+**階層ノード:**
+- `master_planner` - タスク分解
+- `depth_evaluator` - 深度品質評価
+- `drill_down_generator` - 再帰的サブタスク作成
+- `plan_revisor` - 動的計画適応
 
-**Causal Inference Nodes:**
-- `issue_analyzer`, `brainstormer`, `evidence_planner`
-- `causal_checker`, `hypothesis_validator`, `causal_graph_builder`
+**因果推論ノード:**
+- `issue_analyzer`、`brainstormer`、`evidence_planner`
+- `causal_checker`、`hypothesis_validator`、`causal_graph_builder`
 - `root_cause_synthesizer`
 
-### 3. LLM Configuration (`src/models.py`)
+### 3. LLM設定 (`src/models.py`)
 
-Centralized model management with provider abstraction:
+プロバイダー抽象化を伴う中央集中型モデル管理:
 
 ```python
-# Each task has a dedicated model function
-get_planner_model()      # llama3 or gemini-pro
-get_evaluation_model()   # command-r or gemini-pro
-get_synthesizer_model()  # command-r or gemini-pro
+# 各タスクに専用のモデル関数
+get_planner_model()      # llama3またはgemini-pro
+get_evaluation_model()   # command-rまたはgemini-pro
+get_synthesizer_model()  # command-rまたはgemini-pro
 ```
 
-### 4. Prompt Templates (`src/prompts/`)
+### 4. プロンプトテンプレート (`src/prompts/`)
 
-LangChain PromptTemplates with variable injection for each node.
+各ノード用の変数注入を伴うLangChain PromptTemplate。
 
-### 5. Knowledge Base (`src/preprocessor/`, `chroma_db/`)
+### 5. 知識ベース (`src/preprocessor/`, `chroma_db/`)
 
-RAG system with intelligent preprocessing and ChromaDB vector storage.
+インテリジェント前処理とChromaDBベクトルストレージを備えたRAGシステム。
 
 ---
 
-## State Management
+## ステート管理
 
-### Agent State Schema
+### エージェントステートスキーマ
 
 ```python
 class AgentState(TypedDict):
-    # Core fields
+    # コアフィールド
     query: str
     report: str
 
-    # Query allocation
+    # クエリ割り当て
     web_queries: list[str]
     rag_queries: list[str]
     allocation_strategy: str
 
-    # Results (cumulative)
+    # 結果（累積）
     search_results: Annotated[list[str], operator.add]
     rag_results: Annotated[list[str], operator.add]
     analyzed_data: Annotated[list[str], operator.add]
 
-    # Evaluation
+    # 評価
     evaluation: str
     reason: str
     loop_count: int
 
-    # Hierarchical mode
-    execution_mode: str  # "simple" or "hierarchical"
+    # 階層モード
+    execution_mode: str  # "simple"または"hierarchical"
     master_plan: dict
     current_subtask_id: str
     current_subtask_index: int
     subtask_results: dict
 
-    # Dynamic replanning
+    # 動的再計画
     revision_count: int
     plan_revisions: list
     max_revisions: int
     max_total_subtasks: int
 ```
 
-### State Persistence
+### ステート永続化
 
-- **Technology**: SQLite checkpointing (`langgraph-checkpoint-sqlite`)
-- **Purpose**: Conversation continuity, crash recovery, debugging
+- **技術**: SQLiteチェックポイント（`langgraph-checkpoint-sqlite`）
+- **目的**: 会話継続、クラッシュ回復、デバッグ
 
 ---
 
-## Execution Modes
+## 実行モード
 
-### Simple Mode
+### シンプルモード
 
-For straightforward queries - uses 6-node graph:
+単純なクエリ用 - 6ノードグラフを使用:
 
 ```
-Planner → Searcher/RAG (parallel) → Analyzer → Evaluator → Synthesizer
-                                              ↓ (if insufficient)
-                                           Planner (max 2 loops)
+Planner → Searcher/RAG（並列） → Analyzer → Evaluator → Synthesizer
+                                              ↓（不十分な場合）
+                                           Planner（最大2ループ）
 ```
 
-### Hierarchical Mode
+### 階層モード
 
-For complex queries - uses master planning and subtask execution:
+複雑なクエリ用 - マスタープランニングとサブタスク実行を使用:
 
 ```
 Master Planner → [Subtask Loop] → Hierarchical Synthesizer
@@ -154,77 +154,77 @@ Master Planner → [Subtask Loop] → Hierarchical Synthesizer
 
 ---
 
-## Data Flow
+## データフロー
 
-### 1. Input Processing
-
-```
-User Query → Master Planner → Complexity Assessment → Mode Selection
-```
-
-### 2. Query Allocation
+### 1. 入力処理
 
 ```
-Strategic Planner → Check KB Contents → Allocate RAG/Web Queries
+ユーザークエリ → Master Planner → 複雑性評価 → モード選択
 ```
 
-### 3. Parallel Retrieval
+### 2. クエリ割り当て
 
 ```
-RAG Queries → ChromaDB → RAG Results
-Web Queries → Tavily   → Search Results
+Strategic Planner → KB内容確認 → RAG/Webクエリ割り当て
 ```
 
-### 4. Analysis & Synthesis
+### 3. 並列検索
 
 ```
-Results → Analyzer → Evaluation → Synthesis → Report
+RAGクエリ → ChromaDB → RAG結果
+Webクエリ → Tavily   → 検索結果
+```
+
+### 4. 分析と統合
+
+```
+結果 → Analyzer → 評価 → 統合 → レポート
 ```
 
 ---
 
-## Key Design Patterns
+## 主要な設計パターン
 
-### 1. Cumulative State Accumulation
+### 1. 累積ステート蓄積
 
-Uses `Annotated[list[str], operator.add]` for automatic list merging:
+自動リストマージのため`Annotated[list[str], operator.add]`を使用:
 
 ```python
-# Each node appends to list
-# LangGraph merges automatically
+# 各ノードがリストに追加
+# LangGraphが自動的にマージ
 search_results: Annotated[list[str], operator.add]
 ```
 
-### 2. Strategic Query Allocation
+### 2. 戦略的クエリ割り当て
 
-Planner checks KB contents and routes queries optimally:
+PlannerがKB内容を確認し、クエリを最適にルーティング:
 
 ```python
-# KB has auth docs → RAG queries for auth
-# Need current events → Web queries
+# KBに認証ドキュメントがある → 認証用RAGクエリ
+# 現在の出来事が必要 → Webクエリ
 allocation = {
-    "rag_queries": ["internal auth flow"],
-    "web_queries": ["OAuth2 best practices 2025"]
+    "rag_queries": ["内部認証フロー"],
+    "web_queries": ["OAuth2ベストプラクティス2025"]
 }
 ```
 
-### 3. Structured Outputs
+### 3. 構造化出力
 
-Pydantic schemas with `.with_structured_output()`:
+`.with_structured_output()`を伴うPydanticスキーマ:
 
 ```python
 from src.schemas import StrategicPlan
 
 planner_llm = get_planner_model().with_structured_output(StrategicPlan)
-output = planner_llm.invoke(prompt)  # Validated Pydantic object
+output = planner_llm.invoke(prompt)  # 検証済みPydanticオブジェクト
 ```
 
-### 4. Dynamic Replanning
+### 4. 動的再計画
 
-Plan Revisor analyzes findings and adapts master plan:
+Plan Revisorが発見を分析しマスタープランを適応:
 
 ```python
-# After finding important topic not in original plan
+# 元の計画にない重要なトピックを発見後
 revision = {
     "should_revise": True,
     "new_subtasks": [...],
@@ -234,70 +234,70 @@ revision = {
 
 ---
 
-## Directory Structure
+## ディレクトリ構造
 
 ```
 test-smith/
-├── main.py                      # CLI entry point
+├── main.py                      # CLIエントリーポイント
 ├── src/
-│   ├── graphs/                  # Workflow definitions
-│   │   ├── __init__.py          # Graph registry
-│   │   ├── base_graph.py        # Base classes
+│   ├── graphs/                  # ワークフロー定義
+│   │   ├── __init__.py          # グラフレジストリ
+│   │   ├── base_graph.py        # 基底クラス
 │   │   ├── deep_research_graph.py
 │   │   ├── quick_research_graph.py
 │   │   ├── fact_check_graph.py
 │   │   ├── comparative_graph.py
 │   │   └── causal_inference_graph.py
-│   ├── nodes/                   # Processing nodes
-│   ├── prompts/                 # LLM prompts
-│   ├── models.py                # Model configuration
-│   ├── schemas.py               # Pydantic schemas
-│   └── preprocessor/            # Document preprocessing
+│   ├── nodes/                   # 処理ノード
+│   ├── prompts/                 # LLMプロンプト
+│   ├── models.py                # モデル設定
+│   ├── schemas.py               # Pydanticスキーマ
+│   └── preprocessor/            # ドキュメント前処理
 ├── scripts/
-│   ├── ingest/                  # KB ingestion
-│   ├── utils/                   # Utilities
-│   └── visualization/           # Graph visualization
-├── evaluation/                  # LangSmith evaluation
-├── documents/                   # RAG source documents
-├── chroma_db/                   # Vector database
-├── logs/                        # Execution logs
-└── reports/                     # Generated reports
+│   ├── ingest/                  # KB取り込み
+│   ├── utils/                   # ユーティリティ
+│   └── visualization/           # グラフ可視化
+├── evaluation/                  # LangSmith評価
+├── documents/                   # RAGソースドキュメント
+├── chroma_db/                   # ベクトルデータベース
+├── logs/                        # 実行ログ
+└── reports/                     # 生成されたレポート
 ```
 
 ---
 
-## Configuration
+## 設定
 
-### Environment Variables
+### 環境変数
 
 ```bash
-# Required
+# 必須
 TAVILY_API_KEY="your-key"
 
-# LangSmith (optional)
+# LangSmith（オプション）
 LANGCHAIN_TRACING_V2="true"
 LANGCHAIN_API_KEY="your-key"
 LANGCHAIN_PROJECT="deep-research-v1-proto"
 
-# Gemini (optional)
+# Gemini（オプション）
 GOOGLE_API_KEY="your-key"
-MODEL_PROVIDER="ollama"  # or "gemini"
+MODEL_PROVIDER="ollama"  # または"gemini"
 ```
 
-### Key Parameters
+### 主要パラメータ
 
-| Parameter | Location | Default | Purpose |
+| パラメータ | 場所 | デフォルト | 目的 |
 |-----------|----------|---------|---------|
-| `recursion_limit` | main.py | 100 | Max LangGraph steps |
-| `max_depth` | master_planner | 2 | Max drill-down depth |
-| `max_revisions` | plan_revisor | 3 | Max plan revisions |
-| `max_total_subtasks` | plan_revisor | 20 | Subtask budget |
-| `loop_count` | evaluator | 2 | Max refinement loops |
+| `recursion_limit` | main.py | 100 | 最大LangGraphステップ |
+| `max_depth` | master_planner | 2 | 最大ドリルダウン深度 |
+| `max_revisions` | plan_revisor | 3 | 最大計画改訂回数 |
+| `max_total_subtasks` | plan_revisor | 20 | サブタスク予算 |
+| `loop_count` | evaluator | 2 | 最大改善ループ |
 
 ---
 
-## Related Documentation
+## 関連ドキュメント
 
-- **[Multi-Graph Workflows](multi-graph-workflows.md)** - Workflow details and selection
-- **[Creating Graphs](../development/creating-graphs.md)** - Build custom workflows
-- **[RAG Guide](../knowledge-base/rag-guide.md)** - Knowledge base configuration
+- **[マルチグラフワークフロー](multi-graph-workflows.md)** - ワークフローの詳細と選択
+- **[グラフの作成](../development/creating-graphs.md)** - カスタムワークフローの構築
+- **[RAGガイド](../knowledge-base/rag-guide.md)** - 知識ベース設定
