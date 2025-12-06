@@ -1,6 +1,6 @@
 # Installation & Setup
 
-This guide covers the complete setup process for Test-Smith.
+This guide covers the complete setup process for Test-Smith using **UV**, the modern Python package manager.
 
 ---
 
@@ -8,58 +8,96 @@ This guide covers the complete setup process for Test-Smith.
 
 ### Required Software
 
-- **Python 3.8+** - Core runtime
-- **Ollama** - Local LLM inference
+- **Python 3.9.2+** - Core runtime (UV can install this for you)
+- **UV** - Modern package manager ([Installation guide](#1-install-uv))
 - **Git** - Version control
+
+### Optional: LLM Providers
+
+Choose one or both:
+
+- **Google Gemini API** (Recommended) - Cloud-based LLMs ([Get free key](https://makersuite.google.com/app/apikey))
+- **Ollama** (Optional) - Local LLM inference ([Download](https://ollama.ai/))
 
 ### Required API Keys
 
 - **Tavily API Key** - Web search ([Get free key](https://tavily.com/))
 - **LangSmith API Key** (optional) - Observability ([Get free key](https://smith.langchain.com/))
-- **Google API Key** (optional) - For Gemini models ([Get key](https://makersuite.google.com/app/apikey))
 
 ---
 
 ## Installation Steps
 
-### 1. Clone Repository
+### 1. Install UV
+
+**macOS/Linux:**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Windows:**
+```powershell
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**Verify installation:**
+```bash
+uv --version
+```
+
+### 2. Clone Repository
 
 ```bash
 git clone https://github.com/your-repo/test-smith.git
 cd test-smith
 ```
 
-### 2. Create Virtual Environment
-
-```bash
-python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-# or
-.venv\Scripts\activate     # Windows
-```
-
 ### 3. Install Dependencies
 
+UV will automatically create a virtual environment and install all dependencies:
+
 ```bash
-pip install -r requirements.txt
+# Install all dependencies (including dev tools)
+uv sync --all-extras
 ```
 
-Or for development:
-```bash
-pip install -r requirements.txt
-pip install -r requirements-dev.txt  # If available
-```
+**What happens:**
+- ✅ Creates `.venv/` automatically
+- ✅ Installs all dependencies from `pyproject.toml`
+- ✅ Generates `uv.lock` for reproducibility
+- ✅ Takes ~5 seconds (vs ~2 minutes with pip!)
 
-### 4. Install and Configure Ollama
+### 4. Configure LLM Provider
 
+#### Option A: Google Gemini (Recommended, Default)
+
+**Advantages:**
+- ✅ No local installation required
+- ✅ Faster inference
+- ✅ Lower resource usage
+- ✅ Free tier available
+
+**Setup:**
+1. Get API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Add to `.env` (see step 5)
+3. No additional setup needed!
+
+#### Option B: Ollama (Local Models)
+
+**Advantages:**
+- ✅ Fully offline
+- ✅ No API costs
+- ✅ Data privacy
+
+**Setup:**
 ```bash
-# Install Ollama (Linux)
+# Install Ollama
 curl -fsSL https://ollama.ai/install.sh | sh
 
 # Pull required models
-ollama pull llama3
-ollama pull command-r
-ollama pull nomic-embed-text
+ollama pull llama3           # Main reasoning model (4.7GB)
+ollama pull command-r        # Advanced reasoning (20GB)
+ollama pull nomic-embed-text # Embeddings (274MB)
 
 # Verify models
 ollama list
@@ -77,32 +115,62 @@ nomic-embed-text  ...         274MB  ...
 
 Create a `.env` file in the project root:
 
+**For Google Gemini (Default):**
 ```bash
-# Required: Tavily Web Search
+# Model Provider
+MODEL_PROVIDER="gemini"
+
+# Google Gemini API Key (required)
+GOOGLE_API_KEY="your-google-api-key-here"
+
+# Web Search (required)
 TAVILY_API_KEY="tvly-your-key-here"
 
-# Optional: LangSmith Tracing
+# LangSmith (optional - for observability)
 LANGCHAIN_TRACING_V2="true"
 LANGCHAIN_API_KEY="your-langsmith-key"
 LANGCHAIN_PROJECT="deep-research-v1-proto"
 
-# Optional: Gemini (for faster inference)
-GOOGLE_API_KEY="AIza..."
-MODEL_PROVIDER="ollama"  # or "gemini"
+# Logging (optional)
+STRUCTURED_LOGS_JSON="false"
+LOG_LEVEL="INFO"
+```
+
+**For Ollama (Local):**
+```bash
+# Model Provider
+MODEL_PROVIDER="ollama"
+
+# Web Search (required)
+TAVILY_API_KEY="tvly-your-key-here"
+
+# LangSmith (optional - for observability)
+LANGCHAIN_TRACING_V2="true"
+LANGCHAIN_API_KEY="your-langsmith-key"
+LANGCHAIN_PROJECT="deep-research-v1-proto"
+
+# Logging (optional)
+STRUCTURED_LOGS_JSON="false"
+LOG_LEVEL="INFO"
 ```
 
 ### 6. Verify Installation
 
 ```bash
 # Check version
-python main.py --version
+uv run python main.py --version
 
 # List available graphs
-python main.py graphs
+uv run python main.py graphs
 
 # Run test query
-python main.py run "What is LangGraph?"
+uv run python main.py run "What is LangGraph?"
 ```
+
+**Expected output:**
+- Graph list showing available workflows
+- Research process with planner → searcher → analyzer → synthesizer
+- Final comprehensive report
 
 ---
 
@@ -113,16 +181,17 @@ After installation, your project should look like:
 ```
 test-smith/
 ├── .env                    # Environment configuration
-├── .venv/                  # Virtual environment
+├── .venv/                  # Virtual environment (auto-created by UV)
+├── uv.lock                 # Dependency lock file
+├── pyproject.toml          # Project configuration & dependencies
 ├── main.py                 # CLI entry point
-├── requirements.txt        # Dependencies
 ├── src/                    # Source code
 │   ├── graphs/             # Workflow definitions
 │   ├── nodes/              # Processing nodes
 │   ├── prompts/            # LLM prompts
 │   └── preprocessor/       # Document preprocessing
 ├── documents/              # RAG source documents
-├── chroma_db/              # Vector database
+├── chroma_db/              # Vector database (created on first run)
 ├── logs/                   # Execution logs
 └── reports/                # Generated reports
 ```
@@ -131,7 +200,19 @@ test-smith/
 
 ## Troubleshooting
 
-### Ollama Won't Start
+### UV Command Not Found
+
+**Solution:** Add UV to your PATH:
+
+```bash
+# Add to ~/.bashrc or ~/.zshrc
+export PATH="$HOME/.local/bin:$PATH"
+
+# Reload shell
+source ~/.bashrc  # or source ~/.zshrc
+```
+
+### Ollama Won't Start (If using Ollama)
 
 ```bash
 # Check if Ollama is running
@@ -143,7 +224,7 @@ ollama serve
 # Or restart Ollama app
 ```
 
-### Model Not Found
+### Model Not Found (If using Ollama)
 
 ```bash
 # Pull missing model
@@ -160,18 +241,62 @@ ollama list
 cat .env
 
 # Check environment variable is loaded
-python -c "import os; from dotenv import load_dotenv; load_dotenv(); print(os.getenv('TAVILY_API_KEY'))"
+uv run python -c "import os; from dotenv import load_dotenv; load_dotenv(); print(os.getenv('TAVILY_API_KEY'))"
 ```
 
 ### Import Errors
 
 ```bash
-# Reinstall dependencies
-pip install -r requirements.txt --force-reinstall
+# Regenerate lock file
+uv lock
 
-# Check Python version
-python --version  # Should be 3.8+
+# Reinstall dependencies
+uv sync --all-extras
 ```
+
+### "No solution found" Dependency Error
+
+**This is the error you just fixed!**
+
+Solution: The `pyproject.toml` now has `requires-python = ">=3.9.2"` which resolves dependency conflicts.
+
+```bash
+# If you still see this, try:
+uv lock --upgrade
+uv sync --all-extras
+```
+
+---
+
+## Legacy Installation (Not Recommended)
+
+<details>
+<summary>⚠️ Using pip (Deprecated)</summary>
+
+**Note:** This method is deprecated. Use UV for better performance and reproducibility.
+
+```bash
+# Clone repository
+git clone https://github.com/your-repo/test-smith.git
+cd test-smith
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # Linux/Mac
+# or
+.venv\Scripts\activate     # Windows
+
+# Install dependencies
+pip install -e ".[dev]"
+```
+
+**Why not pip?**
+- 🐌 10-100x slower than UV
+- ⚠️ No reproducible builds
+- 🔧 Manual venv management required
+- ❌ Weaker dependency resolution
+
+</details>
 
 ---
 
@@ -179,4 +304,13 @@ python --version  # Should be 3.8+
 
 - **[Quick Start](quick-start.md)** - Run your first research query
 - **[Model Providers](model-providers.md)** - Configure Ollama or Gemini
+- **[UV Usage Guide](../../.github/UV_GUIDE.md)** - Complete UV documentation
 - **[RAG Guide](../knowledge-base/rag-guide.md)** - Add documents to the knowledge base
+
+---
+
+## Additional Resources
+
+- **[UV Documentation](https://docs.astral.sh/uv/)** - Official UV docs
+- **[UV Troubleshooting](../../.github/UV_GUIDE.md#-troubleshooting)** - Common issues and solutions
+- **[Migration from pip](../../.github/UV_GUIDE.md#-migration-from-pip)** - If you're used to pip

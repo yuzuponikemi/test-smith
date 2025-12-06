@@ -82,7 +82,7 @@ ollama pull nomic-embed-text
 
 ### Installation
 
-**Recommended: Using uv (Fast & Modern)**
+**Using uv (Recommended)**
 
 ```bash
 # Clone the repository
@@ -93,13 +93,22 @@ cd test-smith
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Create virtual environment and install dependencies
-uv sync
-
-# Or install with all extras (dev tools included)
 uv sync --all-extras
 ```
 
-**Alternative: Using pip (Traditional)**
+**Why uv?**
+- ⚡ **10-100x faster** than pip
+- 🔒 **Reproducible builds** with uv.lock
+- 🎯 **Better dependency resolution**
+- 💾 **Global cache** for faster installs
+- ✨ **No manual venv activation** with `uv run`
+
+**See [.github/UV_GUIDE.md](.github/UV_GUIDE.md) for complete uv usage guide.**
+
+<details>
+<summary>Legacy: Using pip (Not Recommended)</summary>
+
+**⚠️ Note:** pip support is deprecated. Please use uv for better performance and reproducibility.
 
 ```bash
 # Clone the repository
@@ -111,19 +120,9 @@ python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies
-pip install -e .
-
-# For development dependencies
 pip install -e ".[dev]"
 ```
-
-**Why uv?**
-- ⚡ **10-100x faster** than pip
-- 🔒 **Reproducible builds** with uv.lock
-- 🎯 **Better dependency resolution**
-- 💾 **Global cache** for faster installs
-
-See [.github/UV_GUIDE.md](.github/UV_GUIDE.md) for detailed uv usage guide.
+</details>
 
 ### Configuration
 
@@ -154,7 +153,7 @@ LOG_LEVEL="INFO"  # DEBUG, INFO, WARNING, ERROR
 1. Get a free API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
 2. Set `MODEL_PROVIDER=gemini` in your `.env` file
 3. Add your `GOOGLE_API_KEY`
-4. Run: `pip install langchain-google-genai`
+4. Dependencies are already installed via `uv sync`
 
 **Using Local Ollama Models:**
 1. Install [Ollama](https://ollama.ai/)
@@ -260,7 +259,10 @@ uv run python main.py run "Follow-up question" --thread-id abc-123
 uv run python main.py --version
 ```
 
-**Using traditional Python:**
+<details>
+<summary>Legacy: Using traditional Python (Not Recommended)</summary>
+
+**⚠️ Note:** Manual venv activation is deprecated. Use `uv run` for cleaner workflows.
 
 ```bash
 # Activate virtual environment first
@@ -271,6 +273,7 @@ python main.py run "What are the latest advancements in AI-powered drug discover
 python main.py run "Follow-up question" --thread-id abc-123
 python main.py --version
 ```
+</details>
 
 ### Running Tests
 
@@ -295,7 +298,10 @@ uv run pytest --cov=src --cov-report=html
 uv run pytest -m "not slow and not requires_api"
 ```
 
-**Using traditional Python:**
+<details>
+<summary>Legacy: Using traditional Python (Not Recommended)</summary>
+
+**⚠️ Note:** Manual venv activation is deprecated. Use `uv run` instead.
 
 ```bash
 # Activate virtual environment first
@@ -306,6 +312,7 @@ pytest
 pytest tests/unit -v
 pytest --cov=src --cov-report=html
 ```
+</details>
 
 **Test Structure:**
 - `tests/unit/test_nodes/` - Unit tests for individual nodes
@@ -349,7 +356,7 @@ uv run python scripts/ingest/ingest_diagnostic.py
 
 ```bash
 # Launch Jupyter notebook for interactive analysis
-jupyter notebook chroma_explorer.ipynb
+uv run jupyter notebook chroma_explorer.ipynb
 ```
 
 **Key Notebook Sections:**

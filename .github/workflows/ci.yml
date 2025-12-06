@@ -12,7 +12,7 @@ jobs:
     name: Code Quality & Tests
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Required for auto-committing requirements.txt
+      contents: write  # Required for repository operations
 
     steps:
       # ======================================================================
