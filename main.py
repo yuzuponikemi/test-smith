@@ -20,12 +20,6 @@ from src.utils.logging_utils import (
 )
 from src.utils.streaming_output import StreamingFormatter
 
-# Keep backward compatibility - import old graph
-try:
-    from src.graph import graph as legacy_graph
-except ImportError:
-    legacy_graph = None
-
 
 def main():
     # Note: load_dotenv() is called at module import time (top of file)

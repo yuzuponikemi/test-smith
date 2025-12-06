@@ -8,9 +8,12 @@ Watch budget controls in action!
 from dotenv import load_dotenv
 from langgraph.checkpoint.sqlite import SqliteSaver
 
-from src.graph import workflow
+from src.graphs import get_graph
 
 load_dotenv()
+
+# Get deep_research graph builder
+_graph_builder = get_graph("deep_research")
 
 
 def test_with_langsmith_monitoring():
@@ -45,7 +48,7 @@ def test_with_langsmith_monitoring():
     print("=" * 80)
 
     with SqliteSaver.from_conn_string(":memory:") as memory:
-        app = workflow.compile(checkpointer=memory)
+        app = _graph_builder.build(checkpointer=memory)
 
         config = {
             "configurable": {"thread_id": "langsmith-monitoring-test"},

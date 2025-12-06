@@ -199,17 +199,17 @@ uv run python main.py run "Where is the calculate_total function used?" --graph 
 **Testing the Code Investigation Graph:**
 ```bash
 # Full test: ingest test-smith repo + run test queries
-uv run python scripts/testing/test_code_investigation.py
+uv run python scripts/experiments/test_code_investigation.py
 
 # Skip ingestion (use existing codebase_collection)
-uv run python scripts/testing/test_code_investigation.py --skip-ingest
+uv run python scripts/experiments/test_code_investigation.py --skip-ingest
 
 # Run specific test
-uv run python scripts/testing/test_code_investigation.py --test dependency
-uv run python scripts/testing/test_code_investigation.py --test flow
-uv run python scripts/testing/test_code_investigation.py --test usage
-uv run python scripts/testing/test_code_investigation.py --test architecture
-uv run python scripts/testing/test_code_investigation.py --test implementation
+uv run python scripts/experiments/test_code_investigation.py --test dependency
+uv run python scripts/experiments/test_code_investigation.py --test flow
+uv run python scripts/experiments/test_code_investigation.py --test usage
+uv run python scripts/experiments/test_code_investigation.py --test architecture
+uv run python scripts/experiments/test_code_investigation.py --test implementation
 ```
 
 **Ingest Your Own Codebase:**
@@ -448,19 +448,24 @@ scripts/                         # Organized utility scripts
 │   ├── ingest_diagnostic.py    # Enhanced ingestion with diagnostics
 │   ├── ingest_with_preprocessor.py # Production ingestion (recommended)
 │   └── clean_and_reingest.sh   # Automated clean re-ingest
-├── testing/                     # Test scripts
+├── experiments/                 # Manual experiment/validation scripts
 │   ├── test_gemini_models.py   # Google Gemini model tests
 │   ├── test_langsmith_monitoring.py # LangSmith monitoring tests
 │   ├── test_phase4_dynamic_replanning.py # Dynamic replanning tests
-│   └── test_code_investigation.py # ⭐ NEW: Code investigation graph tests
+│   └── test_code_investigation.py # Code investigation graph tests
 ├── utils/                       # Utility scripts
 │   ├── switch_model_provider.py # Toggle Ollama/Gemini providers
 │   ├── verify_model_provider.py # Verify current provider
 │   ├── update_node_logging.py  # Update logging config
-│   └── update_causal_nodes_logging.py # Update causal node logging
-└── visualization/               # Visualization scripts
-    ├── visualize_graphs.py     # Generate graph diagrams
-    └── visualize_causal_graph.py # Interactive causal graph viz
+│   ├── update_causal_nodes_logging.py # Update causal node logging
+│   └── test_imports.py         # Import validation
+├── visualization/               # Visualization scripts
+│   ├── visualize_graphs.py     # Generate graph diagrams
+│   ├── visualize_causal_graph.py # Interactive causal graph viz
+│   └── visualize_studio_trace.py # Studio trace visualization
+└── studio/                      # LangGraph Studio startup scripts
+    ├── start_studio.sh         # Start Studio server
+    └── stop_studio.sh          # Stop Studio server
 
 evaluation/                      # Evaluation framework
 ├── evaluate_agent.py           # LangSmith evaluation runner
@@ -478,7 +483,6 @@ src/
 │   ├── comparative_graph.py    # Side-by-side comparison workflow
 │   ├── causal_inference_graph.py # Root cause analysis workflow
 │   └── code_investigation_graph.py # ⭐ NEW: Codebase analysis workflow
-├── graph.py                     # Legacy compatibility (deprecated)
 ├── models.py                    # Model factory functions (reusable)
 ├── schemas.py                   # Pydantic data schemas (reusable)
 ├── nodes/                       # Processing nodes (reusable across graphs)

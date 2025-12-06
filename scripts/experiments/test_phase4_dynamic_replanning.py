@@ -17,9 +17,12 @@ import os
 from dotenv import load_dotenv
 from langgraph.checkpoint.sqlite import SqliteSaver
 
-from src.graph import workflow
+from src.graphs import get_graph
 
 load_dotenv()
+
+# Get deep_research graph builder
+_graph_builder = get_graph("deep_research")
 
 
 def test_dynamic_replanning():
@@ -46,7 +49,7 @@ def test_dynamic_replanning():
 
     # Set up checkpointing
     with SqliteSaver.from_conn_string(":memory:") as memory:
-        app = workflow.compile(checkpointer=memory)
+        app = _graph_builder.build(checkpointer=memory)
 
         # Configure for test with higher recursion limit for dynamic replanning
         config = {
