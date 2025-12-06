@@ -1,514 +1,514 @@
-# Test-Smith: Multi-Agent Research Assistant
+# Test-Smith: マルチエージェント研究アシスタント
 
-A sophisticated LangGraph-based research assistant that combines multi-agent workflows with intelligent knowledge base management for deep research and comprehensive report generation.
+高度な知識ベース管理とマルチエージェントワークフローを組み合わせた、LangGraphベースの研究アシスタントです。深い調査と包括的なレポート生成を実現します。
 
-## Overview
+## 概要
 
-Test-Smith implements a "Plan-and-Execute" strategy with specialized AI agents collaborating through a state-based workflow. The system combines:
+Test-Smithは、専門化されたAIエージェントがステートベースのワークフローを通じて協調する「Plan-and-Execute」戦略を実装しています。システムは以下を組み合わせています:
 
-- **Multi-Agent Architecture**: Planner, Searcher, RAG Retriever, Analyzer, Evaluator, and Synthesizer
-- **Intelligent Knowledge Base**: ChromaDB vector store with advanced preprocessing
-- **Quality-First Approach**: Comprehensive document quality analysis and metrics
-- **Flexible LLM Support**: Google Gemini API (default) or local Ollama models
-- **Observability**: Full tracing via LangSmith
+- **マルチエージェントアーキテクチャ**: Planner、Searcher、RAG Retriever、Analyzer、Evaluator、Synthesizer
+- **インテリジェント知識ベース**: 高度な前処理を備えたChromaDBベクトルストア
+- **品質優先アプローチ**: 包括的なドキュメント品質分析とメトリクス
+- **柔軟なLLMサポート**: Google Gemini API（デフォルト）またはローカルOllamaモデル
+- **可観測性**: LangSmithによる完全なトレーシング
 
-## Key Features
+## 主な機能
 
-### Multi-Agent Workflow
+### マルチエージェントワークフロー
 
-1. **Strategic Planner** - Intelligently allocates queries between RAG and web search
-   - Checks knowledge base contents and availability
-   - Allocates domain-specific queries to RAG retrieval
-   - Allocates current/external queries to web search
-   - Adapts strategy based on feedback from evaluator
+1. **Strategic Planner（戦略プランナー）** - RAGとWeb検索の間でクエリを賢く割り当て
+   - 知識ベースの内容と利用可能性を確認
+   - ドメイン固有のクエリをRAG検索に割り当て
+   - 現在の/外部のクエリをWeb検索に割り当て
+   - Evaluatorからのフィードバックに基づいて戦略を適応
 
-2. **Searcher** - Executes strategically allocated web searches via Tavily API
-3. **RAG Retriever** - Retrieves relevant chunks using strategically allocated queries
-4. **Analyzer** - Merges and summarizes results from multiple sources
-5. **Evaluator** - Assesses information sufficiency and quality
-6. **Synthesizer** - Generates comprehensive final reports
+2. **Searcher（検索者）** - Tavily API経由で戦略的に割り当てられたWeb検索を実行
+3. **RAG Retriever（RAG検索者）** - 戦略的に割り当てられたクエリを使用して関連チャンクを取得
+4. **Analyzer（分析者）** - 複数のソースからの結果をマージし要約
+5. **Evaluator（評価者）** - 情報の十分性と品質を評価
+6. **Synthesizer（統合者）** - 包括的な最終レポートを生成
 
-**Key Innovation:** The planner performs **strategic query allocation** instead of sending the same queries to both sources. This saves API calls, improves relevance, and adapts dynamically based on knowledge base contents. The system executes iteratively (max 2 iterations) with conditional routing based on evaluation results.
+**主要なイノベーション:** プランナーは両方のソースに同じクエリを送る代わりに、**戦略的なクエリ割り当て**を実行します。これによりAPIコールを節約し、関連性を向上させ、知識ベースの内容に基づいて動的に適応します。システムは評価結果に基づく条件付きルーティングで反復的に実行されます（最大2回の反復）。
 
-### Intelligent Document Preprocessing
+### インテリジェントドキュメント前処理
 
-The knowledge base system includes a sophisticated preprocessing pipeline:
+知識ベースシステムには高度な前処理パイプラインが含まれています:
 
-**Document Analyzer:**
-- Quality scoring (0-1 scale)
-- Language detection (English, Japanese, etc.)
-- Structure analysis (Markdown, PDF, plain text)
-- Automatic issue detection and recommendations
+**ドキュメントアナライザー:**
+- 品質スコアリング（0-1スケール）
+- 言語検出（英語、日本語など）
+- 構造分析（Markdown、PDF、プレーンテキスト）
+- 自動問題検出と推奨
 
-**Smart Chunking:**
-- Strategy selection per document (Recursive, Markdown, Hybrid)
-- Adaptive chunk sizing based on content type
-- Language-aware adjustments (e.g., 1.2x for Japanese)
-- Target: 500-1000 characters per chunk
+**スマートチャンキング:**
+- ドキュメントごとの戦略選択（Recursive、Markdown、Hybrid）
+- コンテンツタイプに基づく適応的なチャンクサイジング
+- 言語対応調整（例：日本語は1.2倍）
+- ターゲット：チャンクあたり500-1000文字
 
-**Content Cleaning:**
-- Exact duplicate removal (MD5 hash-based)
-- Near-duplicate detection (95% similarity threshold)
-- Boilerplate pattern removal (repeated headers/footers)
-- Size filtering (removes chunks < 100 chars)
+**コンテンツクリーニング:**
+- 完全重複除去（MD5ハッシュベース）
+- 近似重複検出（95%類似度閾値）
+- 定型文パターン除去（繰り返しヘッダー/フッター）
+- サイズフィルタリング（100文字未満のチャンクを除去）
 
-**Quality Metrics:**
-- Chunk size distribution analysis
-- Uniqueness ratio tracking (target >95%)
-- Vocabulary diversity measurement (target 25-50%)
-- PCA variance analysis for embedding quality
+**品質メトリクス:**
+- チャンクサイズ分布分析
+- 一意性比率追跡（目標 >95%）
+- 語彙多様性測定（目標 25-50%）
+- 埋め込み品質のためのPCA分散分析
 
-## Quick Start
+## クイックスタート
 
-### Prerequisites
+### 前提条件
 
 1. **Python 3.8+**
-2. **LLM Provider** - Choose one:
-   - **Google Gemini API** (Recommended, default) - Free tier available at [Google AI Studio](https://makersuite.google.com/app/apikey)
-   - **Ollama** (Local models) - Install from [ollama.ai](https://ollama.ai/)
+2. **LLMプロバイダー** - 以下から1つ選択:
+   - **Google Gemini API**（推奨、デフォルト） - [Google AI Studio](https://makersuite.google.com/app/apikey)で無料ティアが利用可能
+   - **Ollama**（ローカルモデル） - [ollama.ai](https://ollama.ai/)からインストール
 
-**If using Ollama (local models):**
+**Ollamaを使用する場合（ローカルモデル）:**
 ```bash
 ollama pull llama3
 ollama pull command-r
 ollama pull nomic-embed-text
 ```
 
-**If using Gemini (cloud API):**
+**Geminiを使用する場合（クラウドAPI）:**
 ```bash
-# Just get your API key from Google AI Studio
-# No local model installation needed!
+# Google AI Studioから APIキーを取得するだけです
+# ローカルモデルのインストールは不要！
 ```
 
-### Installation
+### インストール
 
-**Using uv (Recommended)**
+**uvを使用（推奨）**
 
 ```bash
-# Clone the repository
+# リポジトリをクローン
 git clone <repository-url>
 cd test-smith
 
-# Install uv if you haven't already
+# uvをインストール（まだの場合）
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Create virtual environment and install dependencies
+# 仮想環境を作成し依存関係をインストール
 uv sync --all-extras
 ```
 
-**Why uv?**
-- ⚡ **10-100x faster** than pip
-- 🔒 **Reproducible builds** with uv.lock
-- 🎯 **Better dependency resolution**
-- 💾 **Global cache** for faster installs
-- ✨ **No manual venv activation** with `uv run`
+**uvを使う理由は？**
+- ⚡ **pipより10-100倍高速**
+- 🔒 **uv.lockによる再現可能なビルド**
+- 🎯 **より良い依存関係解決**
+- 💾 **グローバルキャッシュ**で高速インストール
+- ✨ **`uv run`で手動venv起動不要**
 
-**See [.github/UV_GUIDE.md](.github/UV_GUIDE.md) for complete uv usage guide.**
+**完全なuvの使い方ガイドは[.github/UV_GUIDE.md](.github/UV_GUIDE.md)をご覧ください。**
 
 <details>
-<summary>Legacy: Using pip (Not Recommended)</summary>
+<summary>レガシー: pipを使用（非推奨）</summary>
 
-**⚠️ Note:** pip support is deprecated. Please use uv for better performance and reproducibility.
+**⚠️ 注意:** pipサポートは非推奨です。より良いパフォーマンスと再現性のためuvを使用してください。
 
 ```bash
-# Clone the repository
+# リポジトリをクローン
 git clone <repository-url>
 cd test-smith
 
-# Create virtual environment
+# 仮想環境を作成
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
-# Install dependencies
+# 依存関係をインストール
 pip install -e ".[dev]"
 ```
 </details>
 
-### Configuration
+### 設定
 
-Create a `.env` file in the root directory:
+ルートディレクトリに`.env`ファイルを作成:
 
 ```bash
-# Model Provider (choose "gemini" or "ollama")
-MODEL_PROVIDER="gemini"  # Default: uses Google Gemini API
+# モデルプロバイダー（"gemini"または"ollama"を選択）
+MODEL_PROVIDER="gemini"  # デフォルト: Google Gemini APIを使用
 
-# Google Gemini API Key (required when MODEL_PROVIDER=gemini)
-# Get your API key from: https://makersuite.google.com/app/apikey
+# Google Gemini APIキー（MODEL_PROVIDER=geminiの場合必須）
+# APIキーの取得先: https://makersuite.google.com/app/apikey
 GOOGLE_API_KEY="your-google-api-key"
 
-# Tavily (for web search - required)
+# Tavily（Web検索用 - 必須）
 TAVILY_API_KEY="your-tavily-api-key"
 
-# LangSmith (optional - for observability)
+# LangSmith（オプション - 可観測性用）
 LANGCHAIN_TRACING_V2="true"
 LANGCHAIN_API_KEY="your-langsmith-api-key"
 LANGCHAIN_PROJECT="deep-research-v1-proto"
 
-# Structured Logging (optional)
-STRUCTURED_LOGS_JSON="false"  # false for human-readable, true for JSON
+# 構造化ロギング（オプション）
+STRUCTURED_LOGS_JSON="false"  # 開発用はfalse、本番用はtrue
 LOG_LEVEL="INFO"  # DEBUG, INFO, WARNING, ERROR
 ```
 
-**Using Google Gemini (Default):**
-1. Get a free API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Set `MODEL_PROVIDER=gemini` in your `.env` file
-3. Add your `GOOGLE_API_KEY`
-4. Dependencies are already installed via `uv sync`
+**Google Geminiを使用（デフォルト）:**
+1. [Google AI Studio](https://makersuite.google.com/app/apikey)から無料APIキーを取得
+2. `.env`ファイルで`MODEL_PROVIDER=gemini`を設定
+3. `GOOGLE_API_KEY`を追加
+4. 依存関係は`uv sync`で既にインストール済み
 
-**Using Local Ollama Models:**
-1. Install [Ollama](https://ollama.ai/)
-2. Pull models: `ollama pull llama3 && ollama pull command-r`
-3. Set `MODEL_PROVIDER=ollama` in your `.env` file
+**ローカルOllamaモデルを使用:**
+1. [Ollama](https://ollama.ai/)をインストール
+2. モデルをプル: `ollama pull llama3 && ollama pull command-r`
+3. `.env`ファイルで`MODEL_PROVIDER=ollama`を設定
 
-### GitHub Actions Setup
+### GitHub Actionsのセットアップ
 
-This repository includes automated testing with GitHub Actions. To set up API keys for CI/CD:
+このリポジトリにはGitHub Actionsによる自動テストが含まれています。CI/CD用のAPIキーを設定するには:
 
-#### Step 1: Navigate to Repository Settings
+#### ステップ1: リポジトリ設定に移動
 
-1. Go to your GitHub repository
-2. Click on **Settings** tab
-3. In the left sidebar, click on **Secrets and variables** → **Actions**
+1. GitHubリポジトリに移動
+2. **Settings**タブをクリック
+3. 左サイドバーで、**Secrets and variables** → **Actions**をクリック
 
-#### Step 2: Add Repository Secrets
+#### ステップ2: リポジトリシークレットを追加
 
-Click **New repository secret** and add the following secrets:
+**New repository secret**をクリックし、以下のシークレットを追加:
 
-**Required Secrets:**
+**必須シークレット:**
 
-| Secret Name | Description | Where to Get |
+| シークレット名 | 説明 | 取得先 |
 |------------|-------------|--------------|
-| `GOOGLE_API_KEY` | Google Gemini API key | [Google AI Studio](https://makersuite.google.com/app/apikey) |
-| `TAVILY_API_KEY` | Tavily web search API key | [Tavily Dashboard](https://tavily.com/) |
+| `GOOGLE_API_KEY` | Google Gemini APIキー | [Google AI Studio](https://makersuite.google.com/app/apikey) |
+| `TAVILY_API_KEY` | Tavily Web検索APIキー | [Tavilyダッシュボード](https://tavily.com/) |
 
-**Optional Secrets:**
+**オプションのシークレット:**
 
-| Secret Name | Description | Where to Get |
+| シークレット名 | 説明 | 取得先 |
 |------------|-------------|--------------|
-| `LANGCHAIN_API_KEY` | LangSmith observability key | [LangSmith](https://smith.langchain.com/) |
+| `LANGCHAIN_API_KEY` | LangSmith可観測性キー | [LangSmith](https://smith.langchain.com/) |
 
-#### Step 3: Add Each Secret
+#### ステップ3: 各シークレットを追加
 
-For each secret:
-1. Click **New repository secret**
-2. Enter the **Name** (e.g., `GOOGLE_API_KEY`)
-3. Paste the **Value** (your actual API key)
-4. Click **Add secret**
+各シークレットについて:
+1. **New repository secret**をクリック
+2. **Name**を入力（例: `GOOGLE_API_KEY`）
+3. **Value**に実際のAPIキーを貼り付け
+4. **Add secret**をクリック
 
-#### Step 4: Verify Workflow
+#### ステップ4: ワークフローを確認
 
-1. Push your code or create a pull request
-2. Go to the **Actions** tab in your repository
-3. You should see the "Test Graphs with Gemini" workflow running
-4. Click on the workflow to view detailed logs
+1. コードをプッシュまたはプルリクエストを作成
+2. リポジトリの**Actions**タブに移動
+3. "Test Graphs with Gemini"ワークフローが実行されているのが確認できます
+4. ワークフローをクリックして詳細ログを表示
 
-#### Manual Workflow Trigger
+#### 手動ワークフロートリガー
 
-You can manually trigger the workflow with custom parameters:
+カスタムパラメータでワークフローを手動トリガーできます:
 
-1. Go to your GitHub repository
-2. Click on the **Actions** tab
-3. Select **"Test Graphs with Gemini"** from the left sidebar
-4. Click **"Run workflow"** button (top right)
-5. Configure the test parameters:
+1. GitHubリポジトリに移動
+2. **Actions**タブをクリック
+3. 左サイドバーから**"Test Graphs with Gemini"**を選択
+4. **"Run workflow"**ボタン（右上）をクリック
+5. テストパラメータを設定:
 
-| Parameter | Description | Default | Options |
+| パラメータ | 説明 | デフォルト | オプション |
 |-----------|-------------|---------|---------|
-| **graph_type** | Which graph workflow to test | `quick_research` | quick_research, deep_research, fact_check, comparative |
-| **test_query** | Custom test query | "What is Python programming language?" | Any string |
-| **run_full_suite** | Run all graph compilation tests | `true` | true, false |
-| **python_version** | Python version to test with | `3.11` | 3.10, 3.11, 3.12 |
+| **graph_type** | テストするグラフワークフロー | `quick_research` | quick_research, deep_research, fact_check, comparative |
+| **test_query** | カスタムテストクエリ | "What is Python programming language?" | 任意の文字列 |
+| **run_full_suite** | すべてのグラフコンパイルテストを実行 | `true` | true, false |
+| **python_version** | テストするPythonバージョン | `3.11` | 3.10, 3.11, 3.12 |
 
-6. Click **"Run workflow"** to start the test
+6. **"Run workflow"**をクリックしてテスト開始
 
-**Example Use Cases:**
-- **Quick test**: Set `run_full_suite=false`, `graph_type=quick_research`, custom query
-- **Test specific graph**: Choose `graph_type=comparative`, provide comparison query
-- **Test Python compatibility**: Change `python_version` to test different Python versions
-- **Full validation**: Keep defaults with `run_full_suite=true`
+**使用例:**
+- **クイックテスト**: `run_full_suite=false`、`graph_type=quick_research`、カスタムクエリ
+- **特定グラフのテスト**: `graph_type=comparative`を選択、比較クエリを提供
+- **Python互換性テスト**: `python_version`を変更して異なるPythonバージョンをテスト
+- **完全検証**: デフォルトのまま`run_full_suite=true`
 
-**Workflow Features:**
-- ✅ Tests graph compilation for all workflow types
-- ✅ Verifies Gemini model initialization
-- ✅ Runs customizable test queries with any graph workflow
-- ✅ Validates environment configuration
-- ✅ Uploads test output as artifacts
-- ⚡ Uses lightweight `requirements-ci.txt` for faster CI builds (excludes heavy ML packages)
-- 🎮 Manual trigger with customizable parameters (graph type, query, Python version)
+**ワークフロー機能:**
+- ✅ すべてのワークフロータイプのグラフコンパイルをテスト
+- ✅ Geminiモデル初期化を検証
+- ✅ 任意のグラフワークフローでカスタマイズ可能なテストクエリを実行
+- ✅ 環境設定を検証
+- ✅ テスト出力をアーティファクトとしてアップロード
+- ⚡ 軽量な`requirements-ci.txt`を使用して高速CIビルド（重いMLパッケージを除外）
+- 🎮 カスタマイズ可能なパラメータ（グラフタイプ、クエリ、Pythonバージョン）での手動トリガー
 
-**Troubleshooting GitHub Actions:**
-- If workflow fails with "GOOGLE_API_KEY not set", verify the secret is added correctly
-- Secret names are case-sensitive and must match exactly
-- Secrets are encrypted and cannot be viewed after creation
-- Update secrets by creating a new one with the same name
+**GitHub Actionsのトラブルシューティング:**
+- "GOOGLE_API_KEY not set"でワークフローが失敗する場合、シークレットが正しく追加されているか確認
+- シークレット名は大文字小文字を区別し、正確に一致する必要があります
+- シークレットは暗号化され、作成後は表示できません
+- シークレットを更新するには、同じ名前で新しいものを作成します
 
-## Usage
+## 使用方法
 
-### Running Research Queries
+### 研究クエリの実行
 
-**Using uv (Recommended):**
+**uvを使用（推奨）:**
 
 ```bash
-# Basic research query
-uv run python main.py run "What are the latest advancements in AI-powered drug discovery?"
+# 基本的な研究クエリ
+uv run python main.py run "AI創薬の最新の進歩は？"
 
-# Continue conversation with thread ID
-uv run python main.py run "Follow-up question" --thread-id abc-123
+# スレッドIDを使用して会話を継続
+uv run python main.py run "フォローアップ質問" --thread-id abc-123
 
-# Check version
+# バージョン確認
 uv run python main.py --version
 ```
 
 <details>
-<summary>Legacy: Using traditional Python (Not Recommended)</summary>
+<summary>レガシー: 従来のPythonを使用（非推奨）</summary>
 
-**⚠️ Note:** Manual venv activation is deprecated. Use `uv run` for cleaner workflows.
+**⚠️ 注意:** 手動のvenv起動は非推奨です。よりクリーンなワークフローのため`uv run`を使用してください。
 
 ```bash
-# Activate virtual environment first
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+# 最初に仮想環境を起動
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
-# Then run commands
-python main.py run "What are the latest advancements in AI-powered drug discovery?"
-python main.py run "Follow-up question" --thread-id abc-123
+# その後コマンドを実行
+python main.py run "AI創薬の最新の進歩は？"
+python main.py run "フォローアップ質問" --thread-id abc-123
 python main.py --version
 ```
 </details>
 
-### Running Tests
+### テストの実行
 
-Test-Smith includes a comprehensive test suite with unit tests for nodes, graphs, and integration tests.
+Test-Smithにはノード、グラフ、統合テストを含む包括的なテストスイートが含まれています。
 
-**Using uv (Recommended):**
+**uvを使用（推奨）:**
 
 ```bash
-# Run all tests
+# すべてのテストを実行
 uv run pytest
 
-# Run only unit tests
+# ユニットテストのみ実行
 uv run pytest tests/unit -v
 
-# Run specific test file
+# 特定のテストファイルを実行
 uv run pytest tests/unit/test_nodes/test_planner_node.py -v
 
-# Run tests with coverage report
+# カバレッジレポート付きでテスト実行
 uv run pytest --cov=src --cov-report=html
 
-# Run tests excluding slow/API-dependent tests
+# 遅い/API依存テストを除外してテスト実行
 uv run pytest -m "not slow and not requires_api"
 ```
 
 <details>
-<summary>Legacy: Using traditional Python (Not Recommended)</summary>
+<summary>レガシー: 従来のPythonを使用（非推奨）</summary>
 
-**⚠️ Note:** Manual venv activation is deprecated. Use `uv run` instead.
+**⚠️ 注意:** 手動のvenv起動は非推奨です。代わりに`uv run`を使用してください。
 
 ```bash
-# Activate virtual environment first
+# 最初に仮想環境を起動
 source .venv/bin/activate
 
-# Then run tests
+# その後テストを実行
 pytest
 pytest tests/unit -v
 pytest --cov=src --cov-report=html
 ```
 </details>
 
-**Test Structure:**
-- `tests/unit/test_nodes/` - Unit tests for individual nodes
-- `tests/unit/test_graphs/` - Graph compilation and structure tests
-- `tests/integration/` - End-to-end workflow tests (coming soon)
-- `tests/conftest.py` - Shared fixtures and mock LLM implementations
+**テスト構造:**
+- `tests/unit/test_nodes/` - 個別ノードのユニットテスト
+- `tests/unit/test_graphs/` - グラフコンパイルと構造のテスト
+- `tests/integration/` - エンドツーエンドワークフローテスト（近日公開）
+- `tests/conftest.py` - 共有フィクスチャとモックLLM実装
 
 **GitHub Actions:**
-Tests run automatically on pull requests. View test results in the Actions tab.
+プルリクエストで自動的にテストが実行されます。Actionsタブでテスト結果を確認できます。
 
-### Knowledge Base Management
+### 知識ベース管理
 
-#### Ingesting Documents
+#### ドキュメントの取り込み
 
-**Production Ingestion (Recommended):**
+**本番取り込み（推奨）:**
 ```bash
-# Place documents in documents/ directory
-# Run intelligent preprocessing pipeline
+# documents/ディレクトリにドキュメントを配置
+# インテリジェント前処理パイプラインを実行
 uv run python scripts/ingest/ingest_with_preprocessor.py
 
-# With quality filtering (skip files with score < 0.5)
+# 品質フィルタリング付き（スコア < 0.5のファイルをスキップ）
 uv run python scripts/ingest/ingest_with_preprocessor.py --min-quality 0.5
 
-# Disable specific cleaning steps if needed
+# 必要に応じて特定のクリーニングステップを無効化
 uv run python scripts/ingest/ingest_with_preprocessor.py --disable-deduplication
 ```
 
-**Diagnostic Ingestion (For Debugging):**
+**診断取り込み（デバッグ用）:**
 ```bash
-# Use for investigating embedding issues
+# 埋め込みの問題を調査するために使用
 uv run python scripts/ingest/ingest_diagnostic.py
 ```
 
-**Automated Clean Re-ingest:**
+**自動クリーン再取り込み:**
 ```bash
-# Backs up existing database and re-ingests
+# 既存のデータベースをバックアップし再取り込み
 ./scripts/ingest/clean_and_reingest.sh
 ```
 
-#### Analyzing Your Knowledge Base
+#### 知識ベースの分析
 
 ```bash
-# Launch Jupyter notebook for interactive analysis
+# 対話型分析用Jupyterノートブックを起動
 uv run jupyter notebook chroma_explorer.ipynb
 ```
 
-**Key Notebook Sections:**
-- **Section 2.1**: Database content breakdown (sources, chunk counts)
-- **Section 2.2**: Embedding quality diagnostics (duplicates, diversity)
-- **Section 3.0**: PCA variance analysis (dimensionality check)
-- **Section 3.1**: Interactive 2D visualization with hover tooltips
-- **Section 3.2**: Interactive 4D pair plots
+**主要なノートブックセクション:**
+- **Section 2.1**: データベースコンテンツの内訳（ソース、チャンク数）
+- **Section 2.2**: 埋め込み品質診断（重複、多様性）
+- **Section 3.0**: PCA分散分析（次元性チェック）
+- **Section 3.1**: ホバーツールチップ付き対話型2D可視化
+- **Section 3.2**: 対話型4Dペアプロット
 
-**Healthy Knowledge Base Indicators:**
-- Median chunk size: 500-800 characters
-- Duplication rate: <5%
-- Quality score: >0.7
-- PCA components for 95% variance: 20-40
+**健全な知識ベースの指標:**
+- チャンクサイズの中央値: 500-800文字
+- 重複率: <5%
+- 品質スコア: >0.7
+- 95%分散のためのPCA成分: 20-40
 
-## Creating RAG-Friendly Documentation
+## RAGフレンドリーなドキュメントの作成
 
-To maximize retrieval quality, follow these best practices when creating knowledge base documents:
+検索品質を最大化するために、知識ベースドキュメントを作成する際は以下のベストプラクティスに従ってください:
 
-### Key Principles
+### 主要原則
 
-1. **Self-Contained Sections** - Each section should make sense independently
-2. **Optimal Length** - Target 500-1500 characters per section
-3. **Descriptive Headers** - Include main topic in every header
-4. **Consistent Terminology** - Use same terms for same concepts
-5. **Define Acronyms** - Use "Full Term (Acronym)" pattern on first use
+1. **自己完結型セクション** - 各セクションは独立して意味をなすべき
+2. **最適な長さ** - セクションあたり500-1500文字を目標
+3. **説明的なヘッダー** - すべてのヘッダーにメイントピックを含める
+4. **一貫した用語** - 同じ概念には同じ用語を使用
+5. **頭字語を定義** - 最初の使用時に「完全な用語（頭字語）」パターンを使用
 
-### Example: Poor vs Good
+### 例: 悪い vs 良い
 
-❌ **Poor - RAG-Unfriendly:**
+❌ **悪い - RAG非対応:**
 ```markdown
-## Configuration
+## 設定
 
-Edit the config file. Set the parameters.
+設定ファイルを編集。パラメータを設定。
 ```
-- Too short (no context)
-- Generic header
-- Vague references
+- 短すぎる（コンテキストなし）
+- 一般的なヘッダー
+- 曖昧な参照
 
-✅ **Good - RAG-Friendly:**
+✅ **良い - RAG対応:**
 ```markdown
-## PostgreSQL Connection Configuration
+## PostgreSQL接続設定
 
-Configure PostgreSQL database connection settings in the
-postgresql.conf file located at /etc/postgresql/14/main/postgresql.conf.
+/etc/postgresql/14/main/postgresql.confにあるpostgresql.confファイルで
+PostgreSQLデータベース接続設定を構成します。
 
-Key settings to configure:
-- listen_addresses: Set to '0.0.0.0' for remote connections
-- port: Default PostgreSQL port is 5432
-- max_connections: Maximum concurrent connections (default: 100)
+設定する主要な設定:
+- listen_addresses: リモート接続の場合は'0.0.0.0'に設定
+- port: デフォルトのPostgreSQLポートは5432
+- max_connections: 最大同時接続数（デフォルト: 100）
 
-Restart PostgreSQL after changes: sudo systemctl restart postgresql
+変更後はPostgreSQLを再起動: sudo systemctl restart postgresql
 ```
-- Adequate length (self-explanatory)
-- Topic-specific header
-- Complete, standalone information
+- 適切な長さ（自己説明的）
+- トピック固有のヘッダー
+- 完全で独立した情報
 
-### Documentation Guides
+### ドキュメントガイド
 
-- **[Writing RAG-Friendly Documentation](docs/WRITING_RAG_FRIENDLY_DOCUMENTATION.md)** - Comprehensive writing best practices
-- **[Document Design Evaluation](docs/DOCUMENT_DESIGN_EVALUATION.md)** - Reproducible quality metrics
-- **[RAG Data Preparation Guide](docs/RAG_DATA_PREPARATION_GUIDE.md)** - Deep dive into RAG concepts
+- **[RAGフレンドリーなドキュメントの作成](docs/WRITING_RAG_FRIENDLY_DOCUMENTATION.md)** - 包括的な執筆ベストプラクティス
+- **[ドキュメント設計評価](docs/DOCUMENT_DESIGN_EVALUATION.md)** - 再現可能な品質メトリクス
+- **[RAGデータ準備ガイド](docs/RAG_DATA_PREPARATION_GUIDE.md)** - RAG概念の深堀り
 
-## Project Structure
+## プロジェクト構造
 
 ```
 test-smith/
-├── main.py                          # Entry point and CLI
-├── pytest.ini                       # Pytest configuration
-├── chroma_explorer.ipynb            # Analysis notebook
-├── PREPROCESSOR_QUICKSTART.md       # Quick start guide
-├── tests/                           # Test suite
-│   ├── conftest.py                 # Shared fixtures and mocks
-│   ├── unit/                        # Unit tests
-│   │   ├── test_nodes/             # Node unit tests
-│   │   ├── test_graphs/            # Graph tests
-│   │   └── test_preprocessor/      # Preprocessor tests
-│   └── integration/                 # Integration tests
-├── scripts/                         # Organized utility scripts
-│   ├── ingest/                      # Knowledge base ingestion
-│   │   ├── ingest.py               # Basic document ingestion
-│   │   ├── ingest_diagnostic.py    # Diagnostic ingestion
-│   │   ├── ingest_with_preprocessor.py # Production ingestion
-│   │   └── clean_and_reingest.sh   # Automated clean re-ingest
-│   ├── testing/                     # Test scripts
+├── main.py                          # エントリーポイントとCLI
+├── pytest.ini                       # Pytest設定
+├── chroma_explorer.ipynb            # 分析ノートブック
+├── PREPROCESSOR_QUICKSTART.md       # クイックスタートガイド
+├── tests/                           # テストスイート
+│   ├── conftest.py                 # 共有フィクスチャとモック
+│   ├── unit/                        # ユニットテスト
+│   │   ├── test_nodes/             # ノードユニットテスト
+│   │   ├── test_graphs/            # グラフテスト
+│   │   └── test_preprocessor/      # 前処理テスト
+│   └── integration/                 # 統合テスト
+├── scripts/                         # 整理されたユーティリティスクリプト
+│   ├── ingest/                      # 知識ベース取り込み
+│   │   ├── ingest.py               # 基本ドキュメント取り込み
+│   │   ├── ingest_diagnostic.py    # 診断取り込み
+│   │   ├── ingest_with_preprocessor.py # 本番取り込み
+│   │   └── clean_and_reingest.sh   # 自動クリーン再取り込み
+│   ├── testing/                     # テストスクリプト
 │   │   ├── test_gemini_models.py
 │   │   ├── test_langsmith_monitoring.py
 │   │   └── test_phase4_dynamic_replanning.py
-│   ├── utils/                       # Utility scripts
+│   ├── utils/                       # ユーティリティスクリプト
 │   │   ├── switch_model_provider.py
 │   │   ├── verify_model_provider.py
 │   │   └── update_node_logging.py
-│   └── visualization/               # Visualization scripts
-│       ├── visualize_graphs.py     # Generate graph diagrams
+│   └── visualization/               # 可視化スクリプト
+│       ├── visualize_graphs.py     # グラフダイアグラム生成
 │       └── visualize_causal_graph.py
-├── evaluation/                      # Evaluation framework
-│   ├── evaluate_agent.py           # LangSmith evaluation runner
-│   ├── evaluators.py               # Heuristic + LLM evaluators
-│   ├── datasets/                    # Test datasets
-│   └── results/                     # Evaluation results
-├── docs/                            # Documentation
-│   ├── system-overview.md           # Architecture deep dive
-│   ├── GEMINI.md                    # Gemini API integration
+├── evaluation/                      # 評価フレームワーク
+│   ├── evaluate_agent.py           # LangSmith評価ランナー
+│   ├── evaluators.py               # ヒューリスティック + LLM評価者
+│   ├── datasets/                    # テストデータセット
+│   └── results/                     # 評価結果
+├── docs/                            # ドキュメント
+│   ├── system-overview.md           # アーキテクチャの詳細
+│   ├── GEMINI.md                    # Gemini API統合
 │   ├── RAG_DATA_PREPARATION_GUIDE.md
 │   ├── WRITING_RAG_FRIENDLY_DOCUMENTATION.md
 │   └── DOCUMENT_DESIGN_EVALUATION.md
-├── src/                             # Source code
-│   ├── graph.py                     # Workflow definition
-│   ├── models.py                    # LLM configurations
-│   ├── schemas.py                   # Data schemas
-│   ├── graphs/                      # Multiple graph workflows
+├── src/                             # ソースコード
+│   ├── graph.py                     # ワークフロー定義
+│   ├── models.py                    # LLM設定
+│   ├── schemas.py                   # データスキーマ
+│   ├── graphs/                      # 複数のグラフワークフロー
 │   │   ├── deep_research_graph.py
 │   │   ├── quick_research_graph.py
 │   │   ├── fact_check_graph.py
 │   │   ├── comparative_graph.py
 │   │   └── causal_inference_graph.py
-│   ├── nodes/                       # Agent nodes
+│   ├── nodes/                       # エージェントノード
 │   │   ├── planner_node.py
 │   │   ├── searcher_node.py
 │   │   ├── rag_retriever_node.py
 │   │   ├── analyzer_node.py
 │   │   ├── evaluator_node.py
 │   │   └── synthesizer_node.py
-│   ├── prompts/                     # Prompt templates
-│   └── preprocessor/                # Preprocessing pipeline
-│       ├── document_analyzer.py     # Quality analysis
-│       ├── chunking_strategy.py     # Smart chunking
-│       ├── content_cleaner.py       # Deduplication
-│       └── quality_metrics.py       # Validation
-├── documents/                       # Source documents (gitignored)
-└── chroma_db/                       # Vector database (gitignored)
+│   ├── prompts/                     # プロンプトテンプレート
+│   └── preprocessor/                # 前処理パイプライン
+│       ├── document_analyzer.py     # 品質分析
+│       ├── chunking_strategy.py     # スマートチャンキング
+│       ├── content_cleaner.py       # 重複除去
+│       └── quality_metrics.py       # 検証
+├── documents/                       # ソースドキュメント（gitignore）
+└── chroma_db/                       # ベクトルデータベース（gitignore）
 ```
 
-## Monitoring & Observability
+## 監視と可観測性
 
-### Structured Logging
+### 構造化ロギング
 
-Test-Smith uses `structlog` for machine-readable, queryable logging.
+Test-Smithは機械可読でクエリ可能なロギングのため`structlog`を使用します。
 
-**Features:**
-- **Contextual logging**: Automatic binding of query, node, thread_id
-- **Performance metrics**: Automatic timing of operations
-- **Development-friendly**: Human-readable console output
-- **Production-ready**: JSON output for log aggregation
+**機能:**
+- **コンテキストロギング**: query、node、thread_idの自動バインディング
+- **パフォーマンスメトリクス**: 操作の自動タイミング
+- **開発フレンドリー**: 人間可読なコンソール出力
+- **本番対応**: ログ集約のためのJSON出力
 
-**Configuration** (in `.env`):
+**設定**（`.env`内）:
 ```bash
-STRUCTURED_LOGS_JSON="false"  # false for dev, true for production
+STRUCTURED_LOGS_JSON="false"  # 開発用はfalse、本番用はtrue
 LOG_LEVEL="INFO"  # DEBUG, INFO, WARNING, ERROR
 ```
 
-**Log Output Example** (Development):
+**ログ出力例**（開発）:
 ```
 2025-01-24T10:30:45.123Z [info] node_start node=planner query="What is TDD?" model=gemini/gemini-2.5-flash
 2025-01-24T10:30:45.456Z [info] operation_complete operation=kb_contents_check duration_ms=123.45
@@ -516,201 +516,201 @@ LOG_LEVEL="INFO"  # DEBUG, INFO, WARNING, ERROR
 2025-01-24T10:30:47.892Z [info] node_end node=planner execution_time_ms=2769.12 status=success
 ```
 
-**Benefits:**
-- Track performance bottlenecks
-- Debug with rich context
-- Analyze query patterns
-- Monitor error rates
+**メリット:**
+- パフォーマンスボトルネックの追跡
+- 豊富なコンテキストでのデバッグ
+- クエリパターンの分析
+- エラー率の監視
 
-📖 **Full Guide**: [docs/STRUCTURED_LOGGING.md](docs/STRUCTURED_LOGGING.md)
+📖 **完全ガイド**: [docs/STRUCTURED_LOGGING.md](docs/STRUCTURED_LOGGING.md)
 
-### LangSmith Tracing
+### LangSmithトレーシング
 
-1. Navigate to your LangSmith dashboard
-2. Select project "deep-research-v1-proto"
-3. View detailed execution traces:
-   - Node-by-node execution flow
-   - Input/output for each agent
-   - Token usage and latency
-   - Error tracking
+1. LangSmithダッシュボードにログイン
+2. プロジェクト"deep-research-v1-proto"を選択
+3. 詳細な実行トレースを表示:
+   - ノードごとの実行フロー
+   - 各エージェントの入出力
+   - トークン使用量とレイテンシ
+   - エラー追跡
 
-### Knowledge Base Quality Monitoring
+### 知識ベース品質監視
 
-**Check After Each Ingestion:**
+**各取り込み後にチェック:**
 
 ```bash
-# Review ingestion log
+# 取り込みログを確認
 cat ingestion_preprocessed_*.log
 
-# Look for these sections:
-# - DOCUMENT ANALYSIS REPORT (quality scores)
-# - CHUNKING STATISTICS (chunk distribution)
-# - CONTENT CLEANING STATISTICS (duplication rates)
-# - QUALITY METRICS REPORT (overall quality score)
+# 以下のセクションを確認:
+# - DOCUMENT ANALYSIS REPORT（品質スコア）
+# - CHUNKING STATISTICS（チャンク分布）
+# - CONTENT CLEANING STATISTICS（重複率）
+# - QUALITY METRICS REPORT（全体品質スコア）
 ```
 
-**Monthly Evaluation:**
+**月次評価:**
 
-1. Run ingestion: `python scripts/ingest/ingest_with_preprocessor.py`
-2. Extract metrics from log file
-3. Run PCA analysis in notebook (Section 3.0)
-4. Record scores and track progress
-5. Identify and fix weak areas
+1. 取り込みを実行: `python scripts/ingest/ingest_with_preprocessor.py`
+2. ログファイルからメトリクスを抽出
+3. ノートブックでPCA分析を実行（Section 3.0）
+4. スコアを記録し進捗を追跡
+5. 弱い領域を特定し修正
 
-## Customization
+## カスタマイゼーション
 
-### Changing LLMs
+### LLMの変更
 
-**Switch Between Gemini and Ollama:**
+**GeminiとOllamaの切り替え:**
 
-Simply change the `MODEL_PROVIDER` in your `.env` file:
+`.env`ファイルの`MODEL_PROVIDER`を変更するだけです:
 
 ```bash
-# Use Google Gemini (default)
+# Google Geminiを使用（デフォルト）
 MODEL_PROVIDER=gemini
 
-# Or use local Ollama models
+# またはローカルOllamaモデルを使用
 MODEL_PROVIDER=ollama
 ```
 
-**Customize Gemini Models:**
+**Geminiモデルのカスタマイズ:**
 
-Edit `src/models.py` to change which Gemini model is used:
+`src/models.py`を編集してどのGeminiモデルを使用するか変更:
 
 ```python
-# Default Gemini models
-DEFAULT_GEMINI_MODEL = "gemini-1.5-flash"  # Fast and efficient
-ADVANCED_GEMINI_MODEL = "gemini-1.5-pro"   # For complex tasks
+# デフォルトのGeminiモデル
+DEFAULT_GEMINI_MODEL = "gemini-1.5-flash"  # 高速で効率的
+ADVANCED_GEMINI_MODEL = "gemini-1.5-pro"   # 複雑なタスク用
 
-# Or use gemini-2.0-flash-exp for latest experimental features
+# または最新の実験的機能にgemini-2.0-flash-expを使用
 DEFAULT_GEMINI_MODEL = "gemini-2.0-flash-exp"
 ```
 
-**Customize Temperature per Agent:**
+**エージェントごとの温度カスタマイズ:**
 
 ```python
 def get_planner_model():
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
         ollama_model="llama3",
-        temperature=0.7  # Adjust this value (0.0-1.0)
+        temperature=0.7  # この値を調整（0.0-1.0）
     )
 ```
 
-### Modifying Agents
+### エージェントの変更
 
-Edit prompts in `src/prompts/`:
+`src/prompts/`のプロンプトを編集:
 
 ```python
 # src/prompts/planner_prompt.py
 PLANNER_PROMPT = PromptTemplate(
-    template="Your custom prompt here...",
+    template="ここにカスタムプロンプト...",
     input_variables=["query", "feedback"]
 )
 ```
 
-### Tuning Preprocessing
+### 前処理のチューニング
 
-Edit `scripts/ingest/ingest_with_preprocessor.py`:
+`scripts/ingest/ingest_with_preprocessor.py`を編集:
 
 ```python
 ingestion = PreprocessedIngestion(
-    min_quality_score=0.5,              # Quality threshold
+    min_quality_score=0.5,              # 品質閾値
     enable_near_duplicate_detection=True,
     enable_boilerplate_removal=True
 )
 
 cleaner = ContentCleaner(
-    similarity_threshold=0.95,          # Near-duplicate threshold
-    min_content_length=100              # Minimum chunk size
+    similarity_threshold=0.95,          # 近似重複閾値
+    min_content_length=100              # 最小チャンクサイズ
 )
 ```
 
-## Troubleshooting
+## トラブルシューティング
 
-### Poor Retrieval Quality
+### 検索品質が悪い
 
-**Symptoms:**
-- RAG retriever returns irrelevant chunks
-- Answers lack domain-specific knowledge
-- Same chunks retrieved for different queries
+**症状:**
+- RAG検索者が無関係なチャンクを返す
+- 回答にドメイン固有の知識が欠けている
+- 異なるクエリに対して同じチャンクが検索される
 
-**Diagnosis:**
+**診断:**
 ```bash
-# Run diagnostic ingestion
+# 診断取り込みを実行
 python scripts/ingest/ingest_diagnostic.py
 
-# Check logs for:
-# - High duplication rate (>15%)
-# - Small median chunk size (<300 chars)
-# - Low quality score (<0.5)
+# ログで以下を確認:
+# - 高い重複率（>15%）
+# - 小さいチャンクサイズの中央値（<300文字）
+# - 低い品質スコア（<0.5）
 ```
 
-**Solutions:**
-1. Review source documents (follow `WRITING_RAG_FRIENDLY_DOCUMENTATION.md`)
-2. Re-ingest with preprocessor: `./scripts/ingest/clean_and_reingest.sh`
-3. Check PCA analysis in notebook - should need 20-40 components for 95% variance
+**解決策:**
+1. ソースドキュメントを確認（`WRITING_RAG_FRIENDLY_DOCUMENTATION.md`に従う）
+2. 前処理で再取り込み: `./scripts/ingest/clean_and_reingest.sh`
+3. ノートブックでPCA分析を確認 - 95%分散に20-40成分が必要なはず
 
-### "All Embeddings Look Similar" Issue
+### 「すべての埋め込みが似ている」問題
 
-**Symptoms:**
-- PCA shows 1-10 components for 99% variance
-- Visualizations show all points clustered together
-- Mean cosine similarity >0.95
+**症状:**
+- PCAが99%分散に1-10成分を示す
+- 可視化ですべての点が一緒にクラスター化されている
+- 平均コサイン類似度 >0.95
 
-**Root Causes:**
-- Chunks too small (UnstructuredLoader over-splitting)
-- High duplication (repeated headers/footers)
-- Low content diversity
+**根本原因:**
+- チャンクが小さすぎる（UnstructuredLoaderの過剰分割）
+- 高い重複（繰り返しヘッダー/フッター）
+- 低いコンテンツ多様性
 
-**Solution:**
-Use `scripts/ingest/ingest_with_preprocessor.py` which addresses all these issues automatically.
+**解決策:**
+これらの問題をすべて自動的に解決する`scripts/ingest/ingest_with_preprocessor.py`を使用。
 
-### Ollama Connection Errors
+### Ollama接続エラー
 
 ```bash
-# Check Ollama is running
+# Ollamaが実行されているか確認
 ollama list
 
-# Verify models are pulled
+# モデルがプルされているか確認
 ollama pull llama3
 ollama pull command-r
 ollama pull nomic-embed-text
 
-# Test embedding
+# 埋め込みをテスト
 ollama run nomic-embed-text
 ```
 
-## Documentation
+## ドキュメント
 
-- **[System Overview](docs/system-overview.md)** - Comprehensive architecture guide
-- **[Agent Graph](docs/agent_graph.md)** - Workflow documentation
-- **[RAG Data Preparation](docs/RAG_DATA_PREPARATION_GUIDE.md)** - Complete RAG guide
-- **[Writing Documentation](docs/WRITING_RAG_FRIENDLY_DOCUMENTATION.md)** - Best practices
-- **[Design Evaluation](docs/DOCUMENT_DESIGN_EVALUATION.md)** - Quality metrics
-- **[CLAUDE.md](CLAUDE.md)** - Quick reference for Claude Code
-- **[Preprocessor Quickstart](PREPROCESSOR_QUICKSTART.md)** - Getting started
+- **[システム概要](docs/system-overview.md)** - 包括的なアーキテクチャガイド
+- **[エージェントグラフ](docs/agent_graph.md)** - ワークフロードキュメント
+- **[RAGデータ準備](docs/RAG_DATA_PREPARATION_GUIDE.md)** - 完全なRAGガイド
+- **[ドキュメントの作成](docs/WRITING_RAG_FRIENDLY_DOCUMENTATION.md)** - ベストプラクティス
+- **[設計評価](docs/DOCUMENT_DESIGN_EVALUATION.md)** - 品質メトリクス
+- **[CLAUDE.md](CLAUDE.md)** - Claude Codeのクイックリファレンス
+- **[Preprocessor Quickstart](PREPROCESSOR_QUICKSTART.md)** - 始め方
 
-## Contributing
+## コントリビューション
 
-When adding to the knowledge base:
+知識ベースに追加する際:
 
-1. Follow guidelines in `docs/WRITING_RAG_FRIENDLY_DOCUMENTATION.md`
-2. Run `python scripts/ingest/ingest_with_preprocessor.py` to ingest
-3. Check quality metrics in log file
-4. Run notebook Section 2.2 for validation
-5. Track quality score over time
+1. `docs/WRITING_RAG_FRIENDLY_DOCUMENTATION.md`のガイドラインに従う
+2. `python scripts/ingest/ingest_with_preprocessor.py`を実行して取り込む
+3. ログファイルで品質メトリクスを確認
+4. 検証のためノートブックSection 2.2を実行
+5. 品質スコアを経時的に追跡
 
-## License
+## ライセンス
 
 [Your License Here]
 
-## Acknowledgments
+## 謝辞
 
-Built with:
-- [LangGraph](https://github.com/langchain-ai/langgraph) - Workflow orchestration
-- [LangChain](https://github.com/langchain-ai/langchain) - LLM framework
-- [Ollama](https://ollama.ai/) - Local LLM serving
-- [ChromaDB](https://www.trychroma.com/) - Vector database
-- [Tavily](https://tavily.com/) - Web search API
-- [LangSmith](https://smith.langchain.com/) - Observability platform
+以下を使用して構築:
+- [LangGraph](https://github.com/langchain-ai/langgraph) - ワークフローオーケストレーション
+- [LangChain](https://github.com/langchain-ai/langchain) - LLMフレームワーク
+- [Ollama](https://ollama.ai/) - ローカルLLMサービング
+- [ChromaDB](https://www.trychroma.com/) - ベクトルデータベース
+- [Tavily](https://tavily.com/) - Web検索API
+- [LangSmith](https://smith.langchain.com/) - 可観測性プラットフォーム

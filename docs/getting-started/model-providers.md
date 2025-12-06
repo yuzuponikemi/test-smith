@@ -1,40 +1,40 @@
-# Model Providers Guide
+# モデルプロバイダーガイド
 
-Test-Smith supports two model providers: **Ollama** (local) and **Gemini** (cloud).
+Test-Smithは2つのモデルプロバイダーをサポートします: **Ollama**（ローカル）と**Gemini**（クラウド）。
 
 ---
 
-## Quick Switch
+## クイック切り替え
 
 ```bash
-# Switch to Gemini (fast, cloud)
+# Geminiに切り替え（高速、クラウド）
 python scripts/utils/switch_model_provider.py gemini
 
-# Switch to Ollama (free, local)
+# Ollamaに切り替え（無料、ローカル）
 python scripts/utils/switch_model_provider.py ollama
 
-# Check current provider
+# 現在のプロバイダーを確認
 python scripts/utils/switch_model_provider.py status
 ```
 
 ---
 
-## Provider Comparison
+## プロバイダー比較
 
-| Feature | Ollama | Gemini |
+| 機能 | Ollama | Gemini |
 |---------|--------|--------|
-| **Cost** | Free | Pay-per-use (~$0.01-0.05/query) |
-| **Speed** | 10-30s per response | 1-3s per response |
-| **Privacy** | All data local | Data sent to Google |
-| **Offline** | Yes | No |
-| **Setup** | Install + pull models | API key only |
-| **Consistency** | Medium | High |
+| **コスト** | 無料 | 従量課金（約$0.01-0.05/クエリ） |
+| **速度** | レスポンスあたり10-30秒 | レスポンスあたり1-3秒 |
+| **プライバシー** | すべてのデータがローカル | データがGoogleに送信 |
+| **オフライン** | はい | いいえ |
+| **セットアップ** | インストール + モデルプル | APIキーのみ |
+| **一貫性** | 中 | 高 |
 
 ---
 
-## Ollama Setup
+## Ollamaセットアップ
 
-### Installation
+### インストール
 
 ```bash
 # Linux
@@ -44,69 +44,69 @@ curl -fsSL https://ollama.ai/install.sh | sh
 brew install ollama
 
 # Windows
-# Download from https://ollama.ai/download
+# https://ollama.ai/downloadからダウンロード
 ```
 
-### Pull Required Models
+### 必要なモデルをプル
 
 ```bash
-ollama pull llama3           # General reasoning
-ollama pull command-r        # Evaluation and synthesis
-ollama pull nomic-embed-text # Embeddings for RAG
+ollama pull llama3           # 一般的な推論
+ollama pull command-r        # 評価と統合
+ollama pull nomic-embed-text # RAG用埋め込み
 
-# Verify
+# 確認
 ollama list
 ```
 
-### Configuration
+### 設定
 
-In `.env`:
+`.env`内:
 ```bash
 MODEL_PROVIDER="ollama"
-OLLAMA_BASE_URL="http://localhost:11434"  # Optional, default
+OLLAMA_BASE_URL="http://localhost:11434"  # オプション、デフォルト
 ```
 
-### Hardware Requirements
+### ハードウェア要件
 
-| Level | RAM | CPU | GPU |
+| レベル | RAM | CPU | GPU |
 |-------|-----|-----|-----|
-| Minimum | 16GB | 4-core | Optional |
-| Recommended | 32GB | 8-core | 8GB VRAM |
-| Optimal | 64GB | 16-core | 16GB VRAM |
+| 最小 | 16GB | 4コア | オプション |
+| 推奨 | 32GB | 8コア | 8GB VRAM |
+| 最適 | 64GB | 16コア | 16GB VRAM |
 
-### Troubleshooting
+### トラブルシューティング
 
-**Cannot connect to Ollama:**
+**Ollamaに接続できない:**
 ```bash
-# Start Ollama service
+# Ollamaサービスを起動
 ollama serve
 
-# Check if running
+# 実行中か確認
 ollama list
 ```
 
-**Model not found:**
+**モデルが見つからない:**
 ```bash
 ollama pull llama3
 ```
 
-**Slow performance:**
-- Upgrade hardware (more RAM, better GPU)
-- Use smaller models (but lower quality)
-- Close other applications
+**パフォーマンスが遅い:**
+- ハードウェアをアップグレード（より多くのRAM、より良いGPU）
+- より小さいモデルを使用（ただし品質が低下）
+- 他のアプリケーションを閉じる
 
 ---
 
-## Gemini Setup
+## Geminiセットアップ
 
-### Get API Key
+### APIキーを取得
 
-1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Sign in with Google account
-3. Click "Create API Key"
-4. Copy the key (starts with `AIza...`)
+1. [Google AI Studio](https://makersuite.google.com/app/apikey)にアクセス
+2. Googleアカウントでサインイン
+3. 「APIキーを作成」をクリック
+4. キーをコピー（`AIza...`で始まる）
 
-### Test API Key
+### APIキーをテスト
 
 ```bash
 curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=YOUR_API_KEY" \
@@ -115,158 +115,158 @@ curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generat
   -d '{"contents":[{"parts":[{"text":"Say hello"}]}]}'
 ```
 
-### Configuration
+### 設定
 
-In `.env`:
+`.env`内:
 ```bash
 GOOGLE_API_KEY="AIza..."
 MODEL_PROVIDER="gemini"
 ```
 
-### Model Options
+### モデルオプション
 
-| Model | Speed | Quality | Cost | Use For |
+| モデル | 速度 | 品質 | コスト | 用途 |
 |-------|-------|---------|------|---------|
-| `gemini-pro` | Fast | Good | Low | Most tasks |
-| `gemini-1.5-flash` | Very Fast | Good | Very Low | Speed-critical |
-| `gemini-1.5-pro` | Medium | Best | Higher | Critical analysis |
+| `gemini-pro` | 高速 | 良い | 低 | ほとんどのタスク |
+| `gemini-1.5-flash` | 非常に高速 | 良い | 非常に低い | 速度重視 |
+| `gemini-1.5-pro` | 中 | 最高 | 高い | 重要な分析 |
 
-To change model, edit `src/models.py`:
+モデルを変更するには、`src/models.py`を編集:
 ```python
-DEFAULT_GEMINI_MODEL = "gemini-1.5-flash"  # Default: "gemini-pro"
+DEFAULT_GEMINI_MODEL = "gemini-1.5-flash"  # デフォルト: "gemini-pro"
 ```
 
-### Cost Estimation
+### コスト見積もり
 
-**Free Tier (Google AI Studio):**
-- 60 requests per minute
-- Sufficient for development
+**無料ティア（Google AI Studio）:**
+- 1分あたり60リクエスト
+- 開発には十分
 
-**With Billing:**
-- gemini-pro: ~$0.0005 per 1K characters
-- Full research query: ~$0.01-0.05
-- 100 queries/day: ~$1-5/day
+**課金あり:**
+- gemini-pro: 1K文字あたり約$0.0005
+- 完全な研究クエリ: 約$0.01-0.05
+- 100クエリ/日: 約$1-5/日
 
-### Troubleshooting
+### トラブルシューティング
 
 **404 models/gemini-pro not found:**
-- Verify API key at https://makersuite.google.com/app/apikey
-- Use Google AI Studio key, not Google Cloud Console
+- https://makersuite.google.com/app/apikeyでAPIキーを確認
+- Google Cloud ConsoleではなくGoogle AI Studioのキーを使用
 
 **403 Permission denied:**
-- Check quota at https://makersuite.google.com/
-- May need to enable billing for higher quotas
+- https://makersuite.google.com/でクォータを確認
+- より高いクォータのために課金を有効にする必要がある場合があります
 
-**API timeout:**
-- Check internet connection
-- Retry in a few minutes
-- Switch to Ollama temporarily
-
----
-
-## When to Use Each
-
-### Use Ollama When:
-
-- **Developing and iterating** - Free unlimited testing
-- **Privacy required** - Sensitive data stays local
-- **Offline work** - No internet needed
-- **Learning** - Experiment without cost concerns
-
-```bash
-python scripts/utils/switch_model_provider.py ollama
-python main.py run "Test query" --graph quick_research
-```
-
-### Use Gemini When:
-
-- **Production runs** - Fast, consistent results
-- **Large-scale evaluation** - 5-10x faster
-- **Time-sensitive** - Quick turnaround needed
-- **Comparison testing** - Consistent benchmarks
-
-```bash
-python scripts/utils/switch_model_provider.py gemini
-python main.py run "Production query" --graph deep_research
-```
-
-### Hybrid Approach (Recommended)
-
-```bash
-# Development: Ollama (free)
-python scripts/utils/switch_model_provider.py ollama
-python main.py run "Test query" --graph quick_research
-
-# Production: Gemini (fast)
-python scripts/utils/switch_model_provider.py gemini
-python main.py run "Final analysis" --graph deep_research
-```
+**APIタイムアウト:**
+- インターネット接続を確認
+- 数分後に再試行
+- 一時的にOllamaに切り替え
 
 ---
 
-## Model Configuration Details
+## いつどちらを使用するか
 
-### Current Model Assignments
+### Ollamaを使用する場合:
 
-| Task | Ollama Model | Gemini Model |
+- **開発と反復** - 無料で無制限のテスト
+- **プライバシーが必要** - 機密データはローカルに保持
+- **オフライン作業** - インターネット不要
+- **学習** - コストを気にせず実験
+
+```bash
+python scripts/utils/switch_model_provider.py ollama
+python main.py run "テストクエリ" --graph quick_research
+```
+
+### Geminiを使用する場合:
+
+- **本番実行** - 高速で一貫した結果
+- **大規模評価** - 5-10倍高速
+- **時間に敏感** - 迅速なターンアラウンドが必要
+- **比較テスト** - 一貫したベンチマーク
+
+```bash
+python scripts/utils/switch_model_provider.py gemini
+python main.py run "本番クエリ" --graph deep_research
+```
+
+### ハイブリッドアプローチ（推奨）
+
+```bash
+# 開発: Ollama（無料）
+python scripts/utils/switch_model_provider.py ollama
+python main.py run "テストクエリ" --graph quick_research
+
+# 本番: Gemini（高速）
+python scripts/utils/switch_model_provider.py gemini
+python main.py run "最終分析" --graph deep_research
+```
+
+---
+
+## モデル設定の詳細
+
+### 現在のモデル割り当て
+
+| タスク | Ollamaモデル | Geminiモデル |
 |------|--------------|--------------|
-| Planning | llama3 | gemini-pro |
-| Analysis | command-r | gemini-pro |
-| Evaluation | command-r | gemini-pro |
-| Synthesis | command-r | gemini-pro |
-| Embeddings | nomic-embed-text | N/A (uses Ollama) |
+| 計画 | llama3 | gemini-pro |
+| 分析 | command-r | gemini-pro |
+| 評価 | command-r | gemini-pro |
+| 統合 | command-r | gemini-pro |
+| 埋め込み | nomic-embed-text | N/A（Ollamaを使用） |
 
-### Customizing Models
+### モデルのカスタマイズ
 
-Edit `src/models.py`:
+`src/models.py`を編集:
 
 ```python
 def get_planner_model():
     return _get_model(
-        gemini_model="gemini-1.5-flash",  # Faster for planning
+        gemini_model="gemini-1.5-flash",  # 計画には高速
         ollama_model="llama3",
         temperature=0.7
     )
 
 def get_evaluation_model():
     return _get_model(
-        gemini_model="gemini-pro",       # Better quality for evaluation
+        gemini_model="gemini-pro",       # 評価にはより良い品質
         ollama_model="command-r",
-        temperature=0.5                   # More consistent
+        temperature=0.5                   # より一貫性
     )
 ```
 
 ---
 
-## Performance Benchmarks
+## パフォーマンスベンチマーク
 
-### 20 Example Evaluation
+### 20例の評価
 
-| Provider | Total Time | Avg per Query | Cost |
+| プロバイダー | 合計時間 | クエリあたり平均 | コスト |
 |----------|------------|---------------|------|
-| Gemini | 5-10 min | 15-30s | $0.01-0.05 |
-| Ollama | 30-60 min | 90-180s | $0 |
+| Gemini | 5-10分 | 15-30秒 | $0.01-0.05 |
+| Ollama | 30-60分 | 90-180秒 | $0 |
 
-### Complex Hierarchical Query
+### 複雑な階層的クエリ
 
-| Provider | Time | Subtasks | Notes |
+| プロバイダー | 時間 | サブタスク | 備考 |
 |----------|------|----------|-------|
-| Gemini | 2-5 min | 5-7 | Consistent |
-| Ollama | 10-20 min | 5-7 | Hardware dependent |
+| Gemini | 2-5分 | 5-7 | 一貫性あり |
+| Ollama | 10-20分 | 5-7 | ハードウェア依存 |
 
 ---
 
-## Summary
+## まとめ
 
-- **Development**: Use Ollama (free, unlimited, private)
-- **Production**: Use Gemini (fast, consistent)
-- **Switch easily**: `python scripts/utils/switch_model_provider.py <provider>`
-- **Check status**: `python scripts/utils/switch_model_provider.py status`
+- **開発**: Ollamaを使用（無料、無制限、プライベート）
+- **本番**: Geminiを使用（高速、一貫性）
+- **簡単に切り替え**: `python scripts/utils/switch_model_provider.py <provider>`
+- **ステータス確認**: `python scripts/utils/switch_model_provider.py status`
 
 ---
 
-## Next Steps
+## 次のステップ
 
-- **[Quick Start](quick-start.md)** - Run your first query
-- **[Evaluation Guide](../development/evaluation-guide.md)** - Benchmark with LangSmith
-- **[System Overview](../architecture/system-overview.md)** - Understand model usage in architecture
+- **[クイックスタート](quick-start.md)** - 最初のクエリを実行
+- **[評価ガイド](../development/evaluation-guide.md)** - LangSmithでベンチマーク
+- **[システム概要](../architecture/system-overview.md)** - アーキテクチャでのモデル使用を理解

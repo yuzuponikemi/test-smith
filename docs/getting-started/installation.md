@@ -1,34 +1,34 @@
-# Installation & Setup
+# インストールとセットアップ
 
-This guide covers the complete setup process for Test-Smith using **UV**, the modern Python package manager.
-
----
-
-## Prerequisites
-
-### Required Software
-
-- **Python 3.9.2+** - Core runtime (UV can install this for you)
-- **UV** - Modern package manager ([Installation guide](#1-install-uv))
-- **Git** - Version control
-
-### Optional: LLM Providers
-
-Choose one or both:
-
-- **Google Gemini API** (Recommended) - Cloud-based LLMs ([Get free key](https://makersuite.google.com/app/apikey))
-- **Ollama** (Optional) - Local LLM inference ([Download](https://ollama.ai/))
-
-### Required API Keys
-
-- **Tavily API Key** - Web search ([Get free key](https://tavily.com/))
-- **LangSmith API Key** (optional) - Observability ([Get free key](https://smith.langchain.com/))
+このガイドでは、**UV**（モダンなPythonパッケージマネージャー）を使用したTest-Smithの完全なセットアッププロセスをカバーします。
 
 ---
 
-## Installation Steps
+## 前提条件
 
-### 1. Install UV
+### 必要なソフトウェア
+
+- **Python 3.9.2+** - コアランタイム（UVがインストール可能）
+- **UV** - モダンなパッケージマネージャー（[インストールガイド](#1-uvのインストール)）
+- **Git** - バージョン管理
+
+### オプション: LLMプロバイダー
+
+以下から1つまたは両方を選択:
+
+- **Google Gemini API**（推奨） - クラウドベースのLLM（[無料キーを取得](https://makersuite.google.com/app/apikey)）
+- **Ollama**（オプション） - ローカルLLM推論（[ダウンロード](https://ollama.ai/)）
+
+### 必要なAPIキー
+
+- **Tavily APIキー** - Web検索（[無料キーを取得](https://tavily.com/)）
+- **LangSmith APIキー**（オプション） - 可観測性（[無料キーを取得](https://smith.langchain.com/)）
+
+---
+
+## インストール手順
+
+### 1. UVのインストール
 
 **macOS/Linux:**
 ```bash
@@ -40,70 +40,70 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-**Verify installation:**
+**インストールの確認:**
 ```bash
 uv --version
 ```
 
-### 2. Clone Repository
+### 2. リポジトリのクローン
 
 ```bash
 git clone https://github.com/your-repo/test-smith.git
 cd test-smith
 ```
 
-### 3. Install Dependencies
+### 3. 依存関係のインストール
 
-UV will automatically create a virtual environment and install all dependencies:
+UVは自動的に仮想環境を作成し、すべての依存関係をインストールします:
 
 ```bash
-# Install all dependencies (including dev tools)
+# すべての依存関係をインストール（devツールを含む）
 uv sync --all-extras
 ```
 
-**What happens:**
-- ✅ Creates `.venv/` automatically
-- ✅ Installs all dependencies from `pyproject.toml`
-- ✅ Generates `uv.lock` for reproducibility
-- ✅ Takes ~5 seconds (vs ~2 minutes with pip!)
+**何が起こるか:**
+- ✅ `.venv/`を自動的に作成
+- ✅ `pyproject.toml`からすべての依存関係をインストール
+- ✅ 再現性のため`uv.lock`を生成
+- ✅ 約5秒で完了（pipの約2分と比較！）
 
-### 4. Configure LLM Provider
+### 4. LLMプロバイダーの設定
 
-#### Option A: Google Gemini (Recommended, Default)
+#### オプションA: Google Gemini（推奨、デフォルト）
 
-**Advantages:**
-- ✅ No local installation required
-- ✅ Faster inference
-- ✅ Lower resource usage
-- ✅ Free tier available
+**利点:**
+- ✅ ローカルインストール不要
+- ✅ 高速な推論
+- ✅ 低いリソース使用量
+- ✅ 無料ティアが利用可能
 
-**Setup:**
-1. Get API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Add to `.env` (see step 5)
-3. No additional setup needed!
+**セットアップ:**
+1. [Google AI Studio](https://makersuite.google.com/app/apikey)からAPIキーを取得
+2. `.env`に追加（ステップ5を参照）
+3. 追加のセットアップは不要！
 
-#### Option B: Ollama (Local Models)
+#### オプションB: Ollama（ローカルモデル）
 
-**Advantages:**
-- ✅ Fully offline
-- ✅ No API costs
-- ✅ Data privacy
+**利点:**
+- ✅ 完全にオフライン
+- ✅ APIコスト不要
+- ✅ データプライバシー
 
-**Setup:**
+**セットアップ:**
 ```bash
-# Install Ollama
+# Ollamaをインストール
 curl -fsSL https://ollama.ai/install.sh | sh
 
-# Pull required models
-ollama pull llama3           # Main reasoning model (4.7GB)
-ollama pull command-r        # Advanced reasoning (20GB)
-ollama pull nomic-embed-text # Embeddings (274MB)
+# 必要なモデルをプル
+ollama pull llama3           # メイン推論モデル（4.7GB）
+ollama pull command-r        # 高度な推論（20GB）
+ollama pull nomic-embed-text # 埋め込み（274MB）
 
-# Verify models
+# モデルを確認
 ollama list
 ```
 
-Expected output:
+期待される出力:
 ```
 NAME              ID          SIZE   MODIFIED
 llama3:latest     ...         4.7GB  ...
@@ -111,206 +111,206 @@ command-r:latest  ...         20GB   ...
 nomic-embed-text  ...         274MB  ...
 ```
 
-### 5. Configure Environment
+### 5. 環境の設定
 
-Create a `.env` file in the project root:
+プロジェクトルートに`.env`ファイルを作成:
 
-**For Google Gemini (Default):**
+**Google Gemini用（デフォルト）:**
 ```bash
-# Model Provider
+# モデルプロバイダー
 MODEL_PROVIDER="gemini"
 
-# Google Gemini API Key (required)
+# Google Gemini APIキー（必須）
 GOOGLE_API_KEY="your-google-api-key-here"
 
-# Web Search (required)
+# Web検索（必須）
 TAVILY_API_KEY="tvly-your-key-here"
 
-# LangSmith (optional - for observability)
+# LangSmith（オプション - 可観測性用）
 LANGCHAIN_TRACING_V2="true"
 LANGCHAIN_API_KEY="your-langsmith-key"
 LANGCHAIN_PROJECT="deep-research-v1-proto"
 
-# Logging (optional)
+# ロギング（オプション）
 STRUCTURED_LOGS_JSON="false"
 LOG_LEVEL="INFO"
 ```
 
-**For Ollama (Local):**
+**Ollama用（ローカル）:**
 ```bash
-# Model Provider
+# モデルプロバイダー
 MODEL_PROVIDER="ollama"
 
-# Web Search (required)
+# Web検索（必須）
 TAVILY_API_KEY="tvly-your-key-here"
 
-# LangSmith (optional - for observability)
+# LangSmith（オプション - 可観測性用）
 LANGCHAIN_TRACING_V2="true"
 LANGCHAIN_API_KEY="your-langsmith-key"
 LANGCHAIN_PROJECT="deep-research-v1-proto"
 
-# Logging (optional)
+# ロギング（オプション）
 STRUCTURED_LOGS_JSON="false"
 LOG_LEVEL="INFO"
 ```
 
-### 6. Verify Installation
+### 6. インストールの確認
 
 ```bash
-# Check version
+# バージョンを確認
 uv run python main.py --version
 
-# List available graphs
+# 利用可能なグラフを一覧表示
 uv run python main.py graphs
 
-# Run test query
-uv run python main.py run "What is LangGraph?"
+# テストクエリを実行
+uv run python main.py run "LangGraphとは何ですか？"
 ```
 
-**Expected output:**
-- Graph list showing available workflows
-- Research process with planner → searcher → analyzer → synthesizer
-- Final comprehensive report
+**期待される出力:**
+- 利用可能なワークフローを表示するグラフリスト
+- planner → searcher → analyzer → synthesizerの研究プロセス
+- 最終的な包括的レポート
 
 ---
 
-## Directory Structure
+## ディレクトリ構造
 
-After installation, your project should look like:
+インストール後、プロジェクトは以下のようになります:
 
 ```
 test-smith/
-├── .env                    # Environment configuration
-├── .venv/                  # Virtual environment (auto-created by UV)
-├── uv.lock                 # Dependency lock file
-├── pyproject.toml          # Project configuration & dependencies
-├── main.py                 # CLI entry point
-├── src/                    # Source code
-│   ├── graphs/             # Workflow definitions
-│   ├── nodes/              # Processing nodes
-│   ├── prompts/            # LLM prompts
-│   └── preprocessor/       # Document preprocessing
-├── documents/              # RAG source documents
-├── chroma_db/              # Vector database (created on first run)
-├── logs/                   # Execution logs
-└── reports/                # Generated reports
+├── .env                    # 環境設定
+├── .venv/                  # 仮想環境（UVが自動作成）
+├── uv.lock                 # 依存関係ロックファイル
+├── pyproject.toml          # プロジェクト設定と依存関係
+├── main.py                 # CLIエントリーポイント
+├── src/                    # ソースコード
+│   ├── graphs/             # ワークフロー定義
+│   ├── nodes/              # 処理ノード
+│   ├── prompts/            # LLMプロンプト
+│   └── preprocessor/       # ドキュメント前処理
+├── documents/              # RAGソースドキュメント
+├── chroma_db/              # ベクトルデータベース（初回実行時に作成）
+├── logs/                   # 実行ログ
+└── reports/                # 生成されたレポート
 ```
 
 ---
 
-## Troubleshooting
+## トラブルシューティング
 
-### UV Command Not Found
+### UVコマンドが見つからない
 
-**Solution:** Add UV to your PATH:
+**解決策:** UVをPATHに追加:
 
 ```bash
-# Add to ~/.bashrc or ~/.zshrc
+# ~/.bashrcまたは~/.zshrcに追加
 export PATH="$HOME/.local/bin:$PATH"
 
-# Reload shell
-source ~/.bashrc  # or source ~/.zshrc
+# シェルをリロード
+source ~/.bashrc  # またはsource ~/.zshrc
 ```
 
-### Ollama Won't Start (If using Ollama)
+### Ollamaが起動しない（Ollamaを使用する場合）
 
 ```bash
-# Check if Ollama is running
+# Ollamaが実行されているか確認
 ollama list
 
-# Start Ollama service
+# Ollamaサービスを起動
 ollama serve
 
-# Or restart Ollama app
+# またはOllamaアプリを再起動
 ```
 
-### Model Not Found (If using Ollama)
+### モデルが見つからない（Ollamaを使用する場合）
 
 ```bash
-# Pull missing model
+# 不足しているモデルをプル
 ollama pull llama3
 
-# Verify it's installed
+# インストールされているか確認
 ollama list
 ```
 
-### API Key Errors
+### APIキーエラー
 
 ```bash
-# Verify .env file exists
+# .envファイルが存在するか確認
 cat .env
 
-# Check environment variable is loaded
+# 環境変数がロードされているか確認
 uv run python -c "import os; from dotenv import load_dotenv; load_dotenv(); print(os.getenv('TAVILY_API_KEY'))"
 ```
 
-### Import Errors
+### インポートエラー
 
 ```bash
-# Regenerate lock file
+# ロックファイルを再生成
 uv lock
 
-# Reinstall dependencies
+# 依存関係を再インストール
 uv sync --all-extras
 ```
 
-### "No solution found" Dependency Error
+### 「解決策が見つかりません」依存関係エラー
 
-**This is the error you just fixed!**
+**これは修正したエラーです！**
 
-Solution: The `pyproject.toml` now has `requires-python = ">=3.9.2"` which resolves dependency conflicts.
+解決策: `pyproject.toml`に`requires-python = ">=3.9.2"`が設定され、依存関係の競合が解決されます。
 
 ```bash
-# If you still see this, try:
+# まだこれが表示される場合は、以下を試してください:
 uv lock --upgrade
 uv sync --all-extras
 ```
 
 ---
 
-## Legacy Installation (Not Recommended)
+## レガシーインストール（非推奨）
 
 <details>
-<summary>⚠️ Using pip (Deprecated)</summary>
+<summary>⚠️ pipを使用（非推奨）</summary>
 
-**Note:** This method is deprecated. Use UV for better performance and reproducibility.
+**注意:** この方法は非推奨です。より良いパフォーマンスと再現性のためUVを使用してください。
 
 ```bash
-# Clone repository
+# リポジトリをクローン
 git clone https://github.com/your-repo/test-smith.git
 cd test-smith
 
-# Create virtual environment
+# 仮想環境を作成
 python -m venv .venv
 source .venv/bin/activate  # Linux/Mac
-# or
+# または
 .venv\Scripts\activate     # Windows
 
-# Install dependencies
+# 依存関係をインストール
 pip install -e ".[dev]"
 ```
 
-**Why not pip?**
-- 🐌 10-100x slower than UV
-- ⚠️ No reproducible builds
-- 🔧 Manual venv management required
-- ❌ Weaker dependency resolution
+**なぜpipではないのか？**
+- 🐌 UVより10-100倍遅い
+- ⚠️ 再現可能なビルドなし
+- 🔧 手動venv管理が必要
+- ❌ より弱い依存関係解決
 
 </details>
 
 ---
 
-## Next Steps
+## 次のステップ
 
-- **[Quick Start](quick-start.md)** - Run your first research query
-- **[Model Providers](model-providers.md)** - Configure Ollama or Gemini
-- **[UV Usage Guide](../../.github/UV_GUIDE.md)** - Complete UV documentation
-- **[RAG Guide](../knowledge-base/rag-guide.md)** - Add documents to the knowledge base
+- **[クイックスタート](quick-start.md)** - 最初の研究クエリを実行
+- **[モデルプロバイダー](model-providers.md)** - OllamaまたはGeminiを設定
+- **[UV使用ガイド](../../.github/UV_GUIDE.md)** - 完全なUVドキュメント
+- **[RAGガイド](../knowledge-base/rag-guide.md)** - 知識ベースにドキュメントを追加
 
 ---
 
-## Additional Resources
+## 追加リソース
 
-- **[UV Documentation](https://docs.astral.sh/uv/)** - Official UV docs
-- **[UV Troubleshooting](../../.github/UV_GUIDE.md#-troubleshooting)** - Common issues and solutions
-- **[Migration from pip](../../.github/UV_GUIDE.md#-migration-from-pip)** - If you're used to pip
+- **[UVドキュメント](https://docs.astral.sh/uv/)** - 公式UVドキュメント
+- **[UVトラブルシューティング](../../.github/UV_GUIDE.md#-troubleshooting)** - 一般的な問題と解決策
+- **[pipからの移行](../../.github/UV_GUIDE.md#-migration-from-pip)** - pipに慣れている場合
