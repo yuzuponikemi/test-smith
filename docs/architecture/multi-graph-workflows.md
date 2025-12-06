@@ -1,217 +1,217 @@
-# Multi-Graph Workflows
+# マルチグラフワークフロー
 
-Test-Smith v2.2 provides **5 specialized workflow graphs** that can be selected based on research needs.
+Test-Smith v2.2は、研究ニーズに基づいて選択できる**5つの専門ワークフローグラフ**を提供します。
 
 ---
 
-## Available Graphs
+## 利用可能なグラフ
 
-### 1. Deep Research (default)
+### 1. Deep Research（デフォルト）
 
-**Name:** `deep_research`
+**名前:** `deep_research`
 
-**Best For:** Complex multi-faceted questions requiring deep exploration
+**最適な用途:** 深い探索を必要とする複雑で多面的な質問
 
-**Features:**
-- Hierarchical task decomposition
-- Recursive drill-down into subtopics
-- Dynamic replanning based on discoveries
-- Comprehensive multi-section reports
+**機能:**
+- 階層的タスク分解
+- サブトピックへの再帰的ドリルダウン
+- 発見に基づく動的再計画
+- 包括的なマルチセクションレポート
 
-**Use When:**
-- Query has multiple aspects to explore
-- Need comprehensive analysis
-- Topic is complex or multi-faceted
-- Have time for thorough research (2-5 minutes)
+**使用タイミング:**
+- クエリに探索すべき複数の側面がある
+- 包括的な分析が必要
+- トピックが複雑または多面的
+- 徹底的な研究のための時間がある（2-5分）
 
-**Example Queries:**
+**クエリ例:**
 ```bash
-python main.py run "Compare microservices and monolithic architectures for enterprise applications"
-python main.py run "Analyze the impact of transformer models on NLP from 2017 to present"
+python main.py run "エンタープライズアプリケーション向けマイクロサービスとモノリシックアーキテクチャを比較"
+python main.py run "2017年から現在までのNLPにおけるTransformerモデルの影響を分析"
 ```
 
 ---
 
 ### 2. Quick Research
 
-**Name:** `quick_research`
+**名前:** `quick_research`
 
-**Best For:** Simple questions, fast lookups, time-sensitive needs
+**最適な用途:** シンプルな質問、高速検索、時間に敏感なニーズ
 
-**Features:**
-- Single-pass execution
-- Max 2 refinement iterations
-- Streamlined workflow
-- Fast responses (30-60 seconds)
+**機能:**
+- シングルパス実行
+- 最大2回の改善反復
+- 効率化されたワークフロー
+- 高速レスポンス（30-60秒）
 
-**Use When:**
-- Simple factual question
-- Time is critical
-- Don't need deep analysis
-- Quick verification needed
+**使用タイミング:**
+- シンプルな事実に関する質問
+- 時間が重要
+- 深い分析が不要
+- クイック検証が必要
 
-**Example Queries:**
+**クエリ例:**
 ```bash
-python main.py run "What is ChromaDB?" --graph quick_research
-python main.py run "When was Python 3.10 released?" --graph quick_research
+python main.py run "ChromaDBとは何ですか？" --graph quick_research
+python main.py run "Python 3.10はいつリリースされましたか？" --graph quick_research
 ```
 
 ---
 
 ### 3. Fact Check
 
-**Name:** `fact_check`
+**名前:** `fact_check`
 
-**Best For:** Verifying claims, checking accuracy, cross-referencing
+**最適な用途:** 主張の検証、正確性チェック、相互参照
 
-**Features:**
-- Evidence categorization (supporting, refuting, neutral)
-- Confidence scoring
-- Citation tracking
-- Verdict generation
+**機能:**
+- 証拠の分類（支持、反駁、中立）
+- 信頼度スコアリング
+- 引用追跡
+- 判定生成
 
-**Use When:**
-- Verifying a specific claim
-- Need to cross-reference information
-- Checking accuracy of statements
-- Investigating misinformation
+**使用タイミング:**
+- 特定の主張を検証
+- 情報の相互参照が必要
+- 発言の正確性を確認
+- 誤情報を調査
 
-**Example Queries:**
+**クエリ例:**
 ```bash
-python main.py run "Verify: GPT-4 was released in March 2023" --graph fact_check
-python main.py run "Is it true that Python is the most popular programming language?" --graph fact_check
+python main.py run "検証: GPT-4は2023年3月にリリースされた" --graph fact_check
+python main.py run "Pythonが最も人気のあるプログラミング言語というのは本当ですか？" --graph fact_check
 ```
 
 ---
 
 ### 4. Comparative
 
-**Name:** `comparative`
+**名前:** `comparative`
 
-**Best For:** Side-by-side analysis, trade-off evaluation, decision support
+**最適な用途:** サイドバイサイド分析、トレードオフ評価、意思決定支援
 
-**Features:**
-- Comparison matrix generation
-- Pros and cons analysis
-- Use case recommendations
-- Decision framework
+**機能:**
+- 比較マトリックス生成
+- 長所と短所の分析
+- ユースケース推奨
+- 意思決定フレームワーク
 
-**Use When:**
-- Comparing two or more options
-- Making technology decisions
-- Need trade-off analysis
-- Evaluating alternatives
+**使用タイミング:**
+- 2つ以上のオプションを比較
+- 技術的な意思決定が必要
+- トレードオフ分析が必要
+- 代替案を評価
 
-**Example Queries:**
+**クエリ例:**
 ```bash
-python main.py run "React vs Vue for a large e-commerce application" --graph comparative
-python main.py run "PostgreSQL vs MySQL for web application backend" --graph comparative
+python main.py run "大規模eコマースアプリケーション向けReact vs Vue" --graph comparative
+python main.py run "WebアプリケーションバックエンドにPostgreSQL vs MySQL" --graph comparative
 ```
 
 ---
 
 ### 5. Causal Inference
 
-**Name:** `causal_inference`
+**名前:** `causal_inference`
 
-**Best For:** Root cause analysis, troubleshooting, incident investigation
+**最適な用途:** 根本原因分析、トラブルシューティング、インシデント調査
 
-**Features:**
-- Hypothesis generation (5-8 hypotheses)
-- Evidence-based validation
-- Causal graph visualization
-- Probability ranking with confidence levels
+**機能:**
+- 仮説生成（5-8仮説）
+- 証拠ベースの検証
+- 因果グラフ可視化
+- 信頼レベル付き確率ランキング
 
-**Use When:**
-- Troubleshooting issues
-- Investigating incidents
-- Understanding why something happened
-- Post-mortem analysis
+**使用タイミング:**
+- 問題のトラブルシューティング
+- インシデント調査
+- なぜ何かが起こったかを理解
+- ポストモーテム分析
 
-**Example Queries:**
+**クエリ例:**
 ```bash
-python main.py run "Why is my application experiencing high latency?" --graph causal_inference
-python main.py run "What caused the database connection errors on Tuesday?" --graph causal_inference
+python main.py run "なぜアプリケーションが高レイテンシを経験しているのですか？" --graph causal_inference
+python main.py run "火曜日にデータベース接続エラーが発生した原因は？" --graph causal_inference
 ```
 
 ---
 
-## Graph Selection Guide
+## グラフ選択ガイド
 
-### Decision Matrix
+### 意思決定マトリックス
 
-| Question Type | Recommended Graph | Time | Depth |
+| 質問タイプ | 推奨グラフ | 時間 | 深度 |
 |---------------|-------------------|------|-------|
-| Simple fact | `quick_research` | 30-60s | Low |
-| Claim to verify | `fact_check` | 30-45s | Medium |
-| A vs B comparison | `comparative` | 45-90s | Medium |
-| Why did X happen? | `causal_inference` | 60-90s | Medium |
-| Complex analysis | `deep_research` | 2-5 min | High |
+| シンプルな事実 | `quick_research` | 30-60秒 | 低 |
+| 検証すべき主張 | `fact_check` | 30-45秒 | 中 |
+| A vs B比較 | `comparative` | 45-90秒 | 中 |
+| なぜXが起こったか？ | `causal_inference` | 60-90秒 | 中 |
+| 複雑な分析 | `deep_research` | 2-5分 | 高 |
 
-### Selection Flowchart
+### 選択フローチャート
 
 ```
-Is it a simple factual question?
-  → Yes: quick_research
-  → No: Continue
+シンプルな事実に関する質問ですか？
+  → はい: quick_research
+  → いいえ: 続ける
 
-Are you verifying a claim?
-  → Yes: fact_check
-  → No: Continue
+主張を検証していますか？
+  → はい: fact_check
+  → いいえ: 続ける
 
-Are you comparing options?
-  → Yes: comparative
-  → No: Continue
+オプションを比較していますか？
+  → はい: comparative
+  → いいえ: 続ける
 
-Are you troubleshooting/investigating?
-  → Yes: causal_inference
-  → No: deep_research (default)
+トラブルシューティング/調査ですか？
+  → はい: causal_inference
+  → いいえ: deep_research（デフォルト）
 ```
 
 ---
 
-## Commands
+## コマンド
 
-### List Available Graphs
+### 利用可能なグラフを一覧表示
 
 ```bash
-# Basic list
+# 基本リスト
 python main.py graphs
 
-# Detailed information
+# 詳細情報
 python main.py graphs --detailed
 ```
 
-### Run with Specific Graph
+### 特定のグラフで実行
 
 ```bash
-python main.py run "Your query" --graph <graph_name>
+python main.py run "あなたのクエリ" --graph <graph_name>
 ```
 
-### Examples
+### 例
 
 ```bash
-# Default (deep_research)
-python main.py run "Analyze AI frameworks"
+# デフォルト（deep_research）
+python main.py run "AIフレームワークを分析"
 
-# Quick lookup
-python main.py run "What is BERT?" --graph quick_research
+# クイック検索
+python main.py run "BERTとは？" --graph quick_research
 
-# Verify claim
-python main.py run "Verify: LangChain supports streaming" --graph fact_check
+# 主張を検証
+python main.py run "検証: LangChainはストリーミングをサポート" --graph fact_check
 
-# Compare options
+# オプションを比較
 python main.py run "Kubernetes vs Docker Swarm" --graph comparative
 
-# Root cause
-python main.py run "Why are API responses slow?" --graph causal_inference
+# 根本原因
+python main.py run "なぜAPIレスポンスが遅いのか？" --graph causal_inference
 ```
 
 ---
 
-## Graph Architectures
+## グラフアーキテクチャ
 
-### Deep Research Architecture
+### Deep Researchアーキテクチャ
 
 ```mermaid
 flowchart TD
@@ -232,7 +232,7 @@ flowchart TD
     SY --> END
 ```
 
-### Quick Research Architecture
+### Quick Researchアーキテクチャ
 
 ```mermaid
 flowchart LR
@@ -247,7 +247,7 @@ flowchart LR
     SY --> END
 ```
 
-### Causal Inference Architecture
+### Causal Inferenceアーキテクチャ
 
 ```mermaid
 flowchart TD
@@ -267,65 +267,65 @@ flowchart TD
 
 ---
 
-## Performance Characteristics
+## パフォーマンス特性
 
-| Graph | Avg Time | API Calls | Best Case | Worst Case |
+| グラフ | 平均時間 | APIコール | ベストケース | ワーストケース |
 |-------|----------|-----------|-----------|------------|
-| quick_research | 30-60s | 1-2 | 15s | 120s |
-| fact_check | 30-45s | 1-2 | 20s | 90s |
-| comparative | 45-90s | 2-3 | 30s | 150s |
-| causal_inference | 60-90s | 2-4 | 45s | 180s |
-| deep_research | 2-5 min | 5-15 | 60s | 10 min |
+| quick_research | 30-60秒 | 1-2 | 15秒 | 120秒 |
+| fact_check | 30-45秒 | 1-2 | 20秒 | 90秒 |
+| comparative | 45-90秒 | 2-3 | 30秒 | 150秒 |
+| causal_inference | 60-90秒 | 2-4 | 45秒 | 180秒 |
+| deep_research | 2-5分 | 5-15 | 60秒 | 10分 |
 
 ---
 
-## Customization
+## カスタマイゼーション
 
-### Creating Custom Graphs
+### カスタムグラフの作成
 
-See [Creating Graphs](../development/creating-graphs.md) for detailed instructions.
+詳細な手順は[グラフの作成](../development/creating-graphs.md)を参照してください。
 
-### Modifying Existing Graphs
+### 既存グラフの変更
 
-Edit files in `src/graphs/`:
+`src/graphs/`のファイルを編集:
 
 ```python
 # src/graphs/quick_research_graph.py
 class QuickResearchGraphBuilder(BaseGraphBuilder):
     def build(self) -> StateGraph:
         workflow = StateGraph(QuickResearchState)
-        # Modify nodes, edges, routing...
+        # ノード、エッジ、ルーティングを変更...
         return workflow.compile()
 ```
 
 ---
 
-## Best Practices
+## ベストプラクティス
 
-### 1. Choose Appropriate Graph
+### 1. 適切なグラフを選択
 
-Don't use `deep_research` for simple facts - it's slower and overkill.
+シンプルな事実に`deep_research`を使用しないでください - より遅く、過剰です。
 
-### 2. Be Specific in Queries
+### 2. クエリを具体的に
 
-Better queries → better graph utilization.
+より良いクエリ → より良いグラフ活用。
 
-### 3. Use Fact Check for Verification
+### 3. 検証にはFact Checkを使用
 
-When you have a specific claim, use `fact_check` instead of general research.
+特定の主張がある場合、一般的な研究の代わりに`fact_check`を使用。
 
-### 4. Use Comparative for Decisions
+### 4. 意思決定にはComparativeを使用
 
-When comparing options, `comparative` produces structured pros/cons analysis.
+オプションを比較する場合、`comparative`は構造化された長所/短所分析を生成。
 
-### 5. Consider Time Constraints
+### 5. 時間制約を考慮
 
-If time-sensitive, use `quick_research` even for moderately complex queries.
+時間に敏感な場合、中程度に複雑なクエリでも`quick_research`を使用。
 
 ---
 
-## Related Documentation
+## 関連ドキュメント
 
-- **[System Overview](system-overview.md)** - Architecture details
-- **[Creating Graphs](../development/creating-graphs.md)** - Build custom workflows
-- **[Quick Start](../getting-started/quick-start.md)** - Basic usage
+- **[システム概要](system-overview.md)** - アーキテクチャの詳細
+- **[グラフの作成](../development/creating-graphs.md)** - カスタムワークフローの構築
+- **[クイックスタート](../getting-started/quick-start.md)** - 基本的な使用方法
