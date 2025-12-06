@@ -8,7 +8,7 @@ Usage:
     python visualize_graphs.py
 
 Output:
-    - Creates graph_visualizations/ directory
+    - Creates docs/architecture/diagrams/graphs/ directory
     - Generates PNG images for each graph using draw_mermaid_png()
     - Falls back to ASCII if PNG generation fails
 """
@@ -18,10 +18,10 @@ from pathlib import Path
 from src.graphs import get_graph, list_graphs
 
 
-def ensure_output_dir(base_dir: str = "graph_visualizations") -> Path:
+def ensure_output_dir(base_dir: str = "docs/architecture/diagrams/graphs") -> Path:
     """Create output directory if it doesn't exist."""
     output_path = Path(base_dir)
-    output_path.mkdir(exist_ok=True)
+    output_path.mkdir(parents=True, exist_ok=True)
     return output_path
 
 

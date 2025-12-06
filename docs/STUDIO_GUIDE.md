@@ -307,7 +307,7 @@ What is 15% of 200?
 - **src/studio_graphs.py**: グラフエントリーポイント
 - **src/graphs/code_execution_graph.py**: グラフ定義
 - **src/nodes/code_executor_node.py**: コード実行ノード
-- **visualizations/code_execution_graph.mmd**: Mermaid図
+- **docs/architecture/diagrams/graphs/code_execution_graph.mmd**: Mermaid図
 
 ## 参考リソース
 
