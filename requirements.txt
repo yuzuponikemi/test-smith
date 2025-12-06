@@ -139,7 +139,7 @@ frozenlist==1.8.0
     # via
     #   aiohttp
     #   aiosignal
-fsspec==2025.10.0
+fsspec==2025.12.0
     # via
     #   huggingface-hub
     #   torch
@@ -157,7 +157,7 @@ googleapis-common-protos==1.72.0
     #   google-api-core
     #   grpcio-status
     #   opentelemetry-exporter-otlp-proto-grpc
-greenlet==3.2.4
+greenlet==3.3.0
     # via sqlalchemy
 grpcio==1.76.0
     # via
@@ -221,7 +221,7 @@ ipykernel==7.1.0
     #   jupyter
     #   jupyter-console
     #   jupyterlab
-ipython==9.7.0
+ipython==9.8.0
     # via
     #   ipykernel
     #   ipywidgets
@@ -312,7 +312,7 @@ kiwisolver==1.4.9
     # via matplotlib
 kubernetes==34.1.0
     # via chromadb
-langchain==1.1.0
+langchain==1.1.2
     # via -r requirements.in
 langchain-chroma==1.0.0
     # via -r requirements.in
@@ -320,7 +320,7 @@ langchain-classic==1.0.0
     # via langchain-community
 langchain-community==0.4.1
     # via -r requirements.in
-langchain-core==1.1.0
+langchain-core==1.1.1
     # via
     #   -r requirements.in
     #   langchain
@@ -359,11 +359,11 @@ langgraph-prebuilt==1.0.5
     # via
     #   -r requirements.in
     #   langgraph
-langgraph-sdk==0.2.12
+langgraph-sdk==0.2.14
     # via
     #   -r requirements.in
     #   langgraph
-langsmith==0.4.52
+langsmith==0.4.56
     # via
     #   -r requirements.in
     #   langchain-classic
@@ -512,25 +512,25 @@ onnxruntime==1.23.2
     #   unstructured-inference
 opencv-python==4.12.0.88
     # via unstructured-inference
-opentelemetry-api==1.38.0
+opentelemetry-api==1.39.0
     # via
     #   chromadb
     #   opentelemetry-exporter-otlp-proto-grpc
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
-opentelemetry-exporter-otlp-proto-common==1.38.0
+opentelemetry-exporter-otlp-proto-common==1.39.0
     # via opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-exporter-otlp-proto-grpc==1.38.0
+opentelemetry-exporter-otlp-proto-grpc==1.39.0
     # via chromadb
-opentelemetry-proto==1.38.0
+opentelemetry-proto==1.39.0
     # via
     #   opentelemetry-exporter-otlp-proto-common
     #   opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-sdk==1.38.0
+opentelemetry-sdk==1.39.0
     # via
     #   chromadb
     #   opentelemetry-exporter-otlp-proto-grpc
-opentelemetry-semantic-conventions==0.59b0
+opentelemetry-semantic-conventions==0.60b0
     # via opentelemetry-sdk
 orjson==3.11.4
     # via
@@ -579,7 +579,7 @@ pillow==12.0.0
     # via
     #   matplotlib
     #   torchvision
-platformdirs==4.5.0
+platformdirs==4.5.1
     # via jupyter-core
 plotly==6.5.0
     # via -r requirements.in
@@ -605,7 +605,7 @@ proto-plus==1.26.1
     # via
     #   google-ai-generativelanguage
     #   google-api-core
-protobuf==6.33.1
+protobuf==6.33.2
     # via
     #   google-ai-generativelanguage
     #   google-api-core
@@ -830,7 +830,7 @@ sympy==1.14.0
     # via
     #   onnxruntime
     #   torch
-tavily-python==0.7.13
+tavily-python==0.7.14
     # via -r requirements.in
 tenacity==9.1.2
     # via
@@ -952,6 +952,10 @@ urllib3==2.3.0
     # via
     #   kubernetes
     #   requests
+uuid-utils==0.12.0
+    # via
+    #   langchain-core
+    #   langsmith
 uvicorn==0.38.0
     # via chromadb
 uvloop==0.22.1
