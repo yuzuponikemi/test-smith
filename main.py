@@ -234,7 +234,8 @@ Examples:
                             )
 
                         # Update final state
-                        final_state.update(value)
+                        if value:
+                            final_state.update(value)
 
                 # Finalize streaming output
                 if streaming_formatter:

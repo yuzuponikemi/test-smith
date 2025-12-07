@@ -193,8 +193,11 @@ Log File: {self.log_file}
         self.log(f"Execution completed in {duration:.2f}s", "INFO")
         self.log(f"Full log saved to: {self.log_file}")
 
-    def _format_output(self, output: dict[str, Any], max_length: int = 200) -> str:
+    def _format_output(self, output: Optional[dict[str, Any]], max_length: int = 200) -> str:
         """Format output dictionary for logging, truncating long values."""
+        if output is None:
+            return "  <No Output>"
+            
         formatted = []
         for key, value in output.items():
             if isinstance(value, (str, int, float, bool)) or value is None:
