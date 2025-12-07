@@ -172,3 +172,18 @@ def get_code_assistant_model():
         ollama_model="llama3",
         temperature=0.5,  # Lower temperature for accurate code analysis
     )
+
+
+# === Graph Selection Models ===
+
+
+def get_graph_selector_model():
+    """
+    Model for selecting the appropriate graph workflow based on query.
+    Uses low temperature for consistent classification.
+    """
+    return _get_model(
+        gemini_model="gemini-1.5-flash",  # Fast model is sufficient for classification
+        ollama_model="llama3",
+        temperature=0.1,  # Very low temperature for deterministic classification
+    )

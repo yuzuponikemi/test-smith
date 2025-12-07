@@ -13,8 +13,12 @@ This module enables:
 - Default to deep_research for complex queries
 """
 
-import re
-from typing import Literal
+from typing import Literal, Optional
+
+from langchain_core.prompts import ChatPromptTemplate
+from pydantic import BaseModel, Field
+
+from src.models import get_graph_selector_model
 
 GraphType = Literal[
     "code_execution",
@@ -26,256 +30,130 @@ GraphType = Literal[
 ]
 
 
-def detect_code_execution_need(query: str) -> bool:
+class GraphSelection(BaseModel):
+    """Selection of the most appropriate graph workflow."""
+
+    selected_graph: GraphType = Field(
+        ..., description="The most appropriate graph workflow for the query"
+    )
+    reasoning: str = Field(..., description="Brief explanation for the selection")
+
+
+def select_graph_with_llm(query: str) -> dict:
     """
-    Detect if query requires code execution.
+    Select the optimal graph using an LLM.
 
-    Indicators:
-    - Mathematical calculations
-    - Data analysis keywords
-    - Statistical operations
-    - Visualization requests
-    - Computational verbs
+    Args:
+        query: User query
+
+    Returns:
+        Dictionary with 'selected_graph' and 'reasoning'
     """
-    query_lower = query.lower()
+    model = get_graph_selector_model()
+    
+    # Use structured output for reliable parsing
+    structured_llm = model.with_structured_output(GraphSelection)
+    
+    system_prompt = """You are an intelligent router for a multi-agent research system. 
+Your goal is to select the most appropriate workflow graph for a given user query.
 
-    # Calculation indicators
-    calculation_keywords = [
-        "calculate",
-        "compute",
-        "sum",
-        "average",
-        "mean",
-        "median",
-        "percentage",
-        "ratio",
-        "rate",
-        "growth",
-        "trend",
-        "statistical",
-        "correlation",
-        "regression",
-        "analyze data",
-        "process data",
-        "parse",
-        "how many",
-        "how much",
-        "total",
-        "count",
-    ]
+Available Graphs:
+1. code_execution: 
+   - For queries requiring calculation, data analysis, visualization, or code generation.
+   - Keywords: calculate, plot, graph, analyze data, python script, correlation, statistical, dataset.
+   - Note: Do NOT use for general "what is" or "how to" questions unless they explicitly ask for code/math.
 
-    # Visualization indicators
-    viz_keywords = [
-        "chart",
-        "graph",
-        "plot",
-        "visualize",
-        "diagram",
-        "show trend",
-        "distribution",
-        "histogram",
-    ]
+2. causal_inference:
+   - For troubleshooting, root cause analysis, or "why" questions about failures.
+   - Keywords: why, root cause, debug, fix, error, issue.
 
-    # Check for mathematical expressions
-    has_math_expression = bool(re.search(r"\d+\s*[\+\-\*\/\%]\s*\d+", query))
+3. comparative:
+   - For comparing 2 or more options, technologies, or concepts.
+   - Keywords: vs, compare, difference between, trade-offs.
 
-    # Check keywords
-    has_calculation = any(kw in query_lower for kw in calculation_keywords)
-    has_viz = any(kw in query_lower for kw in viz_keywords)
+4. fact_check:
+   - For verifying specific claims, true/false questions, or debunking.
+   - Keywords: is it true, verify, fact check, confirm.
+   - Note: Do NOT use for data analysis or correlation tasks (use code_execution).
 
-    return has_math_expression or has_calculation or has_viz
+5. quick_research:
+   - For simple, straightforward questions that need a quick answer.
+   - Criteria: Short query, single fact, specific lookup.
 
+6. deep_research:
+   - The DEFAULT for complex, open-ended, or multi-faceted research topics.
+   - Use this if the query implementation involves broad exploration or doesn't fit others perfectly.
 
-def detect_causal_inference_need(query: str) -> bool:
-    """
-    Detect if query requires causal inference analysis.
-
-    Indicators:
-    - Root cause questions
-    - Troubleshooting
-    - "Why" questions
-    - Failure analysis
-    """
-    query_lower = query.lower()
-
-    causal_keywords = [
-        "why",
-        "причина",
-        "理由",  # multilingual "why"
-        "root cause",
-        "cause of",
-        "reason for",
-        "troubleshoot",
-        "debug",
-        "diagnose",
-        "failure",
-        "error",
-        "bug",
-        "issue",
-        "not working",
-        "broken",
-        "problem with",
-    ]
-
-    return any(kw in query_lower for kw in causal_keywords)
-
-
-def detect_comparative_need(query: str) -> bool:
-    """
-    Detect if query requires comparative analysis.
-
-    Indicators:
-    - Comparison keywords
-    - "vs" or "versus"
-    - Multiple options
-    - Trade-off analysis
-    """
-    query_lower = query.lower()
-
-    comparative_keywords = [
-        " vs ",
-        " versus ",
-        "compare",
-        "comparison",
-        "difference between",
-        "similarities between",
-        "better than",
-        "worse than",
-        "which",
-        "choose between",
-        "decide between",
-        "pros and cons",
-        "trade-off",
-        "tradeoff",
-    ]
-
-    # Check for "A vs B" pattern
-    has_vs_pattern = bool(re.search(r"\w+\s+(vs|versus)\s+\w+", query_lower))
-
-    has_comparative = any(kw in query_lower for kw in comparative_keywords)
-
-    return has_vs_pattern or has_comparative
-
-
-def detect_fact_check_need(query: str) -> bool:
-    """
-    Detect if query requires fact checking.
-
-    Indicators:
-    - Verification requests
-    - True/false questions
-    - Accuracy checking
-    """
-    query_lower = query.lower()
-
-    fact_check_keywords = [
-        "is it true",
-        "is this true",
-        "fact check",
-        "verify",
-        "accurate",
-        "correct",
-        "true or false",
-        "真偽",
-        "本当",
-        "confirm",
-        "validate",
-    ]
-
-    return any(kw in query_lower for kw in fact_check_keywords)
-
-
-def detect_simple_query(query: str) -> bool:
-    """
-    Detect if query is simple enough for quick_research.
-
-    Indicators:
-    - Short queries (< 50 chars)
-    - Single question word
-    - No complex analysis required
-    """
-    # Very short queries are likely simple
-    if len(query) < 50:
-        return True
-
-    # Single sentence questions
-    sentences = query.split(".")
-    return bool(len(sentences) <= 1 and len(query) < 100)
+Analyze the user's intent and select the best graph.
+"""
+    
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", system_prompt),
+            ("human", "{query}"),
+        ]
+    )
+    
+    chain = prompt | structured_llm
+    
+    try:
+        result = chain.invoke({"query": query})
+        return {
+            "selected_graph": result.selected_graph,
+            "reasoning": result.reasoning
+        }
+    except Exception as e:
+        # Fallback if LLM fails
+        print(f"Graph selection LLM failed: {e}")
+        return {
+            "selected_graph": "deep_research",  # Safe default
+            "reasoning": "LLM selection failed, defaulting to deep_research"
+        }
 
 
 def auto_select_graph(query: str, default: GraphType = "deep_research") -> GraphType:
     """
     Automatically select the optimal graph based on query analysis.
-
-    MCP benefit: Only the selected graph is loaded into context,
-    avoiding the token overhead of loading all graphs.
-
-    Priority order:
-    1. Code execution (highest priority for computational tasks)
-    2. Causal inference (for troubleshooting)
-    3. Comparative (for comparisons)
-    4. Fact check (for verification)
-    5. Quick research (for simple queries)
-    6. Deep research (default for complex queries)
+    Uses LLM-based routing for intelligent decision making.
 
     Args:
         query: User query
-        default: Default graph if no pattern matches
+        default: Default graph if selection fails
 
     Returns:
         Selected graph name
     """
-    # Priority 1: Code execution (computational queries)
-    if detect_code_execution_need(query):
-        return "code_execution"
-
-    # Priority 2: Causal inference (troubleshooting)
-    if detect_causal_inference_need(query):
-        return "causal_inference"
-
-    # Priority 3: Comparative analysis
-    if detect_comparative_need(query):
-        return "comparative"
-
-    # Priority 4: Fact checking
-    if detect_fact_check_need(query):
-        return "fact_check"
-
-    # Priority 5: Quick research for simple queries
-    if detect_simple_query(query):
-        return "quick_research"
-
-    # Default: Deep research for complex queries
-    return default
+    try:
+        selection = select_graph_with_llm(query)
+        return selection["selected_graph"]
+    except Exception:
+        return default
 
 
 def explain_selection(query: str, selected_graph: str) -> str:
     """
     Explain why a particular graph was selected.
-
-    Useful for debugging and user transparency.
+    Now uses the LLM to generate the explanation if possible, re-running logic if needed,
+    or just returns a generic explanation if we don't want to re-run.
+    
+    For efficiency, main.py should ideally pass the reasoning if it has it, 
+    but since the signature is fixed for now, we'll do a quick re-eval or logic check.
+    
+    Actually, to avoid double cost, we can just say "Selected by LLM based on intent analysis".
+    But for better UX, let's call the LLM one more time or rely on a cache if we were caching.
+    
+    Since we don't have caching implemented yet, we will re-run the selection to get the reasoning
+    or just provide a static message.
     """
-    reasons = []
-
-    if detect_code_execution_need(query):
-        reasons.append("Contains computational/analytical keywords")
-    if detect_causal_inference_need(query):
-        reasons.append("Requires causal reasoning or troubleshooting")
-    if detect_comparative_need(query):
-        reasons.append("Involves comparison or trade-off analysis")
-    if detect_fact_check_need(query):
-        reasons.append("Requires fact verification")
-    if detect_simple_query(query):
-        reasons.append("Query is simple and concise")
-
-    if not reasons:
-        reasons.append("Complex multi-faceted query")
-
-    explanation = f"Selected '{selected_graph}' graph because:\n"
-    for reason in reasons:
-        explanation += f"  - {reason}\n"
-
-    return explanation
+    # Simply re-run to get the reasoning (it's a cheap call)
+    try:
+        selection = select_graph_with_llm(query)
+        if selection["selected_graph"] == selected_graph:
+            return f"Selected '{selected_graph}' because: {selection['reasoning']}"
+    except:
+        pass
+        
+    return f"Selected '{selected_graph}' based on intelligent intent analysis."
 
 
 # Example usage and testing
@@ -289,8 +167,9 @@ if __name__ == "__main__":
         "Analyze the correlation between variables A and B in this dataset",
     ]
 
-    print("Graph Selection Examples:\n")
+    print("Graph Selection Examples (LLM-based):\n")
     for query in test_queries:
-        selected = auto_select_graph(query)
         print(f"Query: {query}")
-        print(f"→ {selected}\n")
+        selection = select_graph_with_llm(query)
+        print(f"→ {selection['selected_graph']}")
+        print(f"  Reason: {selection['reasoning']}\n")

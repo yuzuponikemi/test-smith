@@ -26,8 +26,8 @@ Test-Smith v2.2は、研究ニーズに基づいて選択できる**5つの専�
 
 **クエリ例:**
 ```bash
-python main.py run "エンタープライズアプリケーション向けマイクロサービスとモノリシックアーキテクチャを比較"
-python main.py run "2017年から現在までのNLPにおけるTransformerモデルの影響を分析"
+uv run main.py run "エンタープライズアプリケーション向けマイクロサービスとモノリシックアーキテクチャを比較"
+uv run main.py run "2017年から現在までのNLPにおけるTransformerモデルの影響を分析"
 ```
 
 ---
@@ -52,8 +52,8 @@ python main.py run "2017年から現在までのNLPにおけるTransformerモデ
 
 **クエリ例:**
 ```bash
-python main.py run "ChromaDBとは何ですか？" --graph quick_research
-python main.py run "Python 3.10はいつリリースされましたか？" --graph quick_research
+uv run main.py run "ChromaDBとは何ですか？" --graph quick_research
+uv run main.py run "Python 3.10はいつリリースされましたか？" --graph quick_research
 ```
 
 ---
@@ -78,8 +78,8 @@ python main.py run "Python 3.10はいつリリースされましたか？" --gra
 
 **クエリ例:**
 ```bash
-python main.py run "検証: GPT-4は2023年3月にリリースされた" --graph fact_check
-python main.py run "Pythonが最も人気のあるプログラミング言語というのは本当ですか？" --graph fact_check
+uv run main.py run "検証: GPT-4は2023年3月にリリースされた" --graph fact_check
+uv run main.py run "Pythonが最も人気のあるプログラミング言語というのは本当ですか？" --graph fact_check
 ```
 
 ---
@@ -104,8 +104,8 @@ python main.py run "Pythonが最も人気のあるプログラミング言語と
 
 **クエリ例:**
 ```bash
-python main.py run "大規模eコマースアプリケーション向けReact vs Vue" --graph comparative
-python main.py run "WebアプリケーションバックエンドにPostgreSQL vs MySQL" --graph comparative
+uv run main.py run "大規模eコマースアプリケーション向けReact vs Vue" --graph comparative
+uv run main.py run "WebアプリケーションバックエンドにPostgreSQL vs MySQL" --graph comparative
 ```
 
 ---
@@ -130,8 +130,8 @@ python main.py run "WebアプリケーションバックエンドにPostgreSQL v
 
 **クエリ例:**
 ```bash
-python main.py run "なぜアプリケーションが高レイテンシを経験しているのですか？" --graph causal_inference
-python main.py run "火曜日にデータベース接続エラーが発生した原因は？" --graph causal_inference
+uv run main.py run "なぜアプリケーションが高レイテンシを経験しているのですか？" --graph causal_inference
+uv run main.py run "火曜日にデータベース接続エラーが発生した原因は？" --graph causal_inference
 ```
 
 ---
@@ -176,35 +176,35 @@ python main.py run "火曜日にデータベース接続エラーが発生した
 
 ```bash
 # 基本リスト
-python main.py graphs
+uv run main.py graphs
 
 # 詳細情報
-python main.py graphs --detailed
+uv run main.py graphs --detailed
 ```
 
 ### 特定のグラフで実行
 
 ```bash
-python main.py run "あなたのクエリ" --graph <graph_name>
+uv run main.py run "あなたのクエリ" --graph <graph_name>
 ```
 
 ### 例
 
 ```bash
 # デフォルト（deep_research）
-python main.py run "AIフレームワークを分析"
+uv run main.py run "AIフレームワークを分析"
 
 # クイック検索
-python main.py run "BERTとは？" --graph quick_research
+uv run main.py run "BERTとは？" --graph quick_research
 
 # 主張を検証
-python main.py run "検証: LangChainはストリーミングをサポート" --graph fact_check
+uv run main.py run "検証: LangChainはストリーミングをサポート" --graph fact_check
 
 # オプションを比較
-python main.py run "Kubernetes vs Docker Swarm" --graph comparative
+uv run main.py run "Kubernetes vs Docker Swarm" --graph comparative
 
 # 根本原因
-python main.py run "なぜAPIレスポンスが遅いのか？" --graph causal_inference
+uv run main.py run "なぜAPIレスポンスが遅いのか？" --graph causal_inference
 ```
 
 ---
