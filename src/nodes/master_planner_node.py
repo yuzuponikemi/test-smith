@@ -34,6 +34,15 @@ def master_planner(state):
     try:
         master_plan = structured_llm.invoke(prompt)
 
+        # Validate: If hierarchical mode but no subtasks, force simple mode
+        if master_plan.is_complex and len(master_plan.subtasks) == 0:
+            print(
+                "\n  ⚠ Warning: LLM selected hierarchical but generated no subtasks. "
+                "Forcing simple mode."
+            )
+            master_plan.is_complex = False
+            master_plan.execution_mode = "simple"
+
         # Log results
         complexity = "COMPLEX" if master_plan.is_complex else "SIMPLE"
         print(f"\n  ✓ Complexity Assessment: {complexity}")

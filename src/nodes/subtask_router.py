@@ -27,6 +27,14 @@ def subtask_router(state):
     current_index = state.get("current_subtask_index", 0)
     total_subtasks = len(master_plan.get("subtasks", []))
 
+    # Critical fix: If hierarchical mode but no subtasks were generated, fall back to simple
+    if total_subtasks == 0 and current_index == 0:
+        print(
+            "  ⚠ Warning: Hierarchical mode but no subtasks generated (LLM output issue), "
+            "falling back to simple mode"
+        )
+        return "simple"
+
     if current_index < total_subtasks:
         subtask_id = master_plan["subtasks"][current_index]["subtask_id"]
         print(

@@ -33,6 +33,16 @@ Evaluate if the analyzed information is **sufficient** to create a comprehensive
 - Contradictions or unclear information that needs resolution
 - User query has multiple parts and only some are addressed
 
+**CRITICAL: Entity-Specific Information Check**
+If the query asks about a SPECIFIC entity (company, person, product, organization):
+- MUST have concrete, factual information ABOUT THAT SPECIFIC ENTITY
+- Generic business/industry information WITHOUT entity-specific details is INSUFFICIENT
+- Example: For "シンクサイト株式会社の事業内容", information must include:
+  - What specific products/services シンクサイト offers
+  - Concrete facts about the company (founding, industry, key technologies)
+  - NOT just general "business strategy" or "competitive analysis" concepts
+- If only generic information is present without entity-specific facts → mark as INSUFFICIENT
+
 **Important Considerations:**
 - Don't mark as insufficient just to gather more - only if there are actual gaps
 - Consider the allocation strategy - if RAG was emphasized, ensure RAG results were properly utilized

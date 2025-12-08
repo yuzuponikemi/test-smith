@@ -85,6 +85,19 @@ Strategy: "No knowledge base available and query requires current events. Use we
 - rag_queries: []
 - web_queries: ["tech industry news this week", "major technology announcements", "startup funding news", "AI developments this week"]
 
+**Example 5: Entity/Company Research (CRITICAL)**
+Query: "シンクサイト株式会社の事業内容について詳しく教えてください"
+KB Status: Contains some business documents
+Strategy: "Query asks about a SPECIFIC COMPANY (シンクサイト株式会社). Web queries MUST include the exact company name to get accurate information. RAG is unlikely to have info on external companies."
+- rag_queries: []
+- web_queries: ["シンクサイト株式会社 事業内容", "シンクサイト株式会社 会社概要", "シンクサイト 製品 サービス", "シンクサイト株式会社 ニュース"]
+
+**Example 6: Person Research**
+Query: "Elon Musk's latest projects and business ventures"
+Strategy: "Query asks about a SPECIFIC PERSON. All web queries must include the person's name."
+- rag_queries: []
+- web_queries: ["Elon Musk latest projects 2025", "Elon Musk business ventures", "Elon Musk new companies"]
+
 ## Output Instructions
 
 Generate a strategic plan with:
@@ -92,7 +105,13 @@ Generate a strategic plan with:
 2. **web_queries**: List of 1-5 queries optimized for web search (always include at least 1 if asking for current info)
 3. **strategy**: Brief explanation (2-3 sentences) of your allocation reasoning
 
-**Important:**
+**CRITICAL RULES:**
+- **ALWAYS preserve proper nouns** (company names, person names, product names, place names) in web search queries
+- When researching a specific entity (company, person, product), EVERY web query should include that entity's name
+- Generic queries like "business strategy" or "competitive analysis" are USELESS without the entity name
+- Example: For "シンクサイト株式会社", queries should be "シンクサイト株式会社 事業内容" NOT just "事業内容"
+
+**Other Important Rules:**
 - Total queries should typically be 3-7 across both sources
 - If feedback indicates missing information, adjust allocation accordingly
 - If KB is unavailable, allocate everything to web search
