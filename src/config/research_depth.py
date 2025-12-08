@@ -39,6 +39,10 @@ class ResearchDepthConfig:
     max_iterations: int  # Maximum research loops
     max_subtasks: int  # Maximum subtasks in hierarchical mode
 
+    # LangGraph Execution Control
+    recursion_limit: int  # Maximum recursion steps for LangGraph execution
+    recursion_extension: int  # Additional steps when user chooses to continue
+
     # Report Generation (Synthesizer)
     target_word_count: int  # Target word count for report
     min_word_count: int  # Minimum acceptable word count
@@ -62,6 +66,9 @@ DEPTH_CONFIGS: dict[ResearchDepth, ResearchDepthConfig] = {
         # Router
         max_iterations=1,
         max_subtasks=0,  # Force simple mode
+        # LangGraph
+        recursion_limit=50,
+        recursion_extension=25,
         # Synthesizer
         target_word_count=500,
         min_word_count=300,
@@ -81,6 +88,9 @@ DEPTH_CONFIGS: dict[ResearchDepth, ResearchDepthConfig] = {
         # Router
         max_iterations=2,
         max_subtasks=5,
+        # LangGraph
+        recursion_limit=150,
+        recursion_extension=50,
         # Synthesizer
         target_word_count=1500,
         min_word_count=800,
@@ -100,6 +110,9 @@ DEPTH_CONFIGS: dict[ResearchDepth, ResearchDepthConfig] = {
         # Router
         max_iterations=3,
         max_subtasks=10,
+        # LangGraph
+        recursion_limit=300,
+        recursion_extension=100,
         # Synthesizer
         target_word_count=4000,
         min_word_count=2500,
@@ -119,6 +132,9 @@ DEPTH_CONFIGS: dict[ResearchDepth, ResearchDepthConfig] = {
         # Router
         max_iterations=5,
         max_subtasks=20,
+        # LangGraph
+        recursion_limit=500,
+        recursion_extension=200,
         # Synthesizer
         target_word_count=10000,
         min_word_count=6000,
