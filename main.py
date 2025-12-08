@@ -87,6 +87,13 @@ Examples:
     run_parser.add_argument(
         "--no-color", action="store_true", help="Disable colored output in streaming mode"
     )
+    run_parser.add_argument(
+        "--depth",
+        type=str,
+        choices=["quick", "standard", "deep", "comprehensive"],
+        default="standard",
+        help="Research depth level: quick (1-2 pages), standard (3-5 pages), deep (6-10 pages), comprehensive (10+ pages)",
+    )
 
     # List command
     list_parser = subparsers.add_parser("list", help="List recent reports or logs")
@@ -150,6 +157,7 @@ Examples:
         try:
             builder = get_graph(graph_name)
             print(f"[System] Using graph workflow: {graph_name} ({selection_mode})")
+            print(f"[System] Research depth: {args.depth}")
             print(f"[System] Description: {builder.get_metadata().get('description', 'N/A')}")
 
             # Show selection reasoning if auto-selected
@@ -197,7 +205,7 @@ Examples:
 
             # Track state for report saving
             final_state = {}
-            inputs = {"query": args.query, "loop_count": 0}
+            inputs = {"query": args.query, "loop_count": 0, "research_depth": args.depth}
 
             try:
                 for output in app.stream(inputs, config=config):

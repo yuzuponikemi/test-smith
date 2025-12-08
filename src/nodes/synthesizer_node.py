@@ -94,13 +94,41 @@ def _format_source_summary(state: dict) -> str:
     return "\n".join(source_summary_lines) + reference_template
 
 
+def _get_report_length_guidance(depth_config) -> str:
+    """Generate report length guidance based on research depth config."""
+    detail_guidance = {
+        "brief": "Write a concise summary. Focus on key points only.",
+        "moderate": "Provide balanced coverage with relevant details.",
+        "detailed": "Include comprehensive analysis with multiple perspectives and supporting evidence.",
+        "exhaustive": "Provide exhaustive coverage with in-depth analysis, multiple viewpoints, extensive evidence, and thorough exploration of all aspects.",
+    }
+
+    return (
+        f"\n## Report Length Requirements\n"
+        f"- Target word count: {depth_config.target_word_count} words\n"
+        f"- Minimum word count: {depth_config.min_word_count} words\n"
+        f"- Detail level: {depth_config.detail_level.upper()}\n"
+        f"- Guidance: {detail_guidance.get(depth_config.detail_level, detail_guidance['moderate'])}\n"
+    )
+
+
 def synthesizer_node(state):
     print_node_header("SYNTHESIZER")
     model = get_synthesizer_model()
 
-    # Get execution mode
+    # Get execution mode and research depth
     execution_mode = state.get("execution_mode", "simple")
     original_query = state.get("query", "")
+    research_depth = state.get("research_depth", "standard")
+
+    # Get depth-aware report settings
+    from src.config.research_depth import get_depth_config
+
+    depth_config = get_depth_config(research_depth)
+    report_guidance = _get_report_length_guidance(depth_config)
+
+    print(f"  Research depth: {research_depth}")
+    print(f"  Target word count: {depth_config.target_word_count}")
 
     if execution_mode == "hierarchical":
         # Hierarchical mode: Synthesize multiple subtask results
@@ -141,14 +169,14 @@ def synthesizer_node(state):
 
         subtask_results_str = "\n\n---\n\n".join(subtask_results_formatted)
 
-        # Use hierarchical synthesis prompt
+        # Use hierarchical synthesis prompt with depth guidance
         prompt = HIERARCHICAL_SYNTHESIZER_PROMPT.format(
             original_query=original_query,
             subtask_count=subtask_count,
             subtask_list=subtask_list_str,
             complexity_reasoning=complexity_reasoning,
             subtask_results_formatted=subtask_results_str,
-        )
+        ) + report_guidance
 
     else:
         # Simple mode: Use synthesis with citations if provenance data available
@@ -189,7 +217,7 @@ def synthesizer_node(state):
             code_results_str += "**IMPORTANT:** Use the actual output values from the code execution results above in your final answer. Do not use placeholders like '[insert value]'.\n"
 
         if has_provenance:
-            # Use citation-aware prompt
+            # Use citation-aware prompt with depth guidance
             source_summary = _format_source_summary(state)
             print(f"  Total sources for citations: {len(web_sources) + len(rag_sources)}")
 
@@ -200,10 +228,11 @@ def synthesizer_node(state):
                     source_summary=source_summary,
                     analyzed_data=analyzed_data,
                 )
+                + report_guidance
                 + code_results_str
             )
         else:
-            # Fallback to original prompt
+            # Fallback to original prompt with depth guidance
             prompt = (
                 SYNTHESIZER_PROMPT.format(
                     original_query=original_query,
@@ -213,6 +242,7 @@ def synthesizer_node(state):
                     analyzed_data=analyzed_data,
                     loop_count=loop_count,
                 )
+                + report_guidance
                 + code_results_str
             )
 

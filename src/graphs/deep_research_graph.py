@@ -72,6 +72,9 @@ class DeepResearchState(TypedDict):
     # Original query
     query: str
 
+    # Research depth control
+    research_depth: str  # "quick", "standard", "deep", "comprehensive"
+
     # === Hierarchical Mode Fields (Phase 1) ===
     execution_mode: str  # "simple" or "hierarchical"
     master_plan: dict  # MasterPlan as dict (JSON-serializable)
@@ -125,6 +128,7 @@ def router(state):
 
     Incorporates reflection critique to make more informed routing decisions.
     Checks both evaluation and reflection to determine next step.
+    Uses research_depth to determine max iterations.
 
     Simple mode: Loop back to planner if reflection identifies critical gaps
     Hierarchical mode: Save result and move to next subtask or synthesize
@@ -134,15 +138,22 @@ def router(state):
     execution_mode = state.get("execution_mode", "simple")
 
     if execution_mode == "simple":
+        # Get max iterations from research depth config
+        from src.config.research_depth import get_depth_config
+
+        research_depth = state.get("research_depth", "standard")
+        depth_config = get_depth_config(research_depth)
+        max_iterations = depth_config.max_iterations
+
         # Check both evaluation and reflection
         loop_count = state.get("loop_count", 0)
         evaluation = state.get("evaluation", "")
         should_continue_research = state.get("should_continue_research", False)
         reflection_quality = state.get("reflection_quality", "adequate")
 
-        # Force exit after max loops
-        if loop_count >= 2:
-            print("  Simple mode: Max loops reached → synthesize")
+        # Force exit after max loops (depth-aware)
+        if loop_count >= max_iterations:
+            print(f"  Simple mode: Max loops reached ({max_iterations}, depth={research_depth}) → synthesize")
             return "synthesizer"
 
         # Check reflection feedback first (higher priority)
