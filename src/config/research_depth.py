@@ -134,8 +134,7 @@ def get_depth_config(depth: ResearchDepth) -> ResearchDepthConfig:
     """Get configuration for the specified research depth level."""
     if depth not in DEPTH_CONFIGS:
         raise ValueError(
-            f"Unknown depth level: {depth}. "
-            f"Valid options: {', '.join(DEPTH_CONFIGS.keys())}"
+            f"Unknown depth level: {depth}. Valid options: {', '.join(DEPTH_CONFIGS.keys())}"
         )
     return DEPTH_CONFIGS[depth]
 

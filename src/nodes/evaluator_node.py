@@ -66,7 +66,9 @@ def evaluator_node(state):
             depth=research_depth,
             strictness=depth_config.evaluator_strictness,
         )
-        print(f"  Evaluating iteration {loop_count} (depth={research_depth}, strictness={depth_config.evaluator_strictness})")
+        print(
+            f"  Evaluating iteration {loop_count} (depth={research_depth}, strictness={depth_config.evaluator_strictness})"
+        )
 
         # Use structured output for reliable evaluation
         structured_llm = model.with_structured_output(Evaluation)
@@ -74,12 +76,15 @@ def evaluator_node(state):
         # Build depth-aware evaluation guidance
         strictness_guidance = _get_strictness_guidance(depth_config)
 
-        prompt = EVALUATOR_PROMPT.format(
-            original_query=original_query,
-            allocation_strategy=allocation_strategy,
-            analyzed_data=analyzed_data,
-            loop_count=loop_count,
-        ) + strictness_guidance
+        prompt = (
+            EVALUATOR_PROMPT.format(
+                original_query=original_query,
+                allocation_strategy=allocation_strategy,
+                analyzed_data=analyzed_data,
+                loop_count=loop_count,
+            )
+            + strictness_guidance
+        )
 
         try:
             with log_performance(logger, "evaluation_llm_call"):

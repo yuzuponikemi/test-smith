@@ -170,13 +170,16 @@ def synthesizer_node(state):
         subtask_results_str = "\n\n---\n\n".join(subtask_results_formatted)
 
         # Use hierarchical synthesis prompt with depth guidance
-        prompt = HIERARCHICAL_SYNTHESIZER_PROMPT.format(
-            original_query=original_query,
-            subtask_count=subtask_count,
-            subtask_list=subtask_list_str,
-            complexity_reasoning=complexity_reasoning,
-            subtask_results_formatted=subtask_results_str,
-        ) + report_guidance
+        prompt = (
+            HIERARCHICAL_SYNTHESIZER_PROMPT.format(
+                original_query=original_query,
+                subtask_count=subtask_count,
+                subtask_list=subtask_list_str,
+                complexity_reasoning=complexity_reasoning,
+                subtask_results_formatted=subtask_results_str,
+            )
+            + report_guidance
+        )
 
     else:
         # Simple mode: Use synthesis with citations if provenance data available

@@ -131,12 +131,15 @@ def planner(state):
             f"Detail level: {depth_config.detail_level}\n"
         )
 
-        prompt = STRATEGIC_PLANNER_PROMPT.format(
-            query=query,
-            feedback=feedback,
-            kb_summary=kb_info["summary"],
-            kb_available=kb_info["available"],
-        ) + depth_guidance
+        prompt = (
+            STRATEGIC_PLANNER_PROMPT.format(
+                query=query,
+                feedback=feedback,
+                kb_summary=kb_info["summary"],
+                kb_available=kb_info["available"],
+            )
+            + depth_guidance
+        )
 
         try:
             logger.info("llm_invoke_start", has_feedback=bool(feedback))

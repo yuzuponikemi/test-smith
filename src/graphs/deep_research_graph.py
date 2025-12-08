@@ -153,7 +153,9 @@ def router(state):
 
         # Force exit after max loops (depth-aware)
         if loop_count >= max_iterations:
-            print(f"  Simple mode: Max loops reached ({max_iterations}, depth={research_depth}) → synthesize")
+            print(
+                f"  Simple mode: Max loops reached ({max_iterations}, depth={research_depth}) → synthesize"
+            )
             return "synthesizer"
 
         # Check reflection feedback first (higher priority)
