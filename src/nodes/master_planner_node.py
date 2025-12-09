@@ -1,3 +1,4 @@
+from src.config.research_depth import get_depth_config
 from src.models import get_master_planner_model
 from src.prompts.master_planner_prompt import MASTER_PLANNER_PROMPT
 from src.schemas import MasterPlan
@@ -60,6 +61,9 @@ def master_planner(state):
         else:
             print(f"  Strategy: {master_plan.overall_strategy[:150]}...\n")
 
+        # Get depth config for budget-aware settings
+        depth_config = get_depth_config(state.get("research_depth", "standard"))
+
         # Convert to dict for state (LangGraph requires JSON-serializable types)
         return {
             "execution_mode": master_plan.execution_mode,
@@ -74,11 +78,11 @@ def master_planner(state):
             "revision_count": 0,
             "plan_revisions": [],
             "max_revisions": 3,  # Maximum allowed plan revisions
-            "max_total_subtasks": 20,  # Maximum total subtasks (including added ones)
+            "max_total_subtasks": depth_config.max_subtasks,  # Based on research depth
             "revision_triggers": [],
             # Phase 4.1 fields (Budget-Aware Control)
             "node_execution_count": 0,  # Track recursion usage
-            "recursion_limit": 150,  # Default limit (should match config)
+            "recursion_limit": depth_config.recursion_limit,  # Based on research depth
             "budget_warnings": [],
         }
 
