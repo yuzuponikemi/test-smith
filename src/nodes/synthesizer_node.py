@@ -112,6 +112,90 @@ def _get_report_length_guidance(depth_config) -> str:
     )
 
 
+def _count_words(text: str) -> int:
+    """Count words in text, handling both English and Japanese."""
+    import re
+
+    # Remove markdown formatting
+    text = re.sub(r"```[\s\S]*?```", "", text)  # Remove code blocks
+    text = re.sub(r"`[^`]+`", "", text)  # Remove inline code
+    text = re.sub(r"[#*_\[\]()>]", " ", text)  # Remove markdown chars
+
+    # Count English words
+    english_words = len(re.findall(r"[a-zA-Z]+", text))
+
+    # Count Japanese characters (each counts as ~1 word equivalent)
+    # This is an approximation: Japanese characters are counted individually
+    japanese_chars = len(re.findall(r"[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9fff]", text))
+
+    # For Japanese, roughly 2-3 characters = 1 word equivalent
+    japanese_word_equiv = japanese_chars // 2
+
+    return english_words + japanese_word_equiv
+
+
+def _validate_report_length(report: str, depth_config, research_depth: str) -> dict:
+    """Validate report meets length requirements and return status."""
+    word_count = _count_words(report)
+    min_words = depth_config.min_word_count
+    target_words = depth_config.target_word_count
+
+    status = {
+        "word_count": word_count,
+        "min_required": min_words,
+        "target": target_words,
+        "meets_minimum": word_count >= min_words,
+        "meets_target": word_count >= target_words,
+        "percentage_of_target": round((word_count / target_words) * 100, 1)
+        if target_words > 0
+        else 0,
+    }
+
+    if word_count < min_words:
+        status["warning"] = (
+            f"⚠️ Report is {word_count} words, below minimum of {min_words} "
+            f"for {research_depth} depth ({status['percentage_of_target']}% of target)"
+        )
+    elif word_count < target_words:
+        status["info"] = (
+            f"ℹ️ Report is {word_count} words, {status['percentage_of_target']}% of "
+            f"target {target_words} for {research_depth} depth"
+        )
+    else:
+        status["success"] = f"✓ Report meets target: {word_count} words (target: {target_words})"
+
+    return status
+
+
+def _get_synthesizer_depth_guidance(research_depth: str) -> str:
+    """Generate depth-specific guidance for report synthesis."""
+    guidance_map = {
+        "quick": """**Quick Research Mode**
+- Target: ~1,000 words (2-3 pages)
+- Focus: Concise, direct answers
+- Sections: Summary + 1-2 main sections + Key Takeaways
+- Style: Brief but informative""",
+        "standard": """**Standard Research Mode**
+- Target: ~3,000 words (6-8 pages)
+- Focus: Balanced coverage with moderate depth
+- Sections: Executive Summary + 3-5 main sections + Conclusion
+- Style: Professional report with clear structure""",
+        "deep": """**Deep Research Mode**
+- Target: ~6,000 words (12-15 pages)
+- Focus: In-depth analysis with multiple perspectives
+- Sections: Comprehensive coverage of all subtasks with detailed analysis
+- Style: Academic-quality with thorough examination of each aspect""",
+        "comprehensive": """**Comprehensive Research Mode**
+- Target: ~10,000 words (20-25 pages, A4 10枚以上)
+- Focus: Exhaustive, multi-dimensional coverage
+- Sections: Detailed analysis of EVERY subtask + cross-cutting insights + thorough conclusion
+- Style: Authoritative reference document
+- IMPORTANT: This is the MOST THOROUGH mode - include ALL relevant details, examples, and analysis
+- Each major subtask should have its own substantial section (500-1000 words per subtask)""",
+    }
+    return guidance_map.get(research_depth, guidance_map["standard"])
+
+
 def synthesizer_node(state):
     print_node_header("SYNTHESIZER")
     model = get_synthesizer_model()
@@ -169,6 +253,9 @@ def synthesizer_node(state):
 
         subtask_results_str = "\n\n---\n\n".join(subtask_results_formatted)
 
+        # Get depth-specific guidance for synthesizer
+        depth_guidance = _get_synthesizer_depth_guidance(research_depth)
+
         # Use hierarchical synthesis prompt with depth guidance
         prompt = (
             HIERARCHICAL_SYNTHESIZER_PROMPT.format(
@@ -177,6 +264,8 @@ def synthesizer_node(state):
                 subtask_list=subtask_list_str,
                 complexity_reasoning=complexity_reasoning,
                 subtask_results_formatted=subtask_results_str,
+                research_depth=research_depth,
+                depth_guidance=depth_guidance,
             )
             + report_guidance
         )
@@ -250,7 +339,17 @@ def synthesizer_node(state):
             )
 
     message = model.invoke(prompt)
-    print("  ✓ Report generated successfully\n")
+    print("  ✓ Report generated successfully")
+
+    # Validate report length
+    length_status = _validate_report_length(message.content, depth_config, research_depth)
+    if "warning" in length_status:
+        print(f"  {length_status['warning']}")
+    elif "info" in length_status:
+        print(f"  {length_status['info']}")
+    else:
+        print(f"  {length_status.get('success', '')}")
+    print()
 
     # Post-process: Ensure proper references section if provenance data available
     report_content = message.content

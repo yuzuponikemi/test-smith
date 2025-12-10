@@ -111,10 +111,24 @@ Generate a strategic plan with:
 - Generic queries like "business strategy" or "competitive analysis" are USELESS without the entity name
 - Example: For "シンクサイト株式会社", queries should be "シンクサイト株式会社 事業内容" NOT just "事業内容"
 
-**Other Important Rules:**
+**Language Rules:**
+- **CRITICAL: Generate queries in the SAME LANGUAGE as the user's query**
+- Japanese query → Japanese search queries (日本語のクエリ → 日本語の検索クエリ)
+- English query → English search queries
+- Mixed language queries → Primary language of the query
+
+**Query Quality Rules:**
 - Total queries should typically be 3-7 across both sources
 - If feedback indicates missing information, adjust allocation accordingly
 - If KB is unavailable, allocate everything to web search
 - Make queries specific and focused (not just repeating the original query)
 - Consider query diversity - cover different aspects of the question
+- **NEVER generate queries about internal system processes** (RAG allocation, planner strategy, etc.)
+- **Focus on the ACTUAL TOPIC** the user is asking about, not research methodology
+
+**Example - Academic Topic Query:**
+Query: "松岡正剛が提唱する編集工学にLLMを応用する方法について論じて"
+Strategy: "Query asks about applying LLM to 編集工学 (editorial engineering) by 松岡正剛. Need web search for both the concept and LLM applications."
+- rag_queries: []
+- web_queries: ["松岡正剛 編集工学とは", "編集工学 理論 方法論", "LLM 知識編集 応用", "大規模言語モデル 編集工学 可能性", "松岡正剛 知の編集 AI"]
 """

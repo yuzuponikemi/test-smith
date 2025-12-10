@@ -185,6 +185,30 @@ Generate the final report with inline citations now:"""
 
 HIERARCHICAL_SYNTHESIZER_PROMPT = """You are a hierarchical report synthesizer. Your job is to create a comprehensive final report by combining results from multiple subtasks that were executed to address a complex query.
 
+## ⚠️ CRITICAL: LANGUAGE REQUIREMENT
+**You MUST write the ENTIRE report in the SAME LANGUAGE as the original query.**
+- If the query is in Japanese → Write the ENTIRE report in Japanese
+- If the query is in English → Write the ENTIRE report in English
+- This applies to: title, headings, body text, summaries, conclusions - EVERYTHING
+
+## ⚠️ CRITICAL: CONTENT FOCUS REQUIREMENT
+**Your report must focus on RESEARCH FINDINGS, not research mechanics.**
+
+DO NOT describe or mention:
+- How queries were allocated (RAG vs Web)
+- Internal system processes or planner decisions
+- Query optimization or allocation strategies
+- Technical implementation details of the research system
+
+DO focus on:
+- Actual research findings and insights
+- Facts, analysis, and synthesized knowledge
+- Expert-level content addressing the user's question
+- Substantive information that answers the query
+
+## Research Depth Level: {research_depth}
+{depth_guidance}
+
 ## Original User Query
 {original_query}
 
@@ -280,6 +304,9 @@ Each section should:
 
 ### Important Guidelines
 
+- **LANGUAGE MATCH** - Write the ENTIRE report in the same language as the query (日本語クエリ → 日本語レポート)
+- **CONTENT ONLY** - Focus on research findings, NOT on how the research was conducted
+- **MEET LENGTH REQUIREMENTS** - Follow the word count guidance from the Research Depth Level section
 - **Synthesize at a higher level** - Go beyond individual subtask findings
 - **Create a unified narrative** - The report should read as one coherent piece
 - **Respect subtask priorities** - Higher importance subtasks deserve more emphasis
@@ -287,6 +314,7 @@ Each section should:
 - **Make connections** - Show how different aspects relate to each other
 - **Be comprehensive** - Cover all subtasks, don't skip any
 - **Write clearly** - Use headings, bullet points, and clear language
+- **NO META-COMMENTARY** - Never describe RAG allocation, planner strategies, or system internals
 
 ## Example Structure for Temporal Query
 

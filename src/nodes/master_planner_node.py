@@ -5,6 +5,37 @@ from src.schemas import MasterPlan
 from src.utils.logging_utils import print_node_header
 
 
+def _get_depth_guidance(research_depth: str) -> str:
+    """Generate depth-specific guidance for subtask generation."""
+    guidance_map = {
+        "quick": """**Quick Research Mode**
+- Target: SIMPLE mode preferred (no decomposition)
+- If decomposition is absolutely necessary: 1-2 subtasks maximum
+- Focus: Fast, surface-level research
+- Only decompose if query has clearly distinct parts""",
+        "standard": """**Standard Research Mode**
+- Target: 3-5 subtasks for complex queries
+- Focus: Balanced coverage with good depth
+- Decompose when query has multiple aspects or requires comparison
+- Each subtask should be meaningful and independent""",
+        "deep": """**Deep Research Mode**
+- Target: 5-10 subtasks for complex queries
+- Focus: Thorough investigation with multiple perspectives
+- Decompose into finer-grained subtasks for detailed analysis
+- Include related aspects that provide context
+- Consider historical, current, and future dimensions""",
+        "comprehensive": """**Comprehensive Research Mode**
+- Target: 10-20 subtasks for complex queries
+- Focus: Exhaustive, multi-dimensional coverage
+- Decompose into many specific subtasks covering ALL relevant aspects
+- Include: technical, historical, social, economic, practical, theoretical dimensions
+- Cover: background, current state, trends, challenges, opportunities, future outlook
+- Every significant aspect deserves its own subtask
+- This is the MOST THOROUGH mode - err on the side of more subtasks""",
+    }
+    return guidance_map.get(research_depth, guidance_map["standard"])
+
+
 def master_planner(state):
     """
     Master Planner - Detects query complexity and creates Master Plan
@@ -17,19 +48,28 @@ def master_planner(state):
     print_node_header("MASTER PLANNER")
 
     query = state["query"]
+    research_depth = state.get("research_depth", "standard")
     print(f"  Analyzing query: {query[:100]}...")
+    print(f"  Research depth: {research_depth}")
 
     # Get KB metadata for context (reuse existing function from Strategic Planner)
     from src.nodes.planner_node import check_kb_contents
 
     kb_info = check_kb_contents()
 
+    # Get depth-specific guidance
+    depth_guidance = _get_depth_guidance(research_depth)
+
     # Invoke LLM with structured output (using command-r for better structured output)
     model = get_master_planner_model()
     structured_llm = model.with_structured_output(MasterPlan)
 
     prompt = MASTER_PLANNER_PROMPT.format(
-        query=query, kb_summary=kb_info["summary"], kb_available=kb_info["available"]
+        query=query,
+        kb_summary=kb_info["summary"],
+        kb_available=kb_info["available"],
+        research_depth=research_depth,
+        depth_guidance=depth_guidance,
     )
 
     try:
