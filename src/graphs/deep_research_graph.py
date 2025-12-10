@@ -33,6 +33,9 @@ from src.nodes.evaluator_node import evaluator_node
 # Hierarchical nodes (Phase 1)
 from src.nodes.master_planner_node import master_planner
 
+# Phase 2: Long Report Generation - Writer Graph Nodes
+from src.nodes.outline_generator_node import outline_generator_node
+
 # Hierarchical nodes (Phase 4 - Dynamic Replanning)
 from src.nodes.plan_revisor_node import plan_revisor
 
@@ -42,7 +45,13 @@ from src.nodes.rag_retriever_node import rag_retriever
 
 # Reflection node (Meta-reasoning & Self-Critique)
 from src.nodes.reflection_node import reflection_node
+from src.nodes.report_reviewer_node import report_reviewer_node
+from src.nodes.report_revisor_node import report_revisor_node
+
+# Phase 1: Long Report Generation - Result Aggregator
+from src.nodes.result_aggregator_node import result_aggregator_node
 from src.nodes.searcher_node import searcher
+from src.nodes.section_writer_node import section_writer_node
 from src.nodes.subtask_executor import subtask_executor
 from src.nodes.subtask_result_aggregator import save_subtask_result
 from src.nodes.subtask_router import subtask_router
@@ -121,6 +130,18 @@ class DeepResearchState(TypedDict):
     )
     reflection_confidence: float  # Confidence score from reflection (0.0-1.0)
 
+    # === Phase 1: Long Report Generation Fields ===
+    aggregated_findings: dict  # AggregatedFindings as dict (JSON-serializable)
+    findings_ready: bool  # Whether findings are ready for writing
+
+    # === Phase 2: Writer Graph Integration Fields ===
+    report_outline: dict  # ReportOutline as dict (JSON-serializable)
+    draft_report: str  # Current draft of the report
+    section_word_counts: dict  # Word counts per section
+    total_word_count: int  # Total word count
+    review_result: dict  # ReportReviewResult as dict
+    needs_revision: bool  # Whether report needs revision
+
 
 def router(state):
     """
@@ -198,6 +219,28 @@ def post_save_router(state):
     return subtask_router(state)
 
 
+def writer_review_router(state):
+    """
+    Router after report reviewer - decides whether to revise or finalize.
+
+    Routes to revisor if needs_revision is True and revision_count < 3.
+    Otherwise routes to synthesizer for final output.
+    """
+    print("---WRITER REVIEW ROUTER---")
+    needs_revision = state.get("needs_revision", False)
+    revision_count = state.get("revision_count", 0)
+
+    if needs_revision and revision_count < 3:
+        print(f"  Report needs revision (attempt {revision_count + 1}/3)")
+        return "report_revisor"
+    else:
+        if needs_revision:
+            print("  Max revisions reached, proceeding to synthesizer")
+        else:
+            print("  Report passed review, proceeding to synthesizer")
+        return "synthesizer"
+
+
 class DeepResearchGraphBuilder(BaseGraphBuilder):
     """Builder for the Deep Research hierarchical workflow"""
 
@@ -233,6 +276,15 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
 
         # Register reflection node (Meta-reasoning & Self-Critique)
         workflow.add_node("reflection", reflection_node)
+
+        # Register Phase 1 Long Report Generation nodes
+        workflow.add_node("result_aggregator", result_aggregator_node)  # type: ignore[type-var]
+
+        # Register Phase 2 Long Report Generation nodes (Writer Graph)
+        workflow.add_node("outline_generator", outline_generator_node)  # type: ignore[type-var]
+        workflow.add_node("section_writer", section_writer_node)  # type: ignore[type-var]
+        workflow.add_node("report_reviewer", report_reviewer_node)  # type: ignore[type-var]
+        workflow.add_node("report_revisor", report_revisor_node)  # type: ignore[type-var]
 
         # Entry point: Master Planner (Phase 1 change)
         workflow.set_entry_point("master_planner")
@@ -291,9 +343,29 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
             post_save_router,
             {
                 "execute_subtask": "subtask_executor",  # More subtasks to execute
-                "synthesize": "synthesizer",  # All done, synthesize
+                "synthesize": "result_aggregator",  # All done → aggregate first
             },
         )
+
+        # Phase 1 Long Report: result_aggregator → outline_generator
+        workflow.add_edge("result_aggregator", "outline_generator")
+
+        # Phase 2 Long Report: Writer Graph flow
+        workflow.add_edge("outline_generator", "section_writer")
+        workflow.add_edge("section_writer", "report_reviewer")
+
+        # After reviewer: revise or proceed to synthesizer
+        workflow.add_conditional_edges(
+            "report_reviewer",
+            writer_review_router,
+            {
+                "report_revisor": "report_revisor",
+                "synthesizer": "synthesizer",
+            },
+        )
+
+        # Revisor loops back to reviewer
+        workflow.add_edge("report_revisor", "report_reviewer")
 
         workflow.add_edge("synthesizer", END)
 
@@ -318,6 +390,11 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_node("drill_down_generator", drill_down_generator)
         workflow.add_node("plan_revisor", plan_revisor)
         workflow.add_node("reflection", reflection_node)
+        workflow.add_node("result_aggregator", result_aggregator_node)  # type: ignore[type-var]
+        workflow.add_node("outline_generator", outline_generator_node)  # type: ignore[type-var]
+        workflow.add_node("section_writer", section_writer_node)  # type: ignore[type-var]
+        workflow.add_node("report_reviewer", report_reviewer_node)  # type: ignore[type-var]
+        workflow.add_node("report_revisor", report_revisor_node)  # type: ignore[type-var]
 
         # Set up all edges (same as build())
         workflow.set_entry_point("master_planner")
@@ -352,8 +429,17 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_conditional_edges(
             "save_result",
             post_save_router,
-            {"execute_subtask": "subtask_executor", "synthesize": "synthesizer"},
+            {"execute_subtask": "subtask_executor", "synthesize": "result_aggregator"},
         )
+        workflow.add_edge("result_aggregator", "outline_generator")
+        workflow.add_edge("outline_generator", "section_writer")
+        workflow.add_edge("section_writer", "report_reviewer")
+        workflow.add_conditional_edges(
+            "report_reviewer",
+            writer_review_router,
+            {"report_revisor": "report_revisor", "synthesizer": "synthesizer"},
+        )
+        workflow.add_edge("report_revisor", "report_reviewer")
         workflow.add_edge("synthesizer", END)
 
         # Return uncompiled
@@ -363,13 +449,14 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         """Return metadata about this graph"""
         return {
             "name": "Deep Research",
-            "description": "Hierarchical multi-agent research with dynamic replanning",
-            "version": "2.1",
+            "description": "Hierarchical multi-agent research with dynamic replanning and long-form report generation",
+            "version": "2.2",
             "use_cases": [
                 "Complex multi-faceted research questions",
                 "Topics requiring deep exploration",
                 "Queries benefiting from subtask decomposition",
                 "Adaptive research that discovers new angles mid-execution",
+                "Long-form report generation (6,000+ words)",
             ],
             "complexity": "high",
             "supports_streaming": True,
@@ -381,6 +468,10 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
                 "Recursive drill-down up to 2 levels",
                 "Budget-aware execution control",
                 "Meta-reasoning reflection & self-critique",
+                "Result aggregation with quality validation (Long Report Phase 1)",
+                "Outline-driven report generation (Long Report Phase 2)",
+                "Multi-section report writing with review-revise loop",
+                "Language consistency enforcement",
             ],
             "phases": {
                 "1": "Basic hierarchical decomposition",
@@ -388,5 +479,7 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
                 "3": "Recursive drill-down for important subtasks",
                 "4": "Dynamic plan revision based on discoveries",
                 "4.1": "Budget-aware control and monitoring",
+                "5": "Result aggregation and quality validation",
+                "6": "Outline-driven long-form report generation",
             },
         }

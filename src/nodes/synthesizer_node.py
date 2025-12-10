@@ -218,9 +218,33 @@ def synthesizer_node(state):
         # Hierarchical mode: Synthesize multiple subtask results
         master_plan = state.get("master_plan", {})
         subtask_results = state.get("subtask_results", {})
+        aggregated_findings = state.get("aggregated_findings", {})
+        findings_ready = state.get("findings_ready", False)
+
+        # Check if Writer Graph has produced a draft report
+        draft_report = state.get("draft_report", "")
+        total_word_count = state.get("total_word_count", 0)
 
         print("  Mode: HIERARCHICAL")
         print(f"  Subtasks completed: {len(subtask_results)}")
+
+        # If Writer Graph has produced a draft report, use it directly
+        if draft_report and total_word_count > 500:
+            print(f"  Writer Graph report: ✓ available ({total_word_count} words)")
+            print("  Using Writer Graph output as final report")
+            return {"report": draft_report}
+
+        # Log aggregation status if available
+        if aggregated_findings:
+            print("  Aggregated findings: ✓ available")
+            print(f"    - Target language: {aggregated_findings.get('target_language', 'unknown')}")
+            print(f"    - Avg quality: {aggregated_findings.get('average_quality_score', 0):.2f}")
+            print(f"    - Themes found: {len(aggregated_findings.get('themes', []))}")
+            print(f"    - Ready for writing: {'✓' if findings_ready else '✗'}")
+            if aggregated_findings.get("coverage_gaps"):
+                print(f"    - Coverage gaps: {aggregated_findings['coverage_gaps']}")
+        else:
+            print("  Aggregated findings: Not available (using raw subtask results)")
 
         # Format subtask information for prompt
         subtask_count = len(master_plan.get("subtasks", []))
@@ -256,6 +280,26 @@ def synthesizer_node(state):
         # Get depth-specific guidance for synthesizer
         depth_guidance = _get_synthesizer_depth_guidance(research_depth)
 
+        # Build aggregation summary if available
+        aggregation_summary = ""
+        if aggregated_findings:
+            target_lang = aggregated_findings.get("target_language", "en")
+            themes = aggregated_findings.get("themes", [])
+            avg_quality = aggregated_findings.get("average_quality_score", 0)
+            total_words = aggregated_findings.get("total_word_count", 0)
+            coverage_gaps = aggregated_findings.get("coverage_gaps", [])
+
+            aggregation_summary = f"""
+## Quality Analysis Summary
+- **Target Language**: {target_lang} (IMPORTANT: Write the entire report in this language)
+- **Average Quality Score**: {avg_quality:.2f}/1.0
+- **Total Research Words**: {total_words}
+- **Cross-cutting Themes**: {", ".join(themes) if themes else "None identified"}
+"""
+            if coverage_gaps:
+                aggregation_summary += f"- **Coverage Gaps**: {'; '.join(coverage_gaps)}\n"
+            aggregation_summary += "\n"
+
         # Use hierarchical synthesis prompt with depth guidance
         prompt = (
             HIERARCHICAL_SYNTHESIZER_PROMPT.format(
@@ -267,6 +311,7 @@ def synthesizer_node(state):
                 research_depth=research_depth,
                 depth_guidance=depth_guidance,
             )
+            + aggregation_summary
             + report_guidance
         )
 

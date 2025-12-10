@@ -150,6 +150,13 @@ def _auto_register_graphs():
     except ImportError as e:
         print(f"[GraphRegistry] Warning: Could not load code_investigation graph: {e}")
 
+    try:
+        from .writer_graph import WriterGraphBuilder
+
+        register_graph("writer", WriterGraphBuilder())
+    except ImportError as e:
+        print(f"[GraphRegistry] Warning: Could not load writer graph: {e}")
+
 
 # Auto-register graphs on module import
 _auto_register_graphs()
