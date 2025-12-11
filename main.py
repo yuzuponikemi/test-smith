@@ -307,6 +307,49 @@ Examples:
                         if logger:
                             logger.log(f"Report saved to: {report_path}")
 
+                    # Save research data if available (for deep_research graph)
+                    if "aggregated_findings" in final_state and final_state["aggregated_findings"]:
+                        # Create output directory if needed
+                        research_data_dir = Path("research_data")
+                        research_data_dir.mkdir(exist_ok=True)
+
+                        # Generate filename with timestamp
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        findings_file = research_data_dir / f"findings_{timestamp}.json"
+
+                        # Prepare research data with additional context
+                        research_data = {
+                            "query": args.query,
+                            "graph": graph_name,
+                            "depth": args.depth,
+                            "thread_id": thread_id,
+                            "timestamp": timestamp,
+                            "aggregated_findings": final_state["aggregated_findings"],
+                        }
+
+                        # Include report outline if available
+                        if "report_outline" in final_state and final_state["report_outline"]:
+                            research_data["report_outline"] = final_state["report_outline"]
+
+                        # Include review result if available
+                        if "review_result" in final_state and final_state["review_result"]:
+                            research_data["review_result"] = final_state["review_result"]
+
+                        # Save research data to JSON
+                        with open(findings_file, "w", encoding="utf-8") as f:
+                            json.dump(research_data, f, indent=2, ensure_ascii=False)
+
+                        print(f"\n✓ Research data saved to: {findings_file}")
+
+                        # Also save as latest.json for easy access
+                        latest_file = research_data_dir / "latest.json"
+                        with open(latest_file, "w", encoding="utf-8") as f:
+                            json.dump(research_data, f, indent=2, ensure_ascii=False)
+                        print(f"  Latest data also saved to: {latest_file}")
+
+                        if logger:
+                            logger.log(f"Research data saved to: {findings_file}")
+
                     # Finalize logger
                     if logger:
                         logger.finalize(final_state.get("report", ""))
