@@ -411,8 +411,6 @@ Examples:
             for i, report in enumerate(reports, 1):
                 size_kb = report.stat().st_size / 1024
                 mtime = report.stat().st_mtime
-                from datetime import datetime
-
                 mtime_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
                 print(f"{i:2}. {report.name}")
                 print(f"    Size: {size_kb:.1f} KB | Modified: {mtime_str}")
@@ -426,8 +424,6 @@ Examples:
             for i, log in enumerate(logs, 1):
                 size_kb = log.stat().st_size / 1024
                 mtime = log.stat().st_mtime
-                from datetime import datetime
-
                 mtime_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
                 print(f"{i:2}. {log.name}")
                 print(f"    Size: {size_kb:.1f} KB | Modified: {mtime_str}")
