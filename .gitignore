@@ -229,6 +229,7 @@ visualizations/*
 !visualizations/.gitkeep
 citations/*
 !citations/.gitkeep
+research_data/*
 
 # Citation output files (generated artifacts)
 *_citations_*.bib
