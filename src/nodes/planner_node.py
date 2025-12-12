@@ -100,8 +100,13 @@ def planner(state):
 
     query = state["query"]
     feedback = state.get("reason", "")
+    quality_feedback = state.get("quality_feedback", "")
     loop_count = state.get("loop_count", 0)
     research_depth = state.get("research_depth", "standard")
+
+    # Combine feedback sources (evaluator reason + quality checker feedback)
+    if quality_feedback:
+        feedback = f"{feedback}\n\n{quality_feedback}" if feedback else quality_feedback
 
     # Get depth-aware query limits
     from src.config.research_depth import get_depth_config

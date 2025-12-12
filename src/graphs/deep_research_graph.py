@@ -45,6 +45,9 @@ from src.nodes.rag_retriever_node import rag_retriever
 
 # Reflection node (Meta-reasoning & Self-Critique)
 from src.nodes.reflection_node import reflection_node
+
+# Quality feedback loop
+from src.nodes.report_quality_checker_node import report_quality_checker_node
 from src.nodes.report_reviewer_node import report_reviewer_node
 from src.nodes.report_revisor_node import report_revisor_node
 
@@ -141,6 +144,11 @@ class DeepResearchState(TypedDict):
     total_word_count: int  # Total word count
     review_result: dict  # ReportReviewResult as dict
     needs_revision: bool  # Whether report needs revision
+
+    # === Quality Feedback Loop Fields ===
+    quality_check_passed: bool  # Whether report meets quality criteria
+    quality_feedback: str  # Feedback for planner if retry needed
+    quality_retry_count: int  # Number of quality-based retries
 
 
 def router(state):
@@ -241,6 +249,31 @@ def writer_review_router(state):
         return "synthesizer"
 
 
+def quality_check_router(state):
+    """
+    Router after quality checker - decides whether to retry research or finish.
+
+    For SIMPLE mode: If quality check failed and retries available, go back to planner.
+    For HIERARCHICAL mode: Quality check is not used (uses Writer Graph instead).
+    """
+    print("---QUALITY CHECK ROUTER---")
+    execution_mode = state.get("execution_mode", "simple")
+    quality_check_passed = state.get("quality_check_passed", True)
+
+    if execution_mode != "simple":
+        # Hierarchical mode doesn't use this quality check loop
+        print("  Hierarchical mode: Skipping quality check loop → END")
+        return "end"
+
+    if quality_check_passed:
+        print("  Quality check passed → END")
+        return "end"
+    else:
+        quality_retry_count = state.get("quality_retry_count", 0)
+        print(f"  Quality check failed, retry {quality_retry_count}/2 → planner")
+        return "planner"
+
+
 class DeepResearchGraphBuilder(BaseGraphBuilder):
     """Builder for the Deep Research hierarchical workflow"""
 
@@ -285,6 +318,9 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_node("section_writer", section_writer_node)  # type: ignore[type-var]
         workflow.add_node("report_reviewer", report_reviewer_node)  # type: ignore[type-var]
         workflow.add_node("report_revisor", report_revisor_node)  # type: ignore[type-var]
+
+        # Register Quality Feedback Loop node
+        workflow.add_node("quality_checker", report_quality_checker_node)  # type: ignore[type-var]
 
         # Entry point: Master Planner (Phase 1 change)
         workflow.set_entry_point("master_planner")
@@ -367,7 +403,18 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         # Revisor loops back to reviewer
         workflow.add_edge("report_revisor", "report_reviewer")
 
-        workflow.add_edge("synthesizer", END)
+        # Synthesizer → Quality Checker (for SIMPLE mode quality feedback loop)
+        workflow.add_edge("synthesizer", "quality_checker")
+
+        # Quality Checker routes: retry research or finish
+        workflow.add_conditional_edges(
+            "quality_checker",
+            quality_check_router,
+            {
+                "planner": "planner",  # Retry research with feedback
+                "end": END,  # Quality passed or max retries
+            },
+        )
 
         # Compile and return
         return workflow.compile()
@@ -395,6 +442,7 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_node("section_writer", section_writer_node)  # type: ignore[type-var]
         workflow.add_node("report_reviewer", report_reviewer_node)  # type: ignore[type-var]
         workflow.add_node("report_revisor", report_revisor_node)  # type: ignore[type-var]
+        workflow.add_node("quality_checker", report_quality_checker_node)  # type: ignore[type-var]
 
         # Set up all edges (same as build())
         workflow.set_entry_point("master_planner")
@@ -440,7 +488,12 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
             {"report_revisor": "report_revisor", "synthesizer": "synthesizer"},
         )
         workflow.add_edge("report_revisor", "report_reviewer")
-        workflow.add_edge("synthesizer", END)
+        workflow.add_edge("synthesizer", "quality_checker")
+        workflow.add_conditional_edges(
+            "quality_checker",
+            quality_check_router,
+            {"planner": "planner", "end": END},
+        )
 
         # Return uncompiled
         return workflow

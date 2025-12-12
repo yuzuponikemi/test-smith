@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from src.models import get_synthesizer_model
 from src.prompts.synthesizer_prompt import (
     HIERARCHICAL_SYNTHESIZER_PROMPT,
@@ -5,6 +7,7 @@ from src.prompts.synthesizer_prompt import (
     SYNTHESIZER_WITH_PROVENANCE_PROMPT,
 )
 from src.utils.logging_utils import print_node_header
+from src.utils.result_validator import count_words, detect_language
 
 
 def _format_source_summary(state: dict) -> str:
@@ -262,7 +265,7 @@ def synthesizer_node(state):
 
         # Format subtask results
         subtask_results_formatted = []
-        for subtask_id, result in subtask_results.items():
+        for subtask_id, subtask_result in subtask_results.items():
             # Find the subtask details
             subtask_details = next(
                 (s for s in master_plan.get("subtasks", []) if s["subtask_id"] == subtask_id), None
@@ -272,7 +275,7 @@ def synthesizer_node(state):
                     f"### Subtask: {subtask_id}\n"
                     f"**Description:** {subtask_details['description']}\n"
                     f"**Focus Area:** {subtask_details['focus_area']}\n\n"
-                    f"**Research Results:**\n{result}\n"
+                    f"**Research Results:**\n{subtask_result}\n"
                 )
 
         subtask_results_str = "\n\n---\n\n".join(subtask_results_formatted)
@@ -343,13 +346,13 @@ def synthesizer_node(state):
         if code_results:
             code_results_str = "\n\n**CODE EXECUTION RESULTS:**\n"
             code_results_str += "The following code was executed to answer the query:\n\n"
-            for i, result in enumerate(code_results, 1):
+            for i, code_result in enumerate(code_results, 1):
                 code_results_str += f"Result {i}:\n"
-                code_results_str += f"- Success: {result.get('success', False)}\n"
-                code_results_str += f"- Output: {result.get('output', 'N/A')}\n"
-                code_results_str += f"- Execution Mode: {result.get('execution_mode', 'N/A')}\n"
-                if result.get("code"):
-                    code_results_str += f"- Code:\n```python\n{result['code']}\n```\n"
+                code_results_str += f"- Success: {code_result.get('success', False)}\n"
+                code_results_str += f"- Output: {code_result.get('output', 'N/A')}\n"
+                code_results_str += f"- Execution Mode: {code_result.get('execution_mode', 'N/A')}\n"
+                if code_result.get("code"):
+                    code_results_str += f"- Code:\n```python\n{code_result['code']}\n```\n"
                 code_results_str += "\n"
             code_results_str += "**IMPORTANT:** Use the actual output values from the code execution results above in your final answer. Do not use placeholders like '[insert value]'.\n"
 
@@ -465,4 +468,70 @@ def synthesizer_node(state):
         report_content += "".join(reference_lines)
         print(f"  ✓ Added {len(all_sources_list)} references programmatically\n")
 
-    return {"report": report_content}
+    # Build aggregated_findings for SIMPLE mode to enable research data saving
+    result: dict = {"report": report_content}
+
+    if execution_mode == "simple":
+        # Calculate report metrics
+        report_word_count = count_words(report_content)
+        detected_lang = detect_language(report_content)
+
+        # Build simple mode findings from analyzed_data
+        simple_findings = {
+            "original_query": original_query,
+            "research_depth": research_depth,
+            "target_language": detected_lang,
+            "execution_mode": "simple",
+            "total_subtasks": 1,
+            "successful_subtasks": 1,
+            "findings": [
+                {
+                    "subtask_id": "simple_research",
+                    "query": original_query,
+                    "focus_area": "General Research",
+                    "language": detected_lang,
+                    "findings": analyzed_data if analyzed_data else [],
+                    "key_insights": [],
+                    "sources": [],
+                    "quality_score": min(1.0, report_word_count / depth_config.target_word_count),
+                    "relevance_score": 1.0,
+                    "word_count": report_word_count,
+                    "contains_meta_description": False,
+                    "metadata": {
+                        "web_queries": web_queries,
+                        "rag_queries": rag_queries,
+                        "allocation_strategy": allocation_strategy,
+                        "loop_count": loop_count,
+                        "timestamp": datetime.now().isoformat(),
+                    },
+                }
+            ],
+            "themes": [],
+            "contradictions": [],
+            "coverage_gaps": [],
+            "total_word_count": report_word_count,
+            "average_quality_score": min(1.0, report_word_count / depth_config.target_word_count),
+            "ready_for_writing": True,
+            "validation_notes": [],
+            "report_word_count": report_word_count,
+            "target_word_count": depth_config.target_word_count,
+        }
+
+        # Add source information if available
+        if has_provenance:
+            simple_findings["findings"][0]["sources"] = [
+                {"type": "web", "url": s.get("url", ""), "title": s.get("title", "")}
+                for s in web_sources
+            ] + [
+                {
+                    "type": "rag",
+                    "file": s.get("metadata", {}).get("source_file", ""),
+                    "title": s.get("title", ""),
+                }
+                for s in rag_sources
+            ]
+
+        result["aggregated_findings"] = simple_findings
+        print(f"  ✓ Built research data for SIMPLE mode ({report_word_count} words)")
+
+    return result
