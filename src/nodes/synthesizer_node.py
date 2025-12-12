@@ -350,7 +350,9 @@ def synthesizer_node(state):
                 code_results_str += f"Result {i}:\n"
                 code_results_str += f"- Success: {code_result.get('success', False)}\n"
                 code_results_str += f"- Output: {code_result.get('output', 'N/A')}\n"
-                code_results_str += f"- Execution Mode: {code_result.get('execution_mode', 'N/A')}\n"
+                code_results_str += (
+                    f"- Execution Mode: {code_result.get('execution_mode', 'N/A')}\n"
+                )
                 if code_result.get("code"):
                     code_results_str += f"- Code:\n```python\n{code_result['code']}\n```\n"
                 code_results_str += "\n"
