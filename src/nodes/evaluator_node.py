@@ -76,12 +76,17 @@ def evaluator_node(state):
         # Build depth-aware evaluation guidance
         strictness_guidance = _get_strictness_guidance(depth_config)
 
+        # Get term definitions for consistency checking
+        term_definitions = state.get("term_definitions", {})
+        term_definitions_section = _format_term_definitions_for_evaluator(term_definitions)
+
         prompt = (
             EVALUATOR_PROMPT.format(
                 original_query=original_query,
                 allocation_strategy=allocation_strategy,
                 analyzed_data=analyzed_data,
                 loop_count=loop_count,
+                term_definitions_section=term_definitions_section,
             )
             + strictness_guidance
         )
@@ -90,22 +95,39 @@ def evaluator_node(state):
             with log_performance(logger, "evaluation_llm_call"):
                 evaluation = structured_llm.invoke(prompt)
 
-            # Check for topic drift - this is critical
+            # Check for topic drift and entity consistency - these are critical
             relevance_score = getattr(evaluation, "relevance_score", 0.5)
             topic_drift = getattr(evaluation, "topic_drift_detected", False)
             drift_desc = getattr(evaluation, "drift_description", "")
+            entity_info_present = getattr(evaluation, "entity_info_present", True)
+            missing_entity_info = getattr(evaluation, "missing_entity_info", "")
 
-            # If severe topic drift, mark as insufficient regardless of other factors
-            if relevance_score < 0.3 or topic_drift:
+            # Multiple failure conditions - any one triggers insufficient
+            failure_reasons = []
+
+            if relevance_score < 0.3:
+                failure_reasons.append(f"Low relevance ({relevance_score:.2f})")
+
+            if topic_drift:
+                failure_reasons.append("Topic drift detected")
+
+            if not entity_info_present:
+                failure_reasons.append("Entity info missing/incorrect")
+
+            # If any failure condition, mark as insufficient
+            if failure_reasons:
                 result = "insufficient"
                 logger.warning(
-                    "topic_drift_detected",
+                    "evaluation_failure",
+                    failure_reasons=failure_reasons,
                     relevance_score=relevance_score,
-                    drift_description=drift_desc[:200] if drift_desc else "No description",
+                    entity_info_present=entity_info_present,
                 )
-                print(f"  ⚠️  TOPIC DRIFT DETECTED (relevance={relevance_score:.2f})")
+                print(f"  ⚠️  EVALUATION FAILED: {', '.join(failure_reasons)}")
                 if drift_desc:
                     print(f"  Drift: {drift_desc[:100]}...")
+                if missing_entity_info:
+                    print(f"  Missing entity info: {missing_entity_info[:100]}...")
             else:
                 result = "sufficient" if evaluation.is_sufficient else "insufficient"
 
@@ -114,6 +136,7 @@ def evaluator_node(state):
 
             print(f"  Result: {result}")
             print(f"  Relevance: {relevance_score:.2f}")
+            print(f"  Entity info present: {entity_info_present}")
             print(f"  Reason: {evaluation.reason[:100]}...")
 
             return {
@@ -121,6 +144,7 @@ def evaluator_node(state):
                 "reason": evaluation.reason,
                 "relevance_score": relevance_score,
                 "topic_drift_detected": topic_drift,
+                "entity_info_present": entity_info_present,
             }
 
         except Exception as e:
@@ -129,3 +153,35 @@ def evaluator_node(state):
 
             message = model.invoke(prompt)
             return {"evaluation": message.content, "reason": "Fallback evaluation used"}
+
+
+def _format_term_definitions_for_evaluator(term_definitions: dict) -> str:
+    """Format term definitions for inclusion in the evaluator prompt."""
+    if not term_definitions:
+        return "No technical terms were pre-verified for this query."
+
+    lines = ["**Use these verified definitions as GROUND TRUTH:**\n"]
+
+    for term, info in term_definitions.items():
+        confidence = info.get("confidence", "unknown")
+
+        lines.append(f"### {term}")
+        lines.append(f"- **Category:** {info.get('category', 'unknown')}")
+        lines.append(f"- **Definition:** {info.get('definition', 'Unknown')}")
+
+        features = info.get("key_features", [])
+        if features:
+            lines.append(f"- **Must discuss:** {', '.join(features[:4])}")
+
+        confusions = info.get("common_confusions", [])
+        if confusions:
+            lines.append(f"- **Must NOT confuse with:** {', '.join(confusions)}")
+
+        lines.append(f"- **Definition confidence:** {confidence}")
+        lines.append("")
+
+    lines.append(
+        "**If the analysis describes these terms differently than defined above, mark entity_info_present as false.**"
+    )
+
+    return "\n".join(lines)

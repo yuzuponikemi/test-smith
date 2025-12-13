@@ -45,6 +45,46 @@ class Evaluation(BaseModel):
         default="",
         description="If topic drift detected, describe what topics are being discussed vs what was asked.",
     )
+    entity_info_present: bool = Field(
+        default=True,
+        description="True if concrete information about the main entity/product in the query is present.",
+    )
+    missing_entity_info: str = Field(
+        default="",
+        description="If entity_info_present is False, describe what specific entity information is missing.",
+    )
+
+
+# === Term Definition Schemas ===
+
+
+class ExtractedTerms(BaseModel):
+    """List of technical terms extracted from a query."""
+
+    terms: list[str] = Field(
+        default_factory=list,
+        description="Technical terms, product names, or concepts that need definition verification",
+    )
+
+
+class TermDefinition(BaseModel):
+    """Verified definition of a technical term."""
+
+    category: str = Field(
+        description="Type of term: tool, framework, company, concept, protocol, acronym, etc."
+    )
+    definition: str = Field(description="Clear, accurate 1-2 sentence definition of the term")
+    key_features: list[str] = Field(
+        default_factory=list,
+        description="3-5 key characteristics or features of this term",
+    )
+    common_confusions: list[str] = Field(
+        default_factory=list,
+        description="Things this term is commonly confused with (to avoid)",
+    )
+    confidence: Literal["high", "medium", "low"] = Field(
+        description="Confidence level in this definition based on available sources"
+    )
 
 
 # === Hierarchical Task Decomposition Schemas (Phase 1) ===

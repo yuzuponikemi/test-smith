@@ -48,6 +48,9 @@ from src.nodes.subtask_result_aggregator import save_subtask_result
 from src.nodes.subtask_router import subtask_router
 from src.nodes.synthesizer_node import synthesizer_node
 
+# Term definition node (prevents topic drift)
+from src.nodes.term_definer_node import term_definer_node
+
 from .base_graph import BaseGraphBuilder
 
 
@@ -71,11 +74,16 @@ class DeepResearchState(TypedDict):
     State for Deep Research workflow.
 
     v3.0: Unified architecture - always uses hierarchical flow with Writer Graph.
+    v3.1: Added term_definitions for topic drift prevention.
     """
 
     # === Core Query Fields ===
     query: str  # Original user query
     research_depth: str  # "quick", "standard", "deep", "comprehensive"
+
+    # === Term Definition Fields (v3.1 - topic drift prevention) ===
+    extracted_terms: list[str]  # Technical terms extracted from query
+    term_definitions: dict  # term → {category, definition, key_features, common_confusions}
 
     # === Hierarchical Orchestration Fields ===
     execution_mode: str  # Always "hierarchical" in v3.0
@@ -175,6 +183,9 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         """
         workflow = StateGraph(DeepResearchState)
 
+        # === Term Definition Node (v3.1 - prevents topic drift) ===
+        workflow.add_node("term_definer", term_definer_node)  # type: ignore[type-var]
+
         # === Core Research Nodes ===
         workflow.add_node("planner", planner)
         workflow.add_node("searcher", searcher)
@@ -197,8 +208,11 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_node("report_reviewer", report_reviewer_node)  # type: ignore[type-var]
         workflow.add_node("report_revisor", report_revisor_node)  # type: ignore[type-var]
 
-        # === Entry Point ===
-        workflow.set_entry_point("master_planner")
+        # === Entry Point: Start with Term Definer (v3.1) ===
+        workflow.set_entry_point("term_definer")
+
+        # === Term Definer → Master Planner ===
+        workflow.add_edge("term_definer", "master_planner")
 
         # === Master Planner → Subtask Execution ===
         # Always routes to execute_subtask (unified architecture)
@@ -260,6 +274,9 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         """Return uncompiled graph for custom checkpointer setup (same as build())"""
         workflow = StateGraph(DeepResearchState)
 
+        # === Term Definition Node (v3.1 - prevents topic drift) ===
+        workflow.add_node("term_definer", term_definer_node)  # type: ignore[type-var]
+
         # === Core Research Nodes ===
         workflow.add_node("planner", planner)
         workflow.add_node("searcher", searcher)
@@ -283,7 +300,8 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         workflow.add_node("report_revisor", report_revisor_node)  # type: ignore[type-var]
 
         # === Entry Point & Edges ===
-        workflow.set_entry_point("master_planner")
+        workflow.set_entry_point("term_definer")
+        workflow.add_edge("term_definer", "master_planner")
         workflow.add_conditional_edges(
             "master_planner",
             subtask_router,
@@ -324,7 +342,7 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         return {
             "name": "Deep Research",
             "description": "Unified hierarchical research with Writer Graph - all queries go through the same quality pipeline",
-            "version": "3.0",
+            "version": "3.1",
             "use_cases": [
                 "All research questions (simple to complex)",
                 "Topics requiring deep exploration",
@@ -334,6 +352,8 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
             "complexity": "medium-high",
             "supports_streaming": True,
             "features": [
+                "Term definition verification (v3.1 - prevents topic drift)",
+                "Multi-layer consistency checking (Analyzer + Evaluator)",
                 "Unified architecture (no simple/hierarchical split)",
                 "Always at least 1 subtask (even for simple queries)",
                 "Writer Graph for all reports (quality guaranteed)",
@@ -349,7 +369,7 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
                 "Language consistency enforcement",
             ],
             "flow": (
-                "master_planner → subtask_executor → planner → search → analyze → "
+                "term_definer → master_planner → subtask_executor → planner → search → analyze → "
                 "depth_eval → drill_down → plan_revisor → save_result → "
                 "(loop or) result_aggregator → Writer Graph → synthesizer → END"
             ),

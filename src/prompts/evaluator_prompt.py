@@ -3,6 +3,9 @@ EVALUATOR_PROMPT = """You are an information sufficiency and RELEVANCE evaluator
 ## Original User Query
 {original_query}
 
+## Verified Term Definitions (GROUND TRUTH)
+{term_definitions_section}
+
 ## Strategic Allocation Used
 {allocation_strategy}
 
@@ -14,9 +17,31 @@ This is iteration {loop_count} of the research process.
 
 ## Your Task
 
-Evaluate TWO critical aspects:
-1. **RELEVANCE**: Does the information actually relate to what was asked?
-2. **SUFFICIENCY**: Is there enough relevant information to answer the query?
+Evaluate THREE critical aspects:
+1. **TERM CONSISTENCY**: Does the analysis correctly understand the key terms per the verified definitions?
+2. **RELEVANCE**: Does the information actually relate to what was asked?
+3. **SUFFICIENCY**: Is there enough relevant information to answer the query?
+
+---
+
+### PART 0: TERM CONSISTENCY CHECK (CHECK FIRST)
+
+**Compare the analyzed data against the Verified Term Definitions above.**
+
+Check for each verified term:
+- Does the analysis describe the term correctly according to the verified definition?
+- Does the analysis discuss features/functions that match the verified key features?
+- Does the analysis fall into any of the "common confusions to avoid"?
+
+**Term Consistency Scoring:**
+- **CONSISTENT**: Analysis matches verified definitions
+- **INCONSISTENT**: Analysis describes the term differently (e.g., wrong category, wrong features)
+- **TOPIC DRIFT**: Analysis uses the term name but discusses something completely different
+
+**If INCONSISTENT or TOPIC DRIFT detected:**
+- Set `entity_info_present` to false
+- Set `missing_entity_info` to describe the mismatch
+- This indicates the research fundamentally misunderstood a key term
 
 ---
 
@@ -78,10 +103,17 @@ If the query asks about a SPECIFIC entity (product, tool, company, technology):
 ## Your Response
 
 Provide ALL of the following:
-1. **is_sufficient** (boolean): true only if relevance >= 0.5 AND content is sufficient
+1. **is_sufficient** (boolean): true only if term consistency OK AND relevance >= 0.5 AND content is sufficient
 2. **reason** (string): 2-3 sentences explaining your decision
 3. **relevance_score** (float 0.0-1.0): How relevant is the content to the ORIGINAL query
 4. **topic_drift_detected** (boolean): true if discussing wrong topics
 5. **drift_description** (string): If drift detected, explain what's being discussed vs what was asked
+6. **entity_info_present** (boolean): true if the analysis correctly describes the main entity/product per verified definitions
+7. **missing_entity_info** (string): If entity_info_present is false, describe what's wrong (e.g., "Analysis describes LangSmith as a person instead of an LLM observability tool")
 
-**IMPORTANT**: If relevance_score < 0.3, the research has fundamentally failed and needs to restart with corrected understanding of the query terms."""
+**AUTOMATIC FAILURE CONDITIONS (set is_sufficient = false):**
+- relevance_score < 0.3 → Research fundamentally off-topic
+- entity_info_present = false → Key term misunderstood, research invalid
+- topic_drift_detected = true → Analysis discusses wrong subject
+
+**IMPORTANT**: If any automatic failure condition is met, the research has fundamentally failed and needs to restart with corrected understanding."""

@@ -17,6 +17,14 @@ DO include:
 - Key findings and insights
 - Synthesized knowledge that addresses the query
 
+## ⚠️ CRITICAL: TERM DEFINITION CONSISTENCY CHECK
+{term_definitions_section}
+
+**You MUST verify that search results are consistent with these definitions.**
+- If results describe a term differently than the definition above → FLAG AS INCONSISTENT
+- If results discuss unrelated topics while using the same term name → FLAG AS TOPIC DRIFT
+- If results match the verified definitions → Use them with confidence
+
 ## Original User Query
 {original_query}
 
@@ -71,5 +79,22 @@ Provide a comprehensive analysis that:
 - Highlights key findings from RAG results (internal knowledge)
 - Supplements with web results (external/current information)
 - Notes any gaps or contradictions between sources
+
+## OUTPUT FORMAT
+
+Start your analysis with a **Term Consistency Check** section:
+
+```
+### Term Consistency Check
+- [Term 1]: ✓ Consistent / ⚠️ Inconsistent / ❌ Not found in results
+  - [Brief explanation if inconsistent]
+- [Term 2]: ...
+
+### Consistency Assessment
+Overall: CONSISTENT / PARTIAL DRIFT / MAJOR DRIFT
+[If drift detected, explain what topics results are discussing vs. what the query actually asked about]
+```
+
+Then proceed with your main analysis.
 
 Analysis:"""
