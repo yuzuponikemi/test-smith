@@ -235,25 +235,37 @@ Examples:
                                 print(value)
                                 print("\n---\n")
 
-                            # Track special nodes for metadata
-                            if (
-                                key == "master_planner"
-                                and "master_plan" in value
-                                and logger
-                                and value.get("master_plan")
-                            ):
-                                logger.log_master_plan(value["master_plan"])
+                            # Ensure value is a dictionary before accessing fields
+                            if isinstance(value, dict):
+                                # Track special nodes for metadata
+                                if (
+                                    key == "master_planner"
+                                    and "master_plan" in value
+                                    and logger
+                                    and value.get("master_plan")
+                                ):
+                                    logger.log_master_plan(value["master_plan"])
 
-                            if key == "planner" and "allocation_strategy" in value and logger:
-                                logger.log_queries(
-                                    value.get("rag_queries", []),
-                                    value.get("web_queries", []),
-                                    value.get("allocation_strategy", ""),
-                                )
+                                if key == "planner" and "allocation_strategy" in value and logger:
+                                    logger.log_queries(
+                                        value.get("rag_queries", []),
+                                        value.get("web_queries", []),
+                                        value.get("allocation_strategy", ""),
+                                    )
 
-                            # Update final state
-                            if value:
+                                # Update final state
                                 final_state.update(value)
+                            else:
+                                # Handle non-dict output (e.g. string errors or simple values)
+                                if logger:
+                                    logger.log(f"Received non-dict output from {key}: {value}", "WARNING")
+                                elif not args.stream:
+                                    print(f"[{key}] {value}")
+                                    
+                                # For simple string outputs, we might want to store them in final_state with the key
+                                # But final_state expects to update with a dict. 
+                                # We'll skip updating final_state for non-dict values to avoid crashing .update()
+                                pass
 
                     # Execution completed successfully
                     execution_complete = True

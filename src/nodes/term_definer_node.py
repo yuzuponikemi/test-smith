@@ -84,9 +84,18 @@ def term_definer_node(state: dict) -> dict:
                 logger.warning(f"Search failed for term '{term}': {e}")
 
         # Generate structured definition from search results
+        # Handle both string and dict results from Tavily (API changed across versions)
+        def extract_content(r) -> str:
+            if isinstance(r, str):
+                return r[:500]
+            elif isinstance(r, dict):
+                return r.get('content', r.get('snippet', ''))[:500]
+            else:
+                return str(r)[:500]
+
         search_context = (
             "\n".join(
-                [f"- {r.get('content', r.get('snippet', ''))[:500]}" for r in search_results[:4]]
+                [f"- {extract_content(r)}" for r in search_results[:4]]
             )
             if search_results
             else "No search results available."
