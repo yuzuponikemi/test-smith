@@ -84,8 +84,28 @@ def calculate_recursion_budget(state):
         status = "healthy"
         message = f"🟢 HEALTHY: {usage_percent:.1f}% used ({remaining} remaining)"
 
+    # Get max subtasks from depth config if available
+    research_depth = state.get("research_depth", "standard")
+    try:
+        from src.config.research_depth import get_depth_config
+
+        depth_config = get_depth_config(research_depth)
+        max_subtasks_limit = depth_config.max_subtasks
+    except Exception:
+        max_subtasks_limit = 10  # Fallback default
+
+    # Check if we've already exceeded max subtasks
+    total_subtasks = len(master_plan.get("subtasks", [])) if master_plan else 0
+    subtask_budget_exhausted = total_subtasks >= max_subtasks_limit
+
     # Recommendations
-    recommendations = {"allow_drill_down": True, "allow_plan_revision": True, "max_new_subtasks": 5}
+    recommendations = {"allow_drill_down": True, "allow_plan_revision": True, "max_new_subtasks": 3}
+
+    # Hard limit: disable expansion if we're at max subtasks
+    if subtask_budget_exhausted:
+        recommendations["allow_drill_down"] = False
+        recommendations["allow_plan_revision"] = False
+        recommendations["max_new_subtasks"] = 0
 
     if status == "critical":
         recommendations["allow_drill_down"] = False
@@ -99,6 +119,12 @@ def calculate_recursion_budget(state):
         recommendations["allow_drill_down"] = remaining_subtasks <= 3  # Only if few subtasks left
         recommendations["allow_plan_revision"] = True
         recommendations["max_new_subtasks"] = 2
+
+    # Ensure we never exceed max subtasks limit
+    remaining_subtask_budget = max(0, max_subtasks_limit - total_subtasks)
+    recommendations["max_new_subtasks"] = min(
+        recommendations["max_new_subtasks"], remaining_subtask_budget
+    )
 
     return {
         "current_count": current_count,

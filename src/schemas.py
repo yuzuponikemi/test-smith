@@ -24,12 +24,27 @@ class StrategicPlan(BaseModel):
 
 
 class Evaluation(BaseModel):
-    """An evaluation of the sufficiency of the information."""
+    """An evaluation of the sufficiency and relevance of the information."""
 
     is_sufficient: bool = Field(
         description="Whether the information is sufficient to create a comprehensive report."
     )
     reason: str = Field(description="The reason for the evaluation.")
+    relevance_score: float = Field(
+        ge=0.0,
+        le=1.0,
+        default=0.5,
+        description="How relevant the gathered information is to the ORIGINAL query (0.0=completely off-topic, 1.0=perfectly relevant). "
+        "Score below 0.3 indicates topic drift or hallucination risk.",
+    )
+    topic_drift_detected: bool = Field(
+        default=False,
+        description="True if the analyzed data discusses topics significantly different from the original query.",
+    )
+    drift_description: str = Field(
+        default="",
+        description="If topic drift detected, describe what topics are being discussed vs what was asked.",
+    )
 
 
 # === Hierarchical Task Decomposition Schemas (Phase 1) ===

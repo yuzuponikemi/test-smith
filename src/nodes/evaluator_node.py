@@ -90,15 +90,38 @@ def evaluator_node(state):
             with log_performance(logger, "evaluation_llm_call"):
                 evaluation = structured_llm.invoke(prompt)
 
-            result = "sufficient" if evaluation.is_sufficient else "insufficient"
+            # Check for topic drift - this is critical
+            relevance_score = getattr(evaluation, "relevance_score", 0.5)
+            topic_drift = getattr(evaluation, "topic_drift_detected", False)
+            drift_desc = getattr(evaluation, "drift_description", "")
+
+            # If severe topic drift, mark as insufficient regardless of other factors
+            if relevance_score < 0.3 or topic_drift:
+                result = "insufficient"
+                logger.warning(
+                    "topic_drift_detected",
+                    relevance_score=relevance_score,
+                    drift_description=drift_desc[:200] if drift_desc else "No description",
+                )
+                print(f"  ⚠️  TOPIC DRIFT DETECTED (relevance={relevance_score:.2f})")
+                if drift_desc:
+                    print(f"  Drift: {drift_desc[:100]}...")
+            else:
+                result = "sufficient" if evaluation.is_sufficient else "insufficient"
 
             # Log evaluation result
             log_evaluation_result(logger, evaluation.is_sufficient, evaluation.reason, loop_count)
 
             print(f"  Result: {result}")
+            print(f"  Relevance: {relevance_score:.2f}")
             print(f"  Reason: {evaluation.reason[:100]}...")
 
-            return {"evaluation": result, "reason": evaluation.reason}
+            return {
+                "evaluation": result,
+                "reason": evaluation.reason,
+                "relevance_score": relevance_score,
+                "topic_drift_detected": topic_drift,
+            }
 
         except Exception as e:
             logger.warning("evaluation_fallback", error_type=type(e).__name__, error_message=str(e))

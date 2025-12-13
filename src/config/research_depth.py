@@ -109,7 +109,7 @@ DEPTH_CONFIGS: dict[ResearchDepth, ResearchDepthConfig] = {
         rag_query_weight=0.4,
         # Router
         max_iterations=3,
-        max_subtasks=10,
+        max_subtasks=8,  # Reduced from 10 to prevent over-decomposition
         # LangGraph
         recursion_limit=300,
         recursion_extension=100,
@@ -131,7 +131,7 @@ DEPTH_CONFIGS: dict[ResearchDepth, ResearchDepthConfig] = {
         rag_query_weight=0.5,
         # Router
         max_iterations=5,
-        max_subtasks=20,
+        max_subtasks=12,  # Reduced from 20 to prevent runaway expansion (was causing 29+ subtasks)
         # LangGraph
         recursion_limit=500,
         recursion_extension=200,

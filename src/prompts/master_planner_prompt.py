@@ -10,6 +10,25 @@ KB Available: {kb_available}
 ## Research Depth Level: {research_depth}
 {depth_guidance}
 
+## ⚠️ CRITICAL: TERMINOLOGY VERIFICATION (DO THIS FIRST)
+
+Before analyzing complexity, verify you understand ALL technical terms in the query:
+
+**For EACH technical term/product name in the query:**
+1. Identify what it actually refers to (tool, framework, company, concept)
+2. Note its primary function or domain
+3. If uncertain, acknowledge this and plan to verify early in research
+
+**If the query contains terms you're uncertain about:**
+- Include a subtask specifically to "Define and verify [term]" as task_1
+- This prevents research from going off-track due to term misunderstanding
+
+**Example:**
+- Query: "LangSmithの製造業への活用パターン"
+- LangSmith = LangChain's observability platform for LLM applications
+- Research should focus on: LLM tracing, prompt debugging, evaluation in manufacturing AI contexts
+- NOT: general business strategy, stakeholder communication, or unrelated topics
+
 ## Your Task
 
 Analyze the query and decide:
