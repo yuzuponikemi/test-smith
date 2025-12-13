@@ -134,8 +134,8 @@ class TestCalculateRecursionBudget:
 
         result = calculate_recursion_budget(state)
 
-        # Should handle division by zero
-        assert result["avg_per_subtask"] == 10  # Default value
+        # Should handle division by zero (uses NODES_PER_SUBTASK_ITERATION constant = 8)
+        assert result["avg_per_subtask"] == 8  # Default value
         assert "estimated_total_needed" in result
 
     def test_calculate_budget_will_exceed_prediction(self):

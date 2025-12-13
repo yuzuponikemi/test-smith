@@ -5,12 +5,14 @@ from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
+from langgraph.errors import GraphRecursionError
 
 load_dotenv()
 
 from langgraph.checkpoint.sqlite import SqliteSaver
 
 # Import new graph registry system (depends on MODEL_PROVIDER being set)
+from src.config.research_depth import get_depth_config
 from src.graphs import get_default_graph, get_graph, list_graphs
 from src.utils.logging_utils import (
     get_recent_logs,
@@ -87,6 +89,13 @@ Examples:
     run_parser.add_argument(
         "--no-color", action="store_true", help="Disable colored output in streaming mode"
     )
+    run_parser.add_argument(
+        "--depth",
+        type=str,
+        choices=["quick", "standard", "deep", "comprehensive"],
+        default="standard",
+        help="Research depth level: quick (1-2 pages), standard (3-5 pages), deep (6-10 pages), comprehensive (10+ pages)",
+    )
 
     # List command
     list_parser = subparsers.add_parser("list", help="List recent reports or logs")
@@ -150,6 +159,7 @@ Examples:
         try:
             builder = get_graph(graph_name)
             print(f"[System] Using graph workflow: {graph_name} ({selection_mode})")
+            print(f"[System] Research depth: {args.depth}")
             print(f"[System] Description: {builder.get_metadata().get('description', 'N/A')}")
 
             # Show selection reasoning if auto-selected
@@ -170,9 +180,14 @@ Examples:
             uncompiled_graph = builder.get_uncompiled_graph()
             app = uncompiled_graph.compile(checkpointer=memory)
             thread_id = args.thread_id if args.thread_id else str(uuid.uuid4())
+
+            # Get depth-aware recursion limit
+            depth_config = get_depth_config(args.depth)
+            current_recursion_limit = depth_config.recursion_limit
+
             config = {
                 "configurable": {"thread_id": thread_id},
-                "recursion_limit": 150,  # Increased for Phase 4 dynamic replanning (default: 25, Phase 1-3: 100)
+                "recursion_limit": current_recursion_limit,
             }
 
             # Setup logger if enabled
@@ -197,103 +212,208 @@ Examples:
 
             # Track state for report saving
             final_state = {}
-            inputs = {"query": args.query, "loop_count": 0}
+            inputs = {"query": args.query, "loop_count": 0, "research_depth": args.depth}
 
-            try:
-                for output in app.stream(inputs, config=config):
-                    for key, value in output.items():
-                        # Streaming output (real-time progressive updates)
-                        if streaming_formatter:
-                            streaming_formatter.process_node_output(key, value)
+            # Execution loop with GraphRecursionError handling
+            execution_complete = False
+            while not execution_complete:
+                try:
+                    for output in app.stream(inputs, config=config):
+                        for key, value in output.items():
+                            # Streaming output (real-time progressive updates)
+                            if streaming_formatter:
+                                streaming_formatter.process_node_output(key, value)
 
-                        # Log node execution (file logging)
+                            # Log node execution (file logging)
+                            if logger:
+                                logger.log_node_start(key)
+                                logger.log_node_end(key, value)
+                            elif not args.stream:
+                                # Default verbose output (only if not streaming)
+                                print(f"Output from node '{key}':")
+                                print("---")
+                                print(value)
+                                print("\n---\n")
+
+                            # Ensure value is a dictionary before accessing fields
+                            if isinstance(value, dict):
+                                # Track special nodes for metadata
+                                if (
+                                    key == "master_planner"
+                                    and "master_plan" in value
+                                    and logger
+                                    and value.get("master_plan")
+                                ):
+                                    logger.log_master_plan(value["master_plan"])
+
+                                if key == "planner" and "allocation_strategy" in value and logger:
+                                    logger.log_queries(
+                                        value.get("rag_queries", []),
+                                        value.get("web_queries", []),
+                                        value.get("allocation_strategy", ""),
+                                    )
+
+                                # Update final state
+                                final_state.update(value)
+                            else:
+                                # Handle non-dict output (e.g. string errors or simple values)
+                                if logger:
+                                    logger.log(f"Received non-dict output from {key}: {value}", "WARNING")
+                                elif not args.stream:
+                                    print(f"[{key}] {value}")
+                                    
+                                # For simple string outputs, we might want to store them in final_state with the key
+                                # But final_state expects to update with a dict. 
+                                # We'll skip updating final_state for non-dict values to avoid crashing .update()
+                                pass
+
+                    # Execution completed successfully
+                    execution_complete = True
+
+                    # Finalize streaming output
+                    if streaming_formatter:
+                        streaming_formatter.finalize()
+
+                    # Save final report if available
+                    if "report" in final_state and not args.no_report:
+                        execution_mode = final_state.get("execution_mode", "simple")
+                        metadata = {
+                            "thread_id": thread_id,
+                        }
+
+                        # Add hierarchical metadata if available
+                        if execution_mode == "hierarchical" and "master_plan" in final_state:
+                            master_plan = final_state["master_plan"]
+                            if master_plan:
+                                metadata["subtask_count"] = len(master_plan.get("subtasks", []))
+                                metadata["complexity_reasoning"] = master_plan.get(
+                                    "complexity_reasoning", ""
+                                )
+
+                        report_path = save_report(
+                            final_state["report"], args.query, execution_mode, metadata
+                        )
+
+                    # Save causal graph data if available (for causal_inference graph)
+                    if "causal_graph_data" in final_state and graph_name == "causal_inference":
+                        # Create output directory if needed
+                        Path("causal_graphs").mkdir(exist_ok=True)
+
+                        # Generate filename with timestamp
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        graph_file = Path("causal_graphs") / f"causal_graph_{timestamp}.json"
+
+                        # Save graph data to JSON
+                        with open(graph_file, "w") as f:
+                            json.dump(final_state["causal_graph_data"], f, indent=2)
+
+                        print(f"\n✓ Causal graph data saved to: {graph_file}")
+                        print(f"  Visualize with: python visualize_causal_graph.py {graph_file}")
+
+                        # Also save as causal_graph.json for easy access
+                        latest_file = Path("causal_graphs") / "causal_graph.json"
+                        with open(latest_file, "w") as f:
+                            json.dump(final_state["causal_graph_data"], f, indent=2)
+                        print(f"  Latest graph also saved to: {latest_file}\n")
+
                         if logger:
-                            logger.log_node_start(key)
-                            logger.log_node_end(key, value)
-                        elif not args.stream:
-                            # Default verbose output (only if not streaming)
-                            print(f"Output from node '{key}':")
-                            print("---")
-                            print(value)
-                            print("\n---\n")
+                            logger.log(f"Report saved to: {report_path}")
 
-                        # Track special nodes for metadata
-                        if (
-                            key == "master_planner"
-                            and "master_plan" in value
-                            and logger
-                            and value.get("master_plan")
-                        ):
-                            logger.log_master_plan(value["master_plan"])
+                    # Save research data if available (for deep_research graph)
+                    if "aggregated_findings" in final_state and final_state["aggregated_findings"]:
+                        # Create output directory if needed
+                        research_data_dir = Path("research_data")
+                        research_data_dir.mkdir(exist_ok=True)
 
-                        if key == "planner" and "allocation_strategy" in value and logger:
-                            logger.log_queries(
-                                value.get("rag_queries", []),
-                                value.get("web_queries", []),
-                                value.get("allocation_strategy", ""),
-                            )
+                        # Generate filename with timestamp
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        findings_file = research_data_dir / f"findings_{timestamp}.json"
 
-                        # Update final state
-                        if value:
-                            final_state.update(value)
+                        # Prepare research data with additional context
+                        research_data = {
+                            "query": args.query,
+                            "graph": graph_name,
+                            "depth": args.depth,
+                            "thread_id": thread_id,
+                            "timestamp": timestamp,
+                            "aggregated_findings": final_state["aggregated_findings"],
+                        }
 
-                # Finalize streaming output
-                if streaming_formatter:
-                    streaming_formatter.finalize()
+                        # Include report outline if available
+                        if "report_outline" in final_state and final_state["report_outline"]:
+                            research_data["report_outline"] = final_state["report_outline"]
 
-                # Save final report if available
-                if "report" in final_state and not args.no_report:
-                    execution_mode = final_state.get("execution_mode", "simple")
-                    metadata = {
-                        "thread_id": thread_id,
-                    }
+                        # Include review result if available
+                        if "review_result" in final_state and final_state["review_result"]:
+                            research_data["review_result"] = final_state["review_result"]
 
-                    # Add hierarchical metadata if available
-                    if execution_mode == "hierarchical" and "master_plan" in final_state:
-                        master_plan = final_state["master_plan"]
-                        if master_plan:
-                            metadata["subtask_count"] = len(master_plan.get("subtasks", []))
-                            metadata["complexity_reasoning"] = master_plan.get(
-                                "complexity_reasoning", ""
-                            )
+                        # Save research data to JSON
+                        with open(findings_file, "w", encoding="utf-8") as f:
+                            json.dump(research_data, f, indent=2, ensure_ascii=False)
 
-                    report_path = save_report(
-                        final_state["report"], args.query, execution_mode, metadata
-                    )
+                        print(f"\n✓ Research data saved to: {findings_file}")
 
-                # Save causal graph data if available (for causal_inference graph)
-                if "causal_graph_data" in final_state and graph_name == "causal_inference":
-                    # Create output directory if needed
-                    Path("causal_graphs").mkdir(exist_ok=True)
+                        # Also save as latest.json for easy access
+                        latest_file = research_data_dir / "latest.json"
+                        with open(latest_file, "w", encoding="utf-8") as f:
+                            json.dump(research_data, f, indent=2, ensure_ascii=False)
+                        print(f"  Latest data also saved to: {latest_file}")
 
-                    # Generate filename with timestamp
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    graph_file = Path("causal_graphs") / f"causal_graph_{timestamp}.json"
+                        if logger:
+                            logger.log(f"Research data saved to: {findings_file}")
 
-                    # Save graph data to JSON
-                    with open(graph_file, "w") as f:
-                        json.dump(final_state["causal_graph_data"], f, indent=2)
+                    # Finalize logger
+                    if logger:
+                        logger.finalize(final_state.get("report", ""))
 
-                    print(f"\n✓ Causal graph data saved to: {graph_file}")
-                    print(f"  Visualize with: python visualize_causal_graph.py {graph_file}")
-
-                    # Also save as causal_graph.json for easy access
-                    latest_file = Path("causal_graphs") / "causal_graph.json"
-                    with open(latest_file, "w") as f:
-                        json.dump(final_state["causal_graph_data"], f, indent=2)
-                    print(f"  Latest graph also saved to: {latest_file}\n")
+                except GraphRecursionError:
+                    # Handle recursion limit reached - ask user if they want to continue
+                    print("\n" + "=" * 60)
+                    print("⚠️  再帰制限に到達しました")
+                    print(f"   現在の制限: {current_recursion_limit} ステップ")
+                    print(f"   追加可能: +{depth_config.recursion_extension} ステップ")
+                    print("=" * 60)
 
                     if logger:
-                        logger.log(f"Report saved to: {report_path}")
+                        logger.log(
+                            f"GraphRecursionError: limit {current_recursion_limit} reached",
+                            "WARNING",
+                        )
 
-                # Finalize logger
-                if logger:
-                    logger.finalize(final_state.get("report", ""))
+                    # Ask user if they want to continue
+                    user_input = input("\n調査を続行しますか？ (yes/no): ").strip().lower()
 
-            except Exception as e:
-                if logger:
-                    logger.log_error(e, "main execution loop")
-                raise
+                    if user_input in ("yes", "y", "はい"):
+                        # Extend the recursion limit and continue
+                        current_recursion_limit += depth_config.recursion_extension
+                        config["recursion_limit"] = current_recursion_limit
+                        print(f"\n✓ 再帰制限を {current_recursion_limit} に拡張して続行します...\n")
+
+                        if logger:
+                            logger.log(
+                                f"User extended recursion limit to {current_recursion_limit}",
+                                "INFO",
+                            )
+                        # Continue the while loop to retry
+                    else:
+                        # User chose not to continue
+                        print("\n調査を中断します。")
+                        if logger:
+                            logger.log("User chose not to continue after recursion limit", "INFO")
+
+                        # Generate partial report if we have any data
+                        if final_state.get("analyzed_data"):
+                            print("収集済みのデータで部分的なレポートを生成します...\n")
+                            # The synthesizer will use whatever data is available
+                            execution_complete = True
+                        else:
+                            execution_complete = True
+                            print("十分なデータが収集されていないため、レポートを生成できません。")
+
+                except Exception as e:
+                    if logger:
+                        logger.log_error(e, "main execution loop")
+                    raise
 
     elif args.command == "list":
         if args.type == "reports":
@@ -303,8 +423,6 @@ Examples:
             for i, report in enumerate(reports, 1):
                 size_kb = report.stat().st_size / 1024
                 mtime = report.stat().st_mtime
-                from datetime import datetime
-
                 mtime_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
                 print(f"{i:2}. {report.name}")
                 print(f"    Size: {size_kb:.1f} KB | Modified: {mtime_str}")
@@ -318,8 +436,6 @@ Examples:
             for i, log in enumerate(logs, 1):
                 size_kb = log.stat().st_size / 1024
                 mtime = log.stat().st_mtime
-                from datetime import datetime
-
                 mtime_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
                 print(f"{i:2}. {log.name}")
                 print(f"    Size: {size_kb:.1f} KB | Modified: {mtime_str}")

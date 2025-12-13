@@ -95,6 +95,31 @@ Include numbered inline citations [1], [2], etc. throughout the report, then lis
 - **Include citations** - Use inline citations like [1], [2] to reference sources
 - **Provide source list** - Include numbered reference list at the end
 
+## ⚠️ CRITICAL: HONESTY ABOUT INFORMATION GAPS
+
+**NEVER fabricate, hallucinate, or invent information.**
+
+If the analyzed data is insufficient:
+1. **Clearly state what information IS available** - Present what you found honestly
+2. **Explicitly acknowledge gaps** - Use clear language like:
+   - "The available sources did not provide specific information about..."
+   - "Further research is needed to determine..."
+   - "No concrete data was found regarding..."
+3. **Do NOT fill gaps with generic content** - If you don't have specific information about X, don't write generic paragraphs that could apply to anything
+4. **Do NOT invent references** - Never create fake citations, author names, or publication details
+5. **Provide useful context** - Even with gaps, explain what related information exists
+
+**Signs you might be hallucinating (STOP and reconsider):**
+- Writing detailed content without citing specific sources
+- Adding author names, dates, or studies not in the source materials
+- Describing features/products with no evidence in the analyzed data
+- Writing content that could apply to any topic (too generic)
+
+**If the analyzed data is mostly irrelevant to the query:**
+- State this clearly at the beginning: "The research did not find sufficient relevant information..."
+- Explain what was found instead
+- Suggest how the query might be refined for better results
+
 Generate the final report now:"""
 
 SYNTHESIZER_WITH_PROVENANCE_PROMPT = """You are a research report synthesizer with citation capabilities. Your job is to create a comprehensive, well-structured final report with inline citations, similar to academic papers or Perplexity AI.
@@ -184,6 +209,30 @@ Generate the final report with inline citations now:"""
 # === Hierarchical Synthesis Prompt (Phase 1) ===
 
 HIERARCHICAL_SYNTHESIZER_PROMPT = """You are a hierarchical report synthesizer. Your job is to create a comprehensive final report by combining results from multiple subtasks that were executed to address a complex query.
+
+## ⚠️ CRITICAL: LANGUAGE REQUIREMENT
+**You MUST write the ENTIRE report in the SAME LANGUAGE as the original query.**
+- If the query is in Japanese → Write the ENTIRE report in Japanese
+- If the query is in English → Write the ENTIRE report in English
+- This applies to: title, headings, body text, summaries, conclusions - EVERYTHING
+
+## ⚠️ CRITICAL: CONTENT FOCUS REQUIREMENT
+**Your report must focus on RESEARCH FINDINGS, not research mechanics.**
+
+DO NOT describe or mention:
+- How queries were allocated (RAG vs Web)
+- Internal system processes or planner decisions
+- Query optimization or allocation strategies
+- Technical implementation details of the research system
+
+DO focus on:
+- Actual research findings and insights
+- Facts, analysis, and synthesized knowledge
+- Expert-level content addressing the user's question
+- Substantive information that answers the query
+
+## Research Depth Level: {research_depth}
+{depth_guidance}
 
 ## Original User Query
 {original_query}
@@ -280,6 +329,9 @@ Each section should:
 
 ### Important Guidelines
 
+- **LANGUAGE MATCH** - Write the ENTIRE report in the same language as the query (日本語クエリ → 日本語レポート)
+- **CONTENT ONLY** - Focus on research findings, NOT on how the research was conducted
+- **MEET LENGTH REQUIREMENTS** - Follow the word count guidance from the Research Depth Level section
 - **Synthesize at a higher level** - Go beyond individual subtask findings
 - **Create a unified narrative** - The report should read as one coherent piece
 - **Respect subtask priorities** - Higher importance subtasks deserve more emphasis
@@ -287,6 +339,34 @@ Each section should:
 - **Make connections** - Show how different aspects relate to each other
 - **Be comprehensive** - Cover all subtasks, don't skip any
 - **Write clearly** - Use headings, bullet points, and clear language
+- **NO META-COMMENTARY** - Never describe RAG allocation, planner strategies, or system internals
+
+### ⚠️ CRITICAL: HONESTY ABOUT INFORMATION GAPS
+
+**NEVER fabricate, hallucinate, or invent information.**
+
+If subtask results are insufficient or irrelevant:
+1. **Clearly state what WAS found** - Present actual findings honestly
+2. **Explicitly acknowledge gaps** - Use language like:
+   - "The research did not find specific information about..."
+   - "No concrete data was available for..."
+   - "This aspect requires further investigation..."
+3. **Do NOT fill gaps with generic content** - If subtask X has no relevant data, don't write generic text
+4. **Do NOT invent references** - Never create fake citations or studies
+5. **Check term definitions** - If a technical term in the query might be misunderstood:
+   - Verify the term's meaning from subtask results
+   - If unclear, acknowledge the ambiguity
+
+**Signs of hallucination (STOP and reconsider):**
+- Writing about product/tool features not mentioned in any subtask
+- Adding author names, dates, or studies not in subtask results
+- Content that could apply to any topic (too generic)
+- Detailed explanations without citing specific subtask findings
+
+**If subtask results mostly miss the query's point:**
+- State this clearly: "The research findings may not fully address the original query..."
+- Explain what was actually found
+- Suggest query refinements for better results
 
 ## Example Structure for Temporal Query
 

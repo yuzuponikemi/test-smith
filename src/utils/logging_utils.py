@@ -197,7 +197,7 @@ Log File: {self.log_file}
         """Format output dictionary for logging, truncating long values."""
         if output is None:
             return "  <No Output>"
-            
+
         formatted = []
         for key, value in output.items():
             if isinstance(value, (str, int, float, bool)) or value is None:

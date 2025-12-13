@@ -94,12 +94,24 @@ def planner(state):
     - What information is likely in the knowledge base
     - What needs current/external information from web
     - Query complexity and information requirements
+    - Research depth level (query count limits)
     """
     print_node_header("STRATEGIC PLANNER")
 
     query = state["query"]
     feedback = state.get("reason", "")
+    quality_feedback = state.get("quality_feedback", "")
     loop_count = state.get("loop_count", 0)
+    research_depth = state.get("research_depth", "standard")
+
+    # Combine feedback sources (evaluator reason + quality checker feedback)
+    if quality_feedback:
+        feedback = f"{feedback}\n\n{quality_feedback}" if feedback else quality_feedback
+
+    # Get depth-aware query limits
+    from src.config.research_depth import get_depth_config
+
+    depth_config = get_depth_config(research_depth)
 
     with log_node_execution("planner", state) as logger:
         # Step 1: Check what's in the knowledge base
@@ -116,11 +128,22 @@ def planner(state):
         # Use structured output for reliable parsing
         structured_llm = model.with_structured_output(StrategicPlan)
 
-        prompt = STRATEGIC_PLANNER_PROMPT.format(
-            query=query,
-            feedback=feedback,
-            kb_summary=kb_info["summary"],
-            kb_available=kb_info["available"],
+        # Build depth-aware query guidance
+        depth_guidance = (
+            f"\n## Research Depth: {research_depth.upper()}\n"
+            f"Generate {depth_config.min_queries}-{depth_config.max_queries} total queries "
+            f"(RAG + Web combined).\n"
+            f"Detail level: {depth_config.detail_level}\n"
+        )
+
+        prompt = (
+            STRATEGIC_PLANNER_PROMPT.format(
+                query=query,
+                feedback=feedback,
+                kb_summary=kb_info["summary"],
+                kb_available=kb_info["available"],
+            )
+            + depth_guidance
         )
 
         try:

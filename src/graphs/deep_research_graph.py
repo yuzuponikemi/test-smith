@@ -1,17 +1,21 @@
 """
-Deep Research Graph - Hierarchical Multi-Agent Research Workflow
+Deep Research Graph - Unified Hierarchical Multi-Agent Research Workflow
 
-This graph implements the v2.1 Deep Research system with:
-- Hierarchical task decomposition
+v3.0: Unified architecture - all queries go through the hierarchical flow.
+Even simple queries get at least 1 subtask and go through Writer Graph.
+
+This graph implements:
+- Hierarchical task decomposition (always at least 1 subtask)
 - Dynamic replanning (Phase 4)
 - Depth-aware exploration
 - Strategic query allocation (RAG vs Web)
+- Writer Graph for quality report generation
 - Recursive drill-down capabilities
 
 Use cases:
-- Complex multi-faceted research questions
+- All research questions (simple to complex)
 - Topics requiring deep exploration
-- Queries benefiting from subtask decomposition
+- Long-form report generation with quality checks
 """
 
 import builtins
@@ -21,32 +25,31 @@ from typing import Annotated, Any, TypedDict
 
 from langgraph.graph import END, StateGraph
 
+# Core research nodes
 from src.nodes.analyzer_node import analyzer_node
 
-# Hierarchical nodes (Phase 2)
+# Hierarchical orchestration nodes
 from src.nodes.depth_evaluator_node import depth_evaluator
-
-# Hierarchical nodes (Phase 3)
 from src.nodes.drill_down_generator import drill_down_generator
-from src.nodes.evaluator_node import evaluator_node
-
-# Hierarchical nodes (Phase 1)
 from src.nodes.master_planner_node import master_planner
 
-# Hierarchical nodes (Phase 4 - Dynamic Replanning)
+# Result aggregation & Writer Graph nodes
+from src.nodes.outline_generator_node import outline_generator_node
 from src.nodes.plan_revisor_node import plan_revisor
-
-# Import existing nodes
 from src.nodes.planner_node import planner
 from src.nodes.rag_retriever_node import rag_retriever
-
-# Reflection node (Meta-reasoning & Self-Critique)
-from src.nodes.reflection_node import reflection_node
+from src.nodes.report_reviewer_node import report_reviewer_node
+from src.nodes.report_revisor_node import report_revisor_node
+from src.nodes.result_aggregator_node import result_aggregator_node
 from src.nodes.searcher_node import searcher
+from src.nodes.section_writer_node import section_writer_node
 from src.nodes.subtask_executor import subtask_executor
 from src.nodes.subtask_result_aggregator import save_subtask_result
 from src.nodes.subtask_router import subtask_router
 from src.nodes.synthesizer_node import synthesizer_node
+
+# Term definition node (prevents topic drift)
+from src.nodes.term_definer_node import term_definer_node
 
 from .base_graph import BaseGraphBuilder
 
@@ -67,122 +70,96 @@ builtins.print = _safe_print
 
 
 class DeepResearchState(TypedDict):
-    """State for Deep Research workflow with hierarchical capabilities"""
+    """
+    State for Deep Research workflow.
 
-    # Original query
-    query: str
+    v3.0: Unified architecture - always uses hierarchical flow with Writer Graph.
+    v3.1: Added term_definitions for topic drift prevention.
+    """
 
-    # === Hierarchical Mode Fields (Phase 1) ===
-    execution_mode: str  # "simple" or "hierarchical"
+    # === Core Query Fields ===
+    query: str  # Original user query
+    research_depth: str  # "quick", "standard", "deep", "comprehensive"
+
+    # === Term Definition Fields (v3.1 - topic drift prevention) ===
+    extracted_terms: list[str]  # Technical terms extracted from query
+    term_definitions: dict  # term → {category, definition, key_features, common_confusions}
+
+    # === Hierarchical Orchestration Fields ===
+    execution_mode: str  # Always "hierarchical" in v3.0
     master_plan: dict  # MasterPlan as dict (JSON-serializable)
     current_subtask_id: str  # ID of currently executing subtask
     current_subtask_index: int  # Index in subtask list
     subtask_results: dict  # subtask_id → analyzed_data
 
-    # === Hierarchical Mode Fields (Phase 2) ===
-    max_depth: int  # Maximum recursion depth (default: 2 for Phase 2-beta)
-    depth_evaluation: dict  # Current subtask's DepthEvaluation (as dict)
-    subtask_evaluations: dict  # All depth evaluations: subtask_id → DepthEvaluation dict
+    # === Depth Evaluation Fields ===
+    max_depth: int  # Maximum recursion depth (default: 2)
+    depth_evaluation: dict  # Current subtask's DepthEvaluation
+    subtask_evaluations: dict  # All depth evaluations: subtask_id → DepthEvaluation
 
-    # === Hierarchical Mode Fields (Phase 4 - Dynamic Replanning) ===
-    revision_count: int  # Number of plan revisions made during this execution
-    plan_revisions: list  # History of all plan revisions (list of PlanRevision dicts)
+    # === Dynamic Replanning Fields (Phase 4) ===
+    revision_count: int  # Number of plan revisions made
+    plan_revisions: list  # History of all plan revisions
     max_revisions: int  # Maximum allowed plan revisions (default: 3)
-    max_total_subtasks: int  # Maximum total subtasks allowed (default: 20)
-    revision_triggers: list  # List of triggers that caused revisions (for logging)
+    max_total_subtasks: int  # Maximum total subtasks allowed
+    revision_triggers: list  # List of triggers that caused revisions
 
-    # === Recursion Budget Tracking (Phase 4.1 - Budget-Aware Control) ===
-    node_execution_count: int  # Number of node executions (tracks recursion usage)
-    recursion_limit: int  # Maximum recursion limit from config (default: 150)
+    # === Recursion Budget Tracking ===
+    node_execution_count: int  # Number of node executions
+    recursion_limit: int  # Maximum recursion limit from config
     budget_warnings: list  # Warnings when budget is running low
 
-    # === Existing Fields (used per-subtask in hierarchical mode) ===
+    # === Per-Subtask Research Fields ===
     web_queries: list[str]  # Queries for web search
     rag_queries: list[str]  # Queries for RAG retrieval
     allocation_strategy: str  # Reasoning for query allocation
     search_results: Annotated[list[str], operator.add]
     rag_results: Annotated[list[str], operator.add]
     analyzed_data: Annotated[list[str], operator.add]
-    report: str
-    evaluation: str
-    reason: str  # Evaluator's reasoning (used as feedback for planner refinement)
     loop_count: int
 
-    # === Reflection & Self-Critique Fields ===
-    reflection_critique: dict  # ReflectionCritique as dict (JSON-serializable)
-    reflection_quality: (
-        str  # Overall quality assessment: "excellent" | "good" | "adequate" | "poor"
-    )
-    should_continue_research: (
-        bool  # Whether reflection identified critical gaps requiring more research
-    )
-    reflection_confidence: float  # Confidence score from reflection (0.0-1.0)
+    # === Result Aggregation Fields ===
+    aggregated_findings: dict  # AggregatedFindings as dict
+    findings_ready: bool  # Whether findings are ready for writing
 
+    # === Writer Graph Fields ===
+    report_outline: dict  # ReportOutline as dict
+    draft_report: str  # Current draft of the report
+    section_word_counts: dict  # Word counts per section
+    total_word_count: int  # Total word count
+    review_result: dict  # ReportReviewResult as dict
+    needs_revision: bool  # Whether report needs revision
 
-def router(state):
-    """
-    Router after reflection - handles both simple and hierarchical modes
-
-    Incorporates reflection critique to make more informed routing decisions.
-    Checks both evaluation and reflection to determine next step.
-
-    Simple mode: Loop back to planner if reflection identifies critical gaps
-    Hierarchical mode: Save result and move to next subtask or synthesize
-    """
-    print("---ROUTER (POST-REFLECTION)---")
-
-    execution_mode = state.get("execution_mode", "simple")
-
-    if execution_mode == "simple":
-        # Check both evaluation and reflection
-        loop_count = state.get("loop_count", 0)
-        evaluation = state.get("evaluation", "")
-        should_continue_research = state.get("should_continue_research", False)
-        reflection_quality = state.get("reflection_quality", "adequate")
-
-        # Force exit after max loops
-        if loop_count >= 2:
-            print("  Simple mode: Max loops reached → synthesize")
-            return "synthesizer"
-
-        # Check reflection feedback first (higher priority)
-        if should_continue_research:
-            print(
-                f"  Simple mode: Reflection identified critical gaps (quality: {reflection_quality}) → refine with planner"
-            )
-            return "planner"
-
-        # Check evaluation
-        if "sufficient" in evaluation.lower():
-            print(
-                f"  Simple mode: Evaluation sufficient, reflection quality: {reflection_quality} → synthesize"
-            )
-            return "synthesizer"
-        else:
-            print("  Simple mode: Evaluation insufficient → refine with planner")
-            return "planner"
-
-    else:
-        # Hierarchical mode: Always save result and check if more subtasks
-        print("  Hierarchical mode: Saving subtask result")
-        return "save_result"
-
-
-def analyzer_router(state):
-    """Route to depth_evaluator for hierarchical mode, regular evaluator for simple mode"""
-    execution_mode = state.get("execution_mode", "simple")
-    if execution_mode == "hierarchical":
-        print("---ANALYZER ROUTER: Using depth_evaluator for hierarchical mode---")
-        return "depth_evaluator"
-    else:
-        print("---ANALYZER ROUTER: Using regular evaluator for simple mode---")
-        return "evaluator"
+    # === Final Output Fields ===
+    report: str  # Final synthesized report
 
 
 def post_save_router(state):
     """Router after saving subtask result"""
     print("---POST-SAVE ROUTER---")
     return subtask_router(state)
+
+
+def writer_review_router(state):
+    """
+    Router after report reviewer - decides whether to revise or finalize.
+
+    Routes to revisor if needs_revision is True and revision_count < 3.
+    Otherwise routes to synthesizer for final output.
+    """
+    print("---WRITER REVIEW ROUTER---")
+    needs_revision = state.get("needs_revision", False)
+    revision_count = state.get("revision_count", 0)
+
+    if needs_revision and revision_count < 3:
+        print(f"  Report needs revision (attempt {revision_count + 1}/3)")
+        return "report_revisor"
+    else:
+        if needs_revision:
+            print("  Max revisions reached, proceeding to synthesizer")
+        else:
+            print("  Report passed review, proceeding to synthesizer")
+        return "synthesizer"
 
 
 class DeepResearchGraphBuilder(BaseGraphBuilder):
@@ -193,187 +170,207 @@ class DeepResearchGraphBuilder(BaseGraphBuilder):
         return DeepResearchState
 
     def build(self) -> Any:
-        """Build and compile the Deep Research workflow"""
+        """
+        Build and compile the Deep Research workflow.
+
+        v3.0: Unified architecture - always uses hierarchical flow with Writer Graph.
+        Even simple queries get at least 1 subtask and go through the full pipeline.
+
+        Flow:
+        master_planner → subtask_executor → planner → search → analyze
+        → depth_evaluator → drill_down → plan_revisor → save_result
+        → (loop for more subtasks or) result_aggregator → Writer Graph → synthesizer → END
+        """
         workflow = StateGraph(DeepResearchState)
 
-        # Register existing nodes
+        # === Term Definition Node (v3.1 - prevents topic drift) ===
+        workflow.add_node("term_definer", term_definer_node)  # type: ignore[type-var]
+
+        # === Core Research Nodes ===
         workflow.add_node("planner", planner)
         workflow.add_node("searcher", searcher)
         workflow.add_node("rag_retriever", rag_retriever)
         workflow.add_node("analyzer", analyzer_node)
-        workflow.add_node("evaluator", evaluator_node)
         workflow.add_node("synthesizer", synthesizer_node)
 
-        # Register new hierarchical nodes (Phase 1)
-        workflow.add_node("master_planner", master_planner)
-        workflow.add_node("subtask_executor", subtask_executor)
-        workflow.add_node("save_result", save_subtask_result)
-
-        # Register new hierarchical nodes (Phase 2)
-        workflow.add_node("depth_evaluator", depth_evaluator)
-
-        # Register new hierarchical nodes (Phase 3)
-        workflow.add_node("drill_down_generator", drill_down_generator)
-
-        # Register new hierarchical nodes (Phase 4)
-        workflow.add_node("plan_revisor", plan_revisor)
-
-        # Register reflection node (Meta-reasoning & Self-Critique)
-        workflow.add_node("reflection", reflection_node)
-
-        # Entry point: Master Planner (Phase 1 change)
-        workflow.set_entry_point("master_planner")
-
-        # After master planner: Route based on complexity
-        workflow.add_conditional_edges(
-            "master_planner",
-            subtask_router,
-            {
-                "simple": "planner",  # Simple mode: Use existing flow
-                "execute_subtask": "subtask_executor",  # Hierarchical: Start first subtask
-                "synthesize": "synthesizer",  # Edge case: no subtasks to execute
-            },
-        )
-
-        # Subtask executor → Strategic Planner (for this specific subtask)
-        workflow.add_edge("subtask_executor", "planner")
-
-        # Existing edges
-        workflow.add_edge("planner", "searcher")
-        workflow.add_edge("planner", "rag_retriever")
-        workflow.add_edge("searcher", "analyzer")
-        workflow.add_edge("rag_retriever", "analyzer")
-
-        # After analyzer: Route to appropriate evaluator based on mode (Phase 2 enhancement)
-        workflow.add_conditional_edges(
-            "analyzer",
-            analyzer_router,
-            {"evaluator": "evaluator", "depth_evaluator": "depth_evaluator"},
-        )
-
-        # After depth_evaluator: Check for drill-down, then revise plan, then save result (Phase 3 + Phase 4)
-        workflow.add_edge("depth_evaluator", "drill_down_generator")
-        workflow.add_edge(
-            "drill_down_generator", "plan_revisor"
-        )  # Phase 4: Plan revision after drill-down
-        workflow.add_edge("plan_revisor", "save_result")
-
-        # After evaluator: Go to reflection for meta-reasoning critique
-        workflow.add_edge("evaluator", "reflection")
-
-        # After reflection: Route based on mode and reflection feedback
-        workflow.add_conditional_edges(
-            "reflection",
-            router,
-            {
-                "synthesizer": "synthesizer",  # Simple mode: sufficient
-                "planner": "planner",  # Simple mode: loop back
-                "save_result": "save_result",  # Hierarchical: save and continue
-            },
-        )
-
-        # After saving result: Check if more subtasks
-        workflow.add_conditional_edges(
-            "save_result",
-            post_save_router,
-            {
-                "execute_subtask": "subtask_executor",  # More subtasks to execute
-                "synthesize": "synthesizer",  # All done, synthesize
-            },
-        )
-
-        workflow.add_edge("synthesizer", END)
-
-        # Compile and return
-        return workflow.compile()
-
-    def get_uncompiled_graph(self) -> StateGraph:
-        """Return uncompiled graph for custom checkpointer setup"""
-        workflow = StateGraph(DeepResearchState)
-
-        # Register all nodes (same as build())
-        workflow.add_node("planner", planner)
-        workflow.add_node("searcher", searcher)
-        workflow.add_node("rag_retriever", rag_retriever)
-        workflow.add_node("analyzer", analyzer_node)
-        workflow.add_node("evaluator", evaluator_node)
-        workflow.add_node("synthesizer", synthesizer_node)
+        # === Hierarchical Orchestration Nodes ===
         workflow.add_node("master_planner", master_planner)
         workflow.add_node("subtask_executor", subtask_executor)
         workflow.add_node("save_result", save_subtask_result)
         workflow.add_node("depth_evaluator", depth_evaluator)
         workflow.add_node("drill_down_generator", drill_down_generator)
         workflow.add_node("plan_revisor", plan_revisor)
-        workflow.add_node("reflection", reflection_node)
 
-        # Set up all edges (same as build())
-        workflow.set_entry_point("master_planner")
+        # === Result Aggregation & Writer Graph Nodes ===
+        workflow.add_node("result_aggregator", result_aggregator_node)  # type: ignore[type-var]
+        workflow.add_node("outline_generator", outline_generator_node)  # type: ignore[type-var]
+        workflow.add_node("section_writer", section_writer_node)  # type: ignore[type-var]
+        workflow.add_node("report_reviewer", report_reviewer_node)  # type: ignore[type-var]
+        workflow.add_node("report_revisor", report_revisor_node)  # type: ignore[type-var]
+
+        # === Entry Point: Start with Term Definer (v3.1) ===
+        workflow.set_entry_point("term_definer")
+
+        # === Term Definer → Master Planner ===
+        workflow.add_edge("term_definer", "master_planner")
+
+        # === Master Planner → Subtask Execution ===
+        # Always routes to execute_subtask (unified architecture)
         workflow.add_conditional_edges(
             "master_planner",
             subtask_router,
             {
-                "simple": "planner",
                 "execute_subtask": "subtask_executor",
-                "synthesize": "synthesizer",
+                "synthesize": "result_aggregator",  # Edge case: skip to aggregation
             },
         )
+
+        # === Subtask Execution Flow ===
         workflow.add_edge("subtask_executor", "planner")
         workflow.add_edge("planner", "searcher")
         workflow.add_edge("planner", "rag_retriever")
         workflow.add_edge("searcher", "analyzer")
         workflow.add_edge("rag_retriever", "analyzer")
-        workflow.add_conditional_edges(
-            "analyzer",
-            analyzer_router,
-            {"evaluator": "evaluator", "depth_evaluator": "depth_evaluator"},
-        )
+
+        # === After Analyzer: Always use depth_evaluator ===
+        workflow.add_edge("analyzer", "depth_evaluator")
+
+        # === Depth Evaluation → Drill-Down → Plan Revision → Save ===
         workflow.add_edge("depth_evaluator", "drill_down_generator")
         workflow.add_edge("drill_down_generator", "plan_revisor")
         workflow.add_edge("plan_revisor", "save_result")
-        workflow.add_edge("evaluator", "reflection")
-        workflow.add_conditional_edges(
-            "reflection",
-            router,
-            {"synthesizer": "synthesizer", "planner": "planner", "save_result": "save_result"},
-        )
+
+        # === After Save: More subtasks or aggregate results ===
         workflow.add_conditional_edges(
             "save_result",
             post_save_router,
-            {"execute_subtask": "subtask_executor", "synthesize": "synthesizer"},
+            {
+                "execute_subtask": "subtask_executor",
+                "synthesize": "result_aggregator",
+            },
         )
+
+        # === Writer Graph Flow ===
+        workflow.add_edge("result_aggregator", "outline_generator")
+        workflow.add_edge("outline_generator", "section_writer")
+        workflow.add_edge("section_writer", "report_reviewer")
+
+        workflow.add_conditional_edges(
+            "report_reviewer",
+            writer_review_router,
+            {
+                "report_revisor": "report_revisor",
+                "synthesizer": "synthesizer",
+            },
+        )
+        workflow.add_edge("report_revisor", "report_reviewer")
+
+        # === Final Output ===
         workflow.add_edge("synthesizer", END)
 
-        # Return uncompiled
+        return workflow.compile()
+
+    def get_uncompiled_graph(self) -> StateGraph:
+        """Return uncompiled graph for custom checkpointer setup (same as build())"""
+        workflow = StateGraph(DeepResearchState)
+
+        # === Term Definition Node (v3.1 - prevents topic drift) ===
+        workflow.add_node("term_definer", term_definer_node)  # type: ignore[type-var]
+
+        # === Core Research Nodes ===
+        workflow.add_node("planner", planner)
+        workflow.add_node("searcher", searcher)
+        workflow.add_node("rag_retriever", rag_retriever)
+        workflow.add_node("analyzer", analyzer_node)
+        workflow.add_node("synthesizer", synthesizer_node)
+
+        # === Hierarchical Orchestration Nodes ===
+        workflow.add_node("master_planner", master_planner)
+        workflow.add_node("subtask_executor", subtask_executor)
+        workflow.add_node("save_result", save_subtask_result)
+        workflow.add_node("depth_evaluator", depth_evaluator)
+        workflow.add_node("drill_down_generator", drill_down_generator)
+        workflow.add_node("plan_revisor", plan_revisor)
+
+        # === Result Aggregation & Writer Graph Nodes ===
+        workflow.add_node("result_aggregator", result_aggregator_node)  # type: ignore[type-var]
+        workflow.add_node("outline_generator", outline_generator_node)  # type: ignore[type-var]
+        workflow.add_node("section_writer", section_writer_node)  # type: ignore[type-var]
+        workflow.add_node("report_reviewer", report_reviewer_node)  # type: ignore[type-var]
+        workflow.add_node("report_revisor", report_revisor_node)  # type: ignore[type-var]
+
+        # === Entry Point & Edges ===
+        workflow.set_entry_point("term_definer")
+        workflow.add_edge("term_definer", "master_planner")
+        workflow.add_conditional_edges(
+            "master_planner",
+            subtask_router,
+            {
+                "execute_subtask": "subtask_executor",
+                "synthesize": "result_aggregator",
+            },
+        )
+        workflow.add_edge("subtask_executor", "planner")
+        workflow.add_edge("planner", "searcher")
+        workflow.add_edge("planner", "rag_retriever")
+        workflow.add_edge("searcher", "analyzer")
+        workflow.add_edge("rag_retriever", "analyzer")
+        workflow.add_edge("analyzer", "depth_evaluator")
+        workflow.add_edge("depth_evaluator", "drill_down_generator")
+        workflow.add_edge("drill_down_generator", "plan_revisor")
+        workflow.add_edge("plan_revisor", "save_result")
+        workflow.add_conditional_edges(
+            "save_result",
+            post_save_router,
+            {"execute_subtask": "subtask_executor", "synthesize": "result_aggregator"},
+        )
+        workflow.add_edge("result_aggregator", "outline_generator")
+        workflow.add_edge("outline_generator", "section_writer")
+        workflow.add_edge("section_writer", "report_reviewer")
+        workflow.add_conditional_edges(
+            "report_reviewer",
+            writer_review_router,
+            {"report_revisor": "report_revisor", "synthesizer": "synthesizer"},
+        )
+        workflow.add_edge("report_revisor", "report_reviewer")
+        workflow.add_edge("synthesizer", END)
+
         return workflow
 
     def get_metadata(self) -> dict:
         """Return metadata about this graph"""
         return {
             "name": "Deep Research",
-            "description": "Hierarchical multi-agent research with dynamic replanning",
-            "version": "2.1",
+            "description": "Unified hierarchical research with Writer Graph - all queries go through the same quality pipeline",
+            "version": "3.1",
             "use_cases": [
-                "Complex multi-faceted research questions",
+                "All research questions (simple to complex)",
                 "Topics requiring deep exploration",
-                "Queries benefiting from subtask decomposition",
+                "Long-form report generation with quality checks",
                 "Adaptive research that discovers new angles mid-execution",
             ],
-            "complexity": "high",
+            "complexity": "medium-high",
             "supports_streaming": True,
             "features": [
+                "Term definition verification (v3.1 - prevents topic drift)",
+                "Multi-layer consistency checking (Analyzer + Evaluator)",
+                "Unified architecture (no simple/hierarchical split)",
+                "Always at least 1 subtask (even for simple queries)",
+                "Writer Graph for all reports (quality guaranteed)",
                 "Hierarchical task decomposition",
-                "Dynamic replanning (Phase 4)",
+                "Dynamic replanning",
                 "Depth-aware exploration",
                 "Strategic query allocation (RAG vs Web)",
                 "Recursive drill-down up to 2 levels",
                 "Budget-aware execution control",
-                "Meta-reasoning reflection & self-critique",
+                "Result aggregation with quality validation",
+                "Outline-driven report generation",
+                "Multi-section report writing with review-revise loop",
+                "Language consistency enforcement",
             ],
-            "phases": {
-                "1": "Basic hierarchical decomposition",
-                "2": "Depth evaluation and quality assessment",
-                "3": "Recursive drill-down for important subtasks",
-                "4": "Dynamic plan revision based on discoveries",
-                "4.1": "Budget-aware control and monitoring",
-            },
+            "flow": (
+                "term_definer → master_planner → subtask_executor → planner → search → analyze → "
+                "depth_eval → drill_down → plan_revisor → save_result → "
+                "(loop or) result_aggregator → Writer Graph → synthesizer → END"
+            ),
         }

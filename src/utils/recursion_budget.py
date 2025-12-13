@@ -10,31 +10,62 @@ def calculate_recursion_budget(state):
     """
     Calculate remaining recursion budget and provide recommendations.
 
+    Uses estimation based on observable state (loop_count, subtask_index)
+    since node_execution_count may not be accurately tracked.
+
     Args:
         state: Current agent state with recursion tracking
 
     Returns:
         dict: Budget analysis with recommendations
     """
-    current_count = state.get("node_execution_count", 0)
+    # Constants for estimation (based on typical graph execution patterns)
+    NODES_PER_SUBTASK_ITERATION = 8  # planner→searcher→rag→analyzer→evaluator→...
+    NODES_PER_SIMPLE_ITERATION = 6  # planner→searcher→rag→analyzer→evaluator→router
+
     limit = state.get("recursion_limit", 150)
-    remaining = limit - current_count
+
+    # Get tracked count (may be 0 if not properly incremented in nodes)
+    tracked_count = state.get("node_execution_count", 0)
+
+    # Get observable state for estimation
+    loop_count = state.get("loop_count", 0)
+    execution_mode = state.get("execution_mode", "simple")
+
+    # Estimate current count based on execution mode
+    master_plan = state.get("master_plan", {})
+    if execution_mode == "hierarchical" or master_plan:
+        total_subtasks = len(master_plan.get("subtasks", [])) if master_plan else 0
+        current_index = state.get("current_subtask_index", 0)
+        remaining_subtasks = max(0, total_subtasks - current_index)
+
+        # Estimate: master_planner (1) + subtasks processed * nodes per subtask
+        # Each subtask can have multiple inner iterations (loop_count resets per subtask)
+        estimated_count = (
+            1
+            + (current_index * NODES_PER_SUBTASK_ITERATION)
+            + (loop_count * NODES_PER_SIMPLE_ITERATION)
+        )
+    else:
+        # Simple mode: just count loop iterations
+        estimated_count = loop_count * NODES_PER_SIMPLE_ITERATION
+        remaining_subtasks = 0
+        current_index = 0
+
+    # Use maximum of tracked and estimated count (hybrid approach)
+    # - tracked_count: accurate if nodes are properly incrementing
+    # - estimated_count: fallback when tracking is incomplete
+    current_count = max(tracked_count, estimated_count)
+    remaining = max(0, limit - current_count)
 
     # Calculate percentage used
     usage_percent = (current_count / limit) * 100 if limit > 0 else 100
 
-    # Estimate remaining subtasks
-    master_plan = state.get("master_plan", {})
-    if master_plan:
-        total_subtasks = len(master_plan.get("subtasks", []))
-        current_index = state.get("current_subtask_index", 0)
-        remaining_subtasks = total_subtasks - current_index
+    # Estimate average recursions per subtask (for hierarchical mode)
+    if (execution_mode == "hierarchical" or master_plan) and current_index > 0:
+        avg_per_subtask = current_count / current_index
     else:
-        remaining_subtasks = 0
-        current_index = 0
-
-    # Estimate average recursions per subtask
-    avg_per_subtask = current_count / max(current_index, 1) if current_index > 0 else 10
+        avg_per_subtask = NODES_PER_SUBTASK_ITERATION
 
     # Estimated total needed
     estimated_total_needed = current_count + (remaining_subtasks * avg_per_subtask)
@@ -53,8 +84,28 @@ def calculate_recursion_budget(state):
         status = "healthy"
         message = f"🟢 HEALTHY: {usage_percent:.1f}% used ({remaining} remaining)"
 
+    # Get max subtasks from depth config if available
+    research_depth = state.get("research_depth", "standard")
+    try:
+        from src.config.research_depth import get_depth_config
+
+        depth_config = get_depth_config(research_depth)
+        max_subtasks_limit = depth_config.max_subtasks
+    except Exception:
+        max_subtasks_limit = 10  # Fallback default
+
+    # Check if we've already exceeded max subtasks
+    total_subtasks = len(master_plan.get("subtasks", [])) if master_plan else 0
+    subtask_budget_exhausted = total_subtasks >= max_subtasks_limit
+
     # Recommendations
-    recommendations = {"allow_drill_down": True, "allow_plan_revision": True, "max_new_subtasks": 5}
+    recommendations = {"allow_drill_down": True, "allow_plan_revision": True, "max_new_subtasks": 3}
+
+    # Hard limit: disable expansion if we're at max subtasks
+    if subtask_budget_exhausted:
+        recommendations["allow_drill_down"] = False
+        recommendations["allow_plan_revision"] = False
+        recommendations["max_new_subtasks"] = 0
 
     if status == "critical":
         recommendations["allow_drill_down"] = False
@@ -68,6 +119,12 @@ def calculate_recursion_budget(state):
         recommendations["allow_drill_down"] = remaining_subtasks <= 3  # Only if few subtasks left
         recommendations["allow_plan_revision"] = True
         recommendations["max_new_subtasks"] = 2
+
+    # Ensure we never exceed max subtasks limit
+    remaining_subtask_budget = max(0, max_subtasks_limit - total_subtasks)
+    recommendations["max_new_subtasks"] = min(
+        recommendations["max_new_subtasks"], remaining_subtask_budget
+    )
 
     return {
         "current_count": current_count,

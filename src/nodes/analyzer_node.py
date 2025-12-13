@@ -25,12 +25,17 @@ def analyzer_node(state):
         # Get code execution results if available
         code_results = state.get("code_execution_results", []) or []
 
+        # Get term definitions for consistency checking
+        term_definitions = state.get("term_definitions", {})
+
         # Log analysis summary
         log_analysis_summary(logger, len(web_results), len(rag_results), len(code_results))
 
         print(
             f"  Analyzing {len(web_results)} web results, {len(rag_results)} RAG results, {len(code_results)} code results"
         )
+        if term_definitions:
+            print(f"  Term definitions available: {list(term_definitions.keys())}")
         print(f"  Strategy: {allocation_strategy[:100]}...")
 
         # Format code results for inclusion in prompt
@@ -45,6 +50,9 @@ def analyzer_node(state):
                 if result.get("code"):
                     code_results_str += f"- Code:\n```python\n{result['code']}\n```\n"
 
+        # Format term definitions for prompt
+        term_definitions_section = _format_term_definitions(term_definitions)
+
         prompt = (
             ANALYZER_PROMPT.format(
                 original_query=original_query,
@@ -53,6 +61,7 @@ def analyzer_node(state):
                 rag_queries=rag_queries,
                 web_results=web_results,
                 rag_results=rag_results,
+                term_definitions_section=term_definitions_section,
             )
             + code_results_str
         )
@@ -69,3 +78,31 @@ def analyzer_node(state):
         logger.info("analysis_complete", analysis_length=len(message.content))
 
         return {"analyzed_data": [message.content]}
+
+
+def _format_term_definitions(term_definitions: dict) -> str:
+    """Format term definitions for inclusion in the analyzer prompt."""
+    if not term_definitions:
+        return "No technical terms were pre-verified for this query."
+
+    lines = ["The following terms have been verified BEFORE research began:\n"]
+
+    for term, info in term_definitions.items():
+        confidence = info.get("confidence", "unknown")
+        confidence_marker = {"high": "✓", "medium": "?", "low": "⚠"}.get(confidence, "?")
+
+        lines.append(f"**{term}** {confidence_marker}")
+        lines.append(f"- Category: {info.get('category', 'unknown')}")
+        lines.append(f"- Definition: {info.get('definition', 'Unknown')}")
+
+        features = info.get("key_features", [])
+        if features:
+            lines.append(f"- Key features: {', '.join(features[:3])}")
+
+        confusions = info.get("common_confusions", [])
+        if confusions:
+            lines.append(f"- NOT to be confused with: {', '.join(confusions[:2])}")
+
+        lines.append("")
+
+    return "\n".join(lines)

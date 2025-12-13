@@ -24,12 +24,67 @@ class StrategicPlan(BaseModel):
 
 
 class Evaluation(BaseModel):
-    """An evaluation of the sufficiency of the information."""
+    """An evaluation of the sufficiency and relevance of the information."""
 
     is_sufficient: bool = Field(
         description="Whether the information is sufficient to create a comprehensive report."
     )
     reason: str = Field(description="The reason for the evaluation.")
+    relevance_score: float = Field(
+        ge=0.0,
+        le=1.0,
+        default=0.5,
+        description="How relevant the gathered information is to the ORIGINAL query (0.0=completely off-topic, 1.0=perfectly relevant). "
+        "Score below 0.3 indicates topic drift or hallucination risk.",
+    )
+    topic_drift_detected: bool = Field(
+        default=False,
+        description="True if the analyzed data discusses topics significantly different from the original query.",
+    )
+    drift_description: str = Field(
+        default="",
+        description="If topic drift detected, describe what topics are being discussed vs what was asked.",
+    )
+    entity_info_present: bool = Field(
+        default=True,
+        description="True if concrete information about the main entity/product in the query is present.",
+    )
+    missing_entity_info: str = Field(
+        default="",
+        description="If entity_info_present is False, describe what specific entity information is missing.",
+    )
+
+
+# === Term Definition Schemas ===
+
+
+class ExtractedTerms(BaseModel):
+    """List of technical terms extracted from a query."""
+
+    terms: list[str] = Field(
+        default_factory=list,
+        description="Technical terms, product names, or concepts that need definition verification",
+    )
+
+
+class TermDefinition(BaseModel):
+    """Verified definition of a technical term."""
+
+    category: str = Field(
+        description="Type of term: tool, framework, company, concept, protocol, acronym, etc."
+    )
+    definition: str = Field(description="Clear, accurate 1-2 sentence definition of the term")
+    key_features: list[str] = Field(
+        default_factory=list,
+        description="3-5 key characteristics or features of this term",
+    )
+    common_confusions: list[str] = Field(
+        default_factory=list,
+        description="Things this term is commonly confused with (to avoid)",
+    )
+    confidence: Literal["high", "medium", "low"] = Field(
+        description="Confidence level in this definition based on available sources"
+    )
 
 
 # === Hierarchical Task Decomposition Schemas (Phase 1) ===
@@ -94,6 +149,156 @@ class MasterPlan(BaseModel):
         description="List of subtasks for hierarchical execution (empty if simple mode)",
     )
     overall_strategy: str = Field(description="High-level strategy for addressing the user's query")
+
+
+# === Structured Research Findings (Phase 1 - Long Report Generation) ===
+
+
+class SubtaskFinding(BaseModel):
+    """
+    Structured representation of a single subtask's research findings.
+
+    Used in Phase 1 of long report generation to store quality-validated,
+    structured research results that can be aggregated and passed to the
+    Writer Graph for report generation.
+    """
+
+    subtask_id: str = Field(description="ID of the subtask this finding belongs to")
+    query: str = Field(description="The original query/description for this subtask")
+    focus_area: str = Field(description="The focus area or aspect covered by this subtask")
+    language: str = Field(description="Detected language of the findings (e.g., 'ja', 'en', 'zh')")
+    findings: list[str] = Field(description="List of key findings/facts extracted from research")
+    key_insights: list[str] = Field(
+        default_factory=list, description="Higher-level insights synthesized from the findings"
+    )
+    sources: list[dict] = Field(
+        default_factory=list,
+        description="Source references with metadata (type, url/file, relevance)",
+    )
+    quality_score: float = Field(
+        ge=0.0,
+        le=1.0,
+        description="Quality score (0.0-1.0) based on relevance, depth, and source quality",
+    )
+    relevance_score: float = Field(
+        ge=0.0, le=1.0, description="Relevance to original query (0.0-1.0)"
+    )
+    word_count: int = Field(ge=0, description="Word count of the findings content")
+    contains_meta_description: bool = Field(
+        default=False,
+        description="Whether findings contain system process descriptions (should be False)",
+    )
+    metadata: dict = Field(
+        default_factory=dict, description="Additional metadata (timestamp, iteration, etc.)"
+    )
+
+
+class AggregatedFindings(BaseModel):
+    """
+    Aggregated and validated findings from all subtasks.
+
+    This is the output of Phase 1 (Research Collection) that gets passed
+    to Phase 2 (Writer Graph) for report generation.
+    """
+
+    original_query: str = Field(description="The user's original research query")
+    research_depth: str = Field(
+        description="Research depth level (quick, standard, deep, comprehensive)"
+    )
+    target_language: str = Field(
+        description="Target language for the final report (detected from query)"
+    )
+    total_subtasks: int = Field(description="Total number of subtasks executed")
+    successful_subtasks: int = Field(description="Number of subtasks with quality >= threshold")
+    findings: list[SubtaskFinding] = Field(description="All validated subtask findings")
+    themes: list[str] = Field(
+        default_factory=list, description="Cross-cutting themes identified across subtasks"
+    )
+    contradictions: list[dict] = Field(
+        default_factory=list, description="Contradictions found between subtask findings"
+    )
+    coverage_gaps: list[str] = Field(
+        default_factory=list, description="Aspects of the query not well covered by findings"
+    )
+    total_word_count: int = Field(ge=0, description="Total word count across all findings")
+    average_quality_score: float = Field(
+        ge=0.0, le=1.0, description="Average quality score across all subtasks"
+    )
+    ready_for_writing: bool = Field(
+        description="Whether findings meet minimum criteria for report generation"
+    )
+    validation_notes: list[str] = Field(
+        default_factory=list, description="Notes from validation process"
+    )
+
+
+class ReportOutline(BaseModel):
+    """
+    Structured outline for the final report.
+
+    Generated by the Outline Generator node in Phase 2 (Writer Graph)
+    from the AggregatedFindings.
+    """
+
+    title: str = Field(description="Title for the report (in target language)")
+    executive_summary_points: list[str] = Field(
+        description="Key points to include in executive summary"
+    )
+    sections: list["OutlineSection"] = Field(description="Ordered list of main sections")
+    conclusion_points: list[str] = Field(description="Key points to include in conclusion")
+    target_word_count: int = Field(ge=0, description="Target total word count for the report")
+    target_language: str = Field(description="Language the report should be written in")
+
+
+class OutlineSection(BaseModel):
+    """
+    A section in the report outline.
+    """
+
+    section_id: str = Field(description="Unique identifier for this section")
+    heading: str = Field(description="Section heading (in target language)")
+    subheadings: list[str] = Field(
+        default_factory=list, description="Subheadings within this section"
+    )
+    relevant_finding_ids: list[str] = Field(
+        description="IDs of SubtaskFindings relevant to this section"
+    )
+    key_points: list[str] = Field(description="Key points this section should cover")
+    target_word_count: int = Field(ge=0, description="Target word count for this section")
+
+
+class ReportReviewResult(BaseModel):
+    """
+    Result of report review by the Reviewer node.
+
+    Used to determine if the report meets quality criteria or needs revision.
+    """
+
+    meets_criteria: bool = Field(description="Whether the report meets all quality criteria")
+    word_count_actual: int = Field(description="Actual word count of the report")
+    word_count_target: int = Field(description="Target word count")
+    word_count_met: bool = Field(description="Whether word count target is met")
+    language_correct: bool = Field(description="Whether report is in the correct language")
+    coverage_complete: bool = Field(description="Whether all subtask findings are covered")
+    structure_quality: Literal["excellent", "good", "adequate", "poor"] = Field(
+        description="Assessment of report structure"
+    )
+    contains_meta_description: bool = Field(
+        description="Whether report contains unwanted system descriptions"
+    )
+    issues: list[str] = Field(
+        default_factory=list, description="Specific issues identified that need fixing"
+    )
+    revision_instructions: list[str] = Field(
+        default_factory=list, description="Specific instructions for revision if needed"
+    )
+    sections_needing_expansion: list[str] = Field(
+        default_factory=list, description="Section IDs that need more content"
+    )
+
+
+# Update forward references
+ReportOutline.model_rebuild()
 
 
 # === Hierarchical Task Decomposition Schemas (Phase 2) ===
