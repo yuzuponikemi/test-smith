@@ -22,7 +22,7 @@ Usage:
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 def get_current_model_info() -> str:
@@ -193,11 +193,11 @@ Log File: {self.log_file}
         self.log(f"Execution completed in {duration:.2f}s", "INFO")
         self.log(f"Full log saved to: {self.log_file}")
 
-    def _format_output(self, output: Optional[dict[str, Any]], max_length: int = 200) -> str:
+    def _format_output(self, output: dict[str, Any] | None, max_length: int = 200) -> str:
         """Format output dictionary for logging, truncating long values."""
         if output is None:
             return "  <No Output>"
-            
+
         formatted = []
         for key, value in output.items():
             if isinstance(value, (str, int, float, bool)) or value is None:
@@ -235,7 +235,7 @@ def save_report(
     report_content: str,
     query: str,
     execution_mode: str = "simple",
-    metadata: Optional[dict[str, Any]] = None,
+    metadata: dict[str, Any] | None = None,
 ) -> Path:
     """
     Save the final research report to a markdown file.
@@ -273,7 +273,7 @@ def save_report(
 
 
 def _build_report_with_metadata(
-    content: str, query: str, execution_mode: str, metadata: Optional[dict[str, Any]]
+    content: str, query: str, execution_mode: str, metadata: dict[str, Any] | None
 ) -> str:
     """Build complete report with metadata header."""
 
@@ -296,7 +296,7 @@ query: "{query}"
     return header + content
 
 
-def get_recent_reports(limit: int = 10, execution_mode: Optional[str] = None) -> list[Path]:
+def get_recent_reports(limit: int = 10, execution_mode: str | None = None) -> list[Path]:
     """
     Get list of recent report files.
 

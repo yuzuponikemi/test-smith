@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -46,7 +46,7 @@ class SubTask(BaseModel):
     subtask_id: str = Field(
         description="Unique identifier for this subtask (e.g., 'task_1', 'task_1.1', 'task_2.3.1')"
     )
-    parent_id: Optional[str] = Field(
+    parent_id: str | None = Field(
         default=None,
         description="ID of parent subtask (None for root-level tasks, e.g., 'task_1' for 'task_1.1')",
     )
@@ -396,7 +396,7 @@ class CodeExecutionRequest(BaseModel):
         description="Clear description of what the code should accomplish"
     )
     context: str = Field(description="Relevant context from previous research steps")
-    input_data: Optional[str] = Field(
+    input_data: str | None = Field(
         default=None,
         description="Input data or parameters for the code (JSON format if structured)",
     )
@@ -416,7 +416,7 @@ class CodeExecutionResult(BaseModel):
 
     success: bool = Field(description="Whether code execution succeeded")
     output: str = Field(description="Output from code execution (stdout or return value)")
-    error: Optional[str] = Field(default=None, description="Error message if execution failed")
+    error: str | None = Field(default=None, description="Error message if execution failed")
     execution_time: float = Field(description="Execution time in seconds")
     code: str = Field(description="The actual code that was executed")
 
@@ -430,10 +430,10 @@ class CodeReference(BaseModel):
     """
 
     file_path: str = Field(description="Relative path to the file in the repository")
-    line_number: Optional[int] = Field(
+    line_number: int | None = Field(
         default=None, description="Specific line number (if applicable)"
     )
-    symbol_name: Optional[str] = Field(
+    symbol_name: str | None = Field(
         default=None, description="Name of function, class, or variable referenced"
     )
     context: str = Field(description="Brief description of what this code does")
@@ -483,7 +483,7 @@ class SourceReference(BaseModel):
     source_type: Literal["web", "rag", "internal"] = Field(
         description="Type of source: 'web' for internet, 'rag' for knowledge base, 'internal' for system-generated"
     )
-    url: Optional[str] = Field(default=None, description="URL if web source")
+    url: str | None = Field(default=None, description="URL if web source")
     title: str = Field(description="Title or name of the source")
     content_snippet: str = Field(description="Relevant excerpt from the source (max 500 chars)")
     query_used: str = Field(description="The query that retrieved this source")
@@ -604,10 +604,8 @@ class Citation(BaseModel):
     source_id: str = Field(description="Reference to the original source")
     title: str = Field(description="Title of the source")
     authors: list[str] = Field(default_factory=list, description="Authors if available")
-    publication_date: Optional[str] = Field(
-        default=None, description="Publication date if available"
-    )
-    url: Optional[str] = Field(default=None, description="URL if web source")
+    publication_date: str | None = Field(default=None, description="Publication date if available")
+    url: str | None = Field(default=None, description="URL if web source")
     access_date: str = Field(description="Date the source was accessed")
     source_type: str = Field(description="Type of source (webpage, document, etc.)")
 
@@ -635,8 +633,8 @@ class ProvenanceQuery(BaseModel):
     Used to trace back from a claim to its supporting evidence and sources.
     """
 
-    claim_id: Optional[str] = Field(default=None, description="Specific claim ID to query")
-    claim_text: Optional[str] = Field(default=None, description="Text of claim to find and explain")
+    claim_id: str | None = Field(default=None, description="Specific claim ID to query")
+    claim_text: str | None = Field(default=None, description="Text of claim to find and explain")
     query_type: Literal["explain", "sources", "evidence", "full_lineage"] = Field(
         default="full_lineage", description="Type of provenance query"
     )

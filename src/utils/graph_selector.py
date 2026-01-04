@@ -13,7 +13,7 @@ This module enables:
 - Default to deep_research for complex queries
 """
 
-from typing import Literal, Optional
+from typing import Literal
 
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
@@ -50,15 +50,15 @@ def select_graph_with_llm(query: str) -> dict:
         Dictionary with 'selected_graph' and 'reasoning'
     """
     model = get_graph_selector_model()
-    
+
     # Use structured output for reliable parsing
     structured_llm = model.with_structured_output(GraphSelection)
-    
-    system_prompt = """You are an intelligent router for a multi-agent research system. 
+
+    system_prompt = """You are an intelligent router for a multi-agent research system.
 Your goal is to select the most appropriate workflow graph for a given user query.
 
 Available Graphs:
-1. code_execution: 
+1. code_execution:
    - For queries requiring calculation, data analysis, visualization, or code generation.
    - Keywords: calculate, plot, graph, analyze data, python script, correlation, statistical, dataset.
    - Note: Do NOT use for general "what is" or "how to" questions unless they explicitly ask for code/math.
@@ -86,28 +86,25 @@ Available Graphs:
 
 Analyze the user's intent and select the best graph.
 """
-    
+
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system", system_prompt),
             ("human", "{query}"),
         ]
     )
-    
+
     chain = prompt | structured_llm
-    
+
     try:
         result = chain.invoke({"query": query})
-        return {
-            "selected_graph": result.selected_graph,
-            "reasoning": result.reasoning
-        }
+        return {"selected_graph": result.selected_graph, "reasoning": result.reasoning}
     except Exception as e:
         # Fallback if LLM fails
         print(f"Graph selection LLM failed: {e}")
         return {
             "selected_graph": "deep_research",  # Safe default
-            "reasoning": "LLM selection failed, defaulting to deep_research"
+            "reasoning": "LLM selection failed, defaulting to deep_research",
         }
 
 
@@ -135,13 +132,13 @@ def explain_selection(query: str, selected_graph: str) -> str:
     Explain why a particular graph was selected.
     Now uses the LLM to generate the explanation if possible, re-running logic if needed,
     or just returns a generic explanation if we don't want to re-run.
-    
-    For efficiency, main.py should ideally pass the reasoning if it has it, 
+
+    For efficiency, main.py should ideally pass the reasoning if it has it,
     but since the signature is fixed for now, we'll do a quick re-eval or logic check.
-    
+
     Actually, to avoid double cost, we can just say "Selected by LLM based on intent analysis".
     But for better UX, let's call the LLM one more time or rely on a cache if we were caching.
-    
+
     Since we don't have caching implemented yet, we will re-run the selection to get the reasoning
     or just provide a static message.
     """
@@ -150,9 +147,9 @@ def explain_selection(query: str, selected_graph: str) -> str:
         selection = select_graph_with_llm(query)
         if selection["selected_graph"] == selected_graph:
             return f"Selected '{selected_graph}' because: {selection['reasoning']}"
-    except:
+    except Exception:
         pass
-        
+
     return f"Selected '{selected_graph}' based on intelligent intent analysis."
 
 

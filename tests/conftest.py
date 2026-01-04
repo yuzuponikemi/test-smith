@@ -11,7 +11,7 @@ This module provides:
 import os
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -28,7 +28,7 @@ sys.path.insert(0, str(project_root / "src"))
 class MockLLMResponse:
     """Mock response from LLM with structured output support."""
 
-    def __init__(self, content: str = "", structured_output: Optional[BaseModel] = None):
+    def __init__(self, content: str = "", structured_output: BaseModel | None = None):
         self.content = content
         self.structured_output = structured_output
 
@@ -43,7 +43,7 @@ class MockChatModel:
     def __init__(
         self,
         response: str = "Mock LLM response",
-        structured_response: Optional[BaseModel] = None,
+        structured_response: BaseModel | None = None,
         temperature: float = 0.7,
     ):
         self.response = response
@@ -82,8 +82,8 @@ class MockStructuredModel:
     def __init__(
         self,
         schema: type,
-        response: Optional[BaseModel] = None,
-        parent: Optional[MockChatModel] = None,
+        response: BaseModel | None = None,
+        parent: MockChatModel | None = None,
     ):
         self.schema = schema
         self.response = response
@@ -281,7 +281,7 @@ def sample_rag_results() -> list[str]:
 # ==================== Assertion Helpers ====================
 
 
-def assert_valid_state(state: dict[str, Any], required_keys: Optional[list[str]] = None):
+def assert_valid_state(state: dict[str, Any], required_keys: list[str] | None = None):
     """
     Assert that a state dictionary has valid structure.
 

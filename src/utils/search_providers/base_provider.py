@@ -5,13 +5,13 @@ Defines the abstract interface that all search providers must implement.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
 
 
 class SearchResult:
     """Standardized search result format"""
 
-    def __init__(self, title: str, url: str, content: str, score: Optional[float] = None):
+    def __init__(self, title: str, url: str, content: str, score: float | None = None):
         self.title = title
         self.url = url
         self.content = content
@@ -29,9 +29,9 @@ class SearchResult:
 class BaseSearchProvider(ABC):
     """Abstract base class for search providers"""
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         self.api_key = api_key
-        self._is_available: Optional[bool] = None  # Cache for availability status
+        self._is_available: bool | None = None  # Cache for availability status
 
     @property
     @abstractmethod

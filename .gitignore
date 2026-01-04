@@ -248,3 +248,5 @@ postgres_data/
 *.pid
 *.seed
 *.pid.lock
+
+research_data/

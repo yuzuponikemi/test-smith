@@ -33,7 +33,7 @@ import json
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # IMPORTANT: Load .env BEFORE any imports that read environment variables
 from dotenv import load_dotenv
@@ -72,9 +72,9 @@ def load_dataset(dataset_path: str = "evaluation/datasets/research_test_cases.js
 
 def filter_examples(
     dataset: dict,
-    category: Optional[str] = None,
-    complexity: Optional[str] = None,
-    limit: Optional[int] = None,
+    category: str | None = None,
+    complexity: str | None = None,
+    limit: int | None = None,
 ) -> list[dict]:
     """
     Filter test examples based on criteria.
@@ -103,7 +103,7 @@ def filter_examples(
 
 
 def upload_dataset_to_langsmith(
-    client: Client, dataset: dict, examples: list[dict], dataset_name: Optional[str] = None
+    client: Client, dataset: dict, examples: list[dict], dataset_name: str | None = None
 ) -> str:
     """
     Upload dataset to LangSmith.
@@ -237,7 +237,7 @@ def run_evaluation(
     dataset_name: str,
     examples: list[dict],
     evaluators: list,
-    experiment_name: Optional[str] = None,
+    experiment_name: str | None = None,
     dry_run: bool = False,
     max_concurrency: int = 1,
 ) -> Any:
