@@ -6,7 +6,7 @@ Handles provider selection, health checking, and error recovery.
 """
 
 import os
-from typing import Any, Optional
+from typing import Any
 
 from .base_provider import BaseSearchProvider
 from .duckduckgo_provider import DuckDuckGoProvider
@@ -26,7 +26,7 @@ class SearchProviderManager:
         BRAVE_API_KEY: API key for Brave Search (optional)
     """
 
-    def __init__(self, priority: Optional[list[str]] = None):
+    def __init__(self, priority: list[str] | None = None):
         """
         Initialize provider manager
 

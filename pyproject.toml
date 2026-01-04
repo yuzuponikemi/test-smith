@@ -262,6 +262,7 @@ module = [
     "_pytest.*",
     "pydantic.*",
     "structlog.*",
+    "mcp.*",
 ]
 ignore_missing_imports = true
 ignore_errors = true

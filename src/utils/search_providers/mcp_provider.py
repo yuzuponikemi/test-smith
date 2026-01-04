@@ -5,13 +5,13 @@ Uses a local MCP server (e.g., local-search-mcp) for search operations.
 No API key required - connects to local server via stdio.
 """
 
+import asyncio
 import json
 import os
 import re
-from typing import Optional
 
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
+from mcp import ClientSession, StdioServerParameters  # type: ignore[import-not-found]
+from mcp.client.stdio import stdio_client  # type: ignore[import-not-found]
 
 from .base_provider import BaseSearchProvider, SearchResult
 
@@ -21,9 +21,9 @@ class MCPSearchProvider(BaseSearchProvider):
 
     def __init__(
         self,
-        server_command: Optional[str] = None,
-        server_args: Optional[str] = None,
-        server_env: Optional[str] = None,
+        server_command: str | None = None,
+        server_args: str | None = None,
+        server_env: str | None = None,
     ):
         """
         Initialize MCP provider
@@ -36,9 +36,7 @@ class MCPSearchProvider(BaseSearchProvider):
         super().__init__(api_key=None)
 
         # Get configuration from environment or parameters
-        self.server_command = server_command or os.environ.get(
-            "MCP_SERVER_COMMAND", "uv"
-        )
+        self.server_command = server_command or os.environ.get("MCP_SERVER_COMMAND", "uv")
         self.server_args_str = server_args or os.environ.get(
             "MCP_SERVER_ARGS", "--directory /path/to/local-search-mcp run src/server.py"
         )
@@ -94,7 +92,7 @@ class MCPSearchProvider(BaseSearchProvider):
 
         for match in matches:
             title = match.group(1).strip()
-            source = match.group(2).strip()
+            _source = match.group(2).strip()  # Extracted but not used
             content = match.group(3).strip()
 
             # Create a local URL format for identification
@@ -120,13 +118,13 @@ class MCPSearchProvider(BaseSearchProvider):
 
         return results
 
-    async def _async_search(self, query: str, max_results: int = 5) -> list[SearchResult]:
+    async def _async_search(self, query: str, _max_results: int = 5) -> list[SearchResult]:
         """
         Internal async search implementation
 
         Args:
             query: Search query string
-            max_results: Maximum number of results (passed to MCP tool if supported)
+            _max_results: Maximum number of results (currently not passed to MCP tool)
 
         Returns:
             List of SearchResult objects
@@ -137,43 +135,45 @@ class MCPSearchProvider(BaseSearchProvider):
         """
         try:
             # Connect to MCP server via stdio
-            async with stdio_client(self.server_params) as (read, write):
-                async with ClientSession(read, write) as session:
-                    # Initialize the session
-                    await session.initialize()
+            async with (
+                stdio_client(self.server_params) as (read, write),
+                ClientSession(read, write) as session,
+            ):
+                # Initialize the session
+                await session.initialize()
 
-                    # List available tools (optional, for debugging)
-                    tools = await session.list_tools()
-                    tool_names = [tool.name for tool in tools.tools]
+                # List available tools (optional, for debugging)
+                tools = await session.list_tools()
+                tool_names = [tool.name for tool in tools.tools]
 
-                    if "search_wikipedia" not in tool_names:
-                        raise Exception(
-                            f"MCP server does not provide 'search_wikipedia' tool. "
-                            f"Available tools: {tool_names}"
-                        )
-
-                    # Call the search_wikipedia tool
-                    result = await session.call_tool(
-                        "search_wikipedia",
-                        arguments={"query": query},
+                if "search_wikipedia" not in tool_names:
+                    raise Exception(
+                        f"MCP server does not provide 'search_wikipedia' tool. "
+                        f"Available tools: {tool_names}"
                     )
 
-                    # Extract text content from result
-                    if hasattr(result, "content") and result.content:
-                        # MCP returns content as a list of content items
-                        raw_text = ""
-                        for item in result.content:
-                            if hasattr(item, "text"):
-                                raw_text += item.text
-                            elif isinstance(item, dict) and "text" in item:
-                                raw_text += item["text"]
-                            else:
-                                raw_text += str(item)
+                # Call the search_wikipedia tool
+                result = await session.call_tool(
+                    "search_wikipedia",
+                    arguments={"query": query},
+                )
 
-                        # Parse the response
-                        return self._parse_wikipedia_response(raw_text)
-                    else:
-                        raise Exception(f"MCP server returned unexpected result format: {result}")
+                # Extract text content from result
+                if hasattr(result, "content") and result.content:
+                    # MCP returns content as a list of content items
+                    raw_text = ""
+                    for item in result.content:
+                        if hasattr(item, "text"):
+                            raw_text += item.text
+                        elif isinstance(item, dict) and "text" in item:
+                            raw_text += item["text"]
+                        else:
+                            raw_text += str(item)
+
+                    # Parse the response
+                    return self._parse_wikipedia_response(raw_text)
+                else:
+                    raise Exception(f"MCP server returned unexpected result format: {result}")
 
         except ConnectionError as e:
             raise ConnectionError(
@@ -198,16 +198,16 @@ class MCPSearchProvider(BaseSearchProvider):
         Raises:
             Exception: If search fails
         """
-        import asyncio
-
         # Run async search in event loop
         try:
-            loop = asyncio.get_event_loop()
+            # Try to get the running event loop
+            loop = asyncio.get_running_loop()
         except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
-        return loop.run_until_complete(self._async_search(query, max_results))
+            # No running loop, use asyncio.run()
+            return asyncio.run(self._async_search(query, max_results))
+        else:
+            # Already in an event loop, create a task
+            return loop.run_until_complete(self._async_search(query, max_results))
 
     def is_configured(self) -> bool:
         """
@@ -217,7 +217,4 @@ class MCPSearchProvider(BaseSearchProvider):
             True if server command and args are set
         """
         # Check if the server command and args contain placeholder paths
-        if "/path/to/local-search-mcp" in self.server_args_str:
-            return False
-
-        return True
+        return "/path/to/local-search-mcp" not in self.server_args_str
