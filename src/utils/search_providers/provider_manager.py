@@ -6,10 +6,11 @@ Handles provider selection, health checking, and error recovery.
 """
 
 import os
-from typing import Any, Optional
+from typing import Any
 
 from .base_provider import BaseSearchProvider
 from .duckduckgo_provider import DuckDuckGoProvider
+from .mcp_provider import MCPSearchProvider
 from .tavily_provider import TavilyProvider
 
 
@@ -25,7 +26,7 @@ class SearchProviderManager:
         BRAVE_API_KEY: API key for Brave Search (optional)
     """
 
-    def __init__(self, priority: Optional[list[str]] = None):
+    def __init__(self, priority: list[str] | None = None):
         """
         Initialize provider manager
 
@@ -53,6 +54,16 @@ class SearchProviderManager:
 
         # DuckDuckGo (no API key needed)
         self.providers["duckduckgo"] = DuckDuckGoProvider()
+
+        # MCP (Model Context Protocol) - local server
+        mcp_command = os.environ.get("MCP_SERVER_COMMAND")
+        mcp_args = os.environ.get("MCP_SERVER_ARGS")
+        mcp_env = os.environ.get("MCP_SERVER_ENV")
+        self.providers["mcp"] = MCPSearchProvider(
+            server_command=mcp_command,
+            server_args=mcp_args,
+            server_env=mcp_env,
+        )
 
         # Note: Brave Search can be added here when implemented
         # brave_key = os.environ.get("BRAVE_API_KEY")

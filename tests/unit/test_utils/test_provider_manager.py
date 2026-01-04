@@ -265,7 +265,7 @@ class TestSearchProviderManager:
         status = manager.health_check_all()
 
         # Assert
-        assert status == {"tavily": True, "duckduckgo": False}
+        assert status == {"tavily": True, "duckduckgo": False, "mcp": False}
 
     @patch.dict("os.environ", {}, clear=True)
     @patch("src.utils.search_providers.provider_manager.TavilyProvider")
@@ -288,7 +288,7 @@ class TestSearchProviderManager:
         status = manager.health_check_all()
 
         # Assert
-        assert status == {"tavily": False, "duckduckgo": True}
+        assert status == {"tavily": False, "duckduckgo": True, "mcp": False}
         mock_tavily.health_check.assert_not_called()  # Should not check unconfigured provider
 
     @patch.dict("os.environ", {}, clear=True)

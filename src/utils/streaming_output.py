@@ -26,7 +26,7 @@ import re
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 
 # ANSI color codes for terminal output
@@ -72,7 +72,7 @@ class StreamingState:
 
     # Current phase tracking
     current_phase: str = "Initializing"
-    current_subtask: Optional[str] = None
+    current_subtask: str | None = None
     subtask_count: int = 0
     completed_subtasks: int = 0
 

@@ -10,7 +10,7 @@ Different document types benefit from different chunking approaches:
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from langchain_core.documents import Document
 from langchain_text_splitters import (
@@ -38,8 +38,8 @@ class ChunkingConfig:
     chunk_size: int
     chunk_overlap: int
     min_chunk_size: int = 100  # Minimum chunk size to keep
-    separators: Optional[list[str]] = None
-    headers_to_split_on: Optional[list[tuple]] = None
+    separators: list[str] | None = None
+    headers_to_split_on: list[tuple] | None = None
     metadata: dict[Any, Any] = field(default_factory=dict)
 
 
