@@ -12,7 +12,6 @@ import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -30,7 +29,7 @@ class DocumentAnalysis:
     issues: list[str]
     recommendations: list[str]
     metadata: dict
-    programming_language: Optional[str] = None  # For code files: 'python', 'javascript', etc.
+    programming_language: str | None = None  # For code files: 'python', 'javascript', etc.
 
 
 class DocumentAnalyzer:
@@ -336,7 +335,7 @@ class DocumentAnalyzer:
         else:
             return "unknown"
 
-    def _detect_programming_language(self, file_ext: str) -> Optional[str]:
+    def _detect_programming_language(self, file_ext: str) -> str | None:
         """Detect programming language from file extension"""
         return self.LANGUAGE_MAP.get(file_ext.lower())
 

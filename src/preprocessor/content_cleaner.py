@@ -12,7 +12,6 @@ import hashlib
 import re
 from collections import Counter
 from difflib import SequenceMatcher
-from typing import Union
 
 from langchain_core.documents import Document
 
@@ -221,9 +220,9 @@ class ContentCleaner:
 
         return pattern_counts
 
-    def get_stats(self) -> dict[str, Union[int, float]]:
+    def get_stats(self) -> dict[str, int | float]:
         """Get cleaning statistics"""
-        stats_copy: dict[str, Union[int, float]] = dict(self.stats)
+        stats_copy: dict[str, int | float] = dict(self.stats)
 
         if stats_copy["total_input_chunks"] > 0:
             stats_copy["removal_rate"] = (
