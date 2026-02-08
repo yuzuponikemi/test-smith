@@ -87,6 +87,13 @@ Examples:
     run_parser.add_argument(
         "--no-color", action="store_true", help="Disable colored output in streaming mode"
     )
+    run_parser.add_argument(
+        "--quality",
+        type=str,
+        choices=["draft", "standard", "production"],
+        default=None,
+        help="Quality profile: draft (fast testing), standard (balanced), production (best quality)",
+    )
 
     # List command
     list_parser = subparsers.add_parser("list", help="List recent reports or logs")
@@ -135,6 +142,14 @@ Examples:
         print("=" * 80 + "\n")
 
     elif args.command == "run":
+        # Set quality profile if specified
+        if args.quality:
+            from src.models import get_profile_info, set_quality_profile
+
+            set_quality_profile(args.quality)
+            info = get_profile_info()
+            print(f"[System] Quality profile: {args.quality} ({info[args.quality]})")
+
         # Select graph workflow (auto-select if not specified)
         if args.graph:
             # User explicitly specified graph
