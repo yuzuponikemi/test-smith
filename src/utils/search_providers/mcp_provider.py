@@ -72,9 +72,12 @@ class MCPSearchProvider(BaseSearchProvider):
         Parse MCP server response into SearchResult objects
 
         The local-search-mcp server returns text in format:
+        [Result N] (source / method)
         Title: <title>
-        Source: <url>
+        URL: <url>
         Content: <content>
+
+        Multiple results are separated by '---'.
 
         Args:
             raw_text: Raw text response from MCP server
@@ -84,19 +87,23 @@ class MCPSearchProvider(BaseSearchProvider):
         """
         results = []
 
-        # Pattern to match Wikipedia article format
-        # Matches: Title: ... \n Source: ... \n Content: ...
-        pattern = r"Title:\s*(.+?)\s*\nSource:\s*(.+?)\s*\nContent:\s*(.+?)(?=\n\nTitle:|$)"
+        # Pattern to match result blocks from localsearch-mcp
+        # Each block starts with optional [Result N] header, then Title/URL/Content fields
+        # Results are separated by \n---\n
+        pattern = (
+            r"(?:\[Result\s+\d+\][^\n]*\n)?"
+            r"Title:\s*(.+?)\s*\n"
+            r"(?:URL|Source):\s*(.+?)\s*\n"
+            r"Content:\s*(.+?)"
+            r"(?=\n---\n|\n\[Result\s+\d+\]|\Z)"
+        )
 
         matches = re.finditer(pattern, raw_text, re.DOTALL)
 
         for match in matches:
             title = match.group(1).strip()
-            _source = match.group(2).strip()  # Extracted but not used
+            url = match.group(2).strip()
             content = match.group(3).strip()
-
-            # Create a local URL format for identification
-            url = f"local://Wikipedia/{title.replace(' ', '_')}"
 
             results.append(
                 SearchResult(
