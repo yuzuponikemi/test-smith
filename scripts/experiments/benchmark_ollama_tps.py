@@ -24,9 +24,7 @@ OLLAMA_API = "http://localhost:11434"
 
 # Prompt sizes to test different input lengths
 PROMPTS = {
-    "short": (
-        "Explain quantum computing in one paragraph."
-    ),
+    "short": ("Explain quantum computing in one paragraph."),
     "medium": (
         "You are a research analyst. Analyze the following information and provide "
         "a comprehensive summary with key findings, gaps, and contradictions.\n\n"
@@ -163,9 +161,7 @@ def benchmark_single(
     if cold_start:
         # Measure cold start: unload → load + generate
         unload_all_models()
-        wall_start = time.time()
         result = run_inference(model, prompt_text, num_ctx)
-        wall_elapsed = (time.time() - wall_start) * 1000
         if result is None:
             return None
         cold_load_ms = ns_to_ms(result.get("load_duration", 0))
@@ -210,9 +206,7 @@ def benchmark_single(
 def check_model_available(model: str) -> bool:
     """Check if model is available in Ollama."""
     try:
-        result = subprocess.run(
-            ["ollama", "list"], capture_output=True, text=True, timeout=10
-        )
+        result = subprocess.run(["ollama", "list"], capture_output=True, text=True, timeout=10)
         return model in result.stdout
     except Exception:
         return False
@@ -322,9 +316,9 @@ def main() -> None:
     all_results: list[BenchmarkResult] = []
 
     for model in available:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Model: {model}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         # First: warm up the model with smallest context
         print(f"  Warming up {model}...")
@@ -361,12 +355,10 @@ def main() -> None:
                     # Use last result (or average if multiple runs)
                     best = run_results[-1]
                     if len(run_results) > 1:
-                        avg_gen_tps = sum(r.generation_tps for r in run_results) / len(
+                        avg_gen_tps = sum(r.generation_tps for r in run_results) / len(run_results)
+                        avg_prompt_tps = sum(r.prompt_eval_tps for r in run_results) / len(
                             run_results
                         )
-                        avg_prompt_tps = sum(
-                            r.prompt_eval_tps for r in run_results
-                        ) / len(run_results)
                         best = BenchmarkResult(
                             model=best.model,
                             num_ctx=best.num_ctx,
@@ -426,7 +418,9 @@ def main() -> None:
         "synthesizer": {"input": "long", "output": "long", "needs_quality": "high"},
     }
     for node, profile in node_profiles.items():
-        print(f"\n  {node}: input={profile['input']}, output={profile['output']}, quality={profile['needs_quality']}")
+        print(
+            f"\n  {node}: input={profile['input']}, output={profile['output']}, quality={profile['needs_quality']}"
+        )
 
     if args.json:
         json_data = [
