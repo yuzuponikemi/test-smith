@@ -10,17 +10,30 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"  # Stable and widely supported
 ADVANCED_GEMINI_MODEL = "gemini-1.5-pro"  # For complex tasks (optional)
 
+# Ollama context window sizes (model max)
+OLLAMA_CONTEXT_LENGTHS: dict[str, int] = {
+    "command-r": 131072,
+    "llama3": 8192,
+}
+
+# Default Ollama model
+DEFAULT_OLLAMA_MODEL = "command-r"
+
 
 def _get_model(
-    gemini_model: str = DEFAULT_GEMINI_MODEL, ollama_model: str = "llama3", temperature: float = 0.7
+    gemini_model: str = DEFAULT_GEMINI_MODEL,
+    ollama_model: str = DEFAULT_OLLAMA_MODEL,
+    temperature: float = 0.7,
+    num_ctx: int | None = None,
 ):
     """
     Factory function to get the appropriate model based on MODEL_PROVIDER.
 
     Args:
-        gemini_model: Gemini model to use (default: gemini-1.5-flash)
-        ollama_model: Ollama model to use as fallback
+        gemini_model: Gemini model to use (default: gemini-2.5-flash)
+        ollama_model: Ollama model to use (default: command-r)
         temperature: Model temperature (0.0-1.0)
+        num_ctx: Context window size for Ollama. If None, uses model's max.
 
     Returns:
         Configured chat model
@@ -47,14 +60,17 @@ def _get_model(
             convert_system_message_to_human=True,  # Gemini compatibility
         )
     elif MODEL_PROVIDER == "ollama":
-        return ChatOllama(model=ollama_model, temperature=temperature)
+        # Use model's max context length if not explicitly specified
+        if num_ctx is None:
+            num_ctx = OLLAMA_CONTEXT_LENGTHS.get(ollama_model, 8192)
+        return ChatOllama(model=ollama_model, temperature=temperature, num_ctx=num_ctx)
     else:
         raise ValueError(f"Unknown MODEL_PROVIDER: {MODEL_PROVIDER}. Use 'gemini' or 'ollama'")
 
 
 def get_planner_model():
     """Strategic planner for query allocation (RAG vs Web)"""
-    return _get_model(gemini_model=DEFAULT_GEMINI_MODEL, ollama_model="llama3", temperature=0.7)
+    return _get_model(gemini_model=DEFAULT_GEMINI_MODEL, temperature=0.7)
 
 
 def get_master_planner_model():
@@ -64,35 +80,32 @@ def get_master_planner_model():
     """
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,  # Flash is fast enough for planning
-        ollama_model="command-r",
         temperature=0.7,
     )
 
 
 def get_reflection_model():
     """Reflection and self-evaluation"""
-    return _get_model(gemini_model=DEFAULT_GEMINI_MODEL, ollama_model="llama3", temperature=0.7)
+    return _get_model(gemini_model=DEFAULT_GEMINI_MODEL, temperature=0.7)
 
 
 def get_evaluation_model():
     """Quality and sufficiency evaluation"""
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
-        ollama_model="command-r",
         temperature=0.5,  # Lower temperature for more consistent evaluation
     )
 
 
 def get_analyzer_model():
     """Data analysis and summarization"""
-    return _get_model(gemini_model=DEFAULT_GEMINI_MODEL, ollama_model="llama3", temperature=0.7)
+    return _get_model(gemini_model=DEFAULT_GEMINI_MODEL, temperature=0.7)
 
 
 def get_synthesizer_model():
     """Final report synthesis"""
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
-        ollama_model="llama3",
         temperature=0.8,  # Slightly higher for more creative synthesis
     )
 
@@ -104,7 +117,6 @@ def get_issue_analyzer_model():
     """Issue analysis and symptom extraction for causal inference"""
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
-        ollama_model="llama3",
         temperature=0.5,  # Lower temperature for systematic analysis
     )
 
@@ -113,21 +125,19 @@ def get_brainstormer_model():
     """Root cause hypothesis generation (brainstorming)"""
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
-        ollama_model="llama3",
         temperature=0.9,  # Higher temperature for creative divergent thinking
     )
 
 
 def get_evidence_planner_model():
     """Strategic evidence gathering planning for causal validation"""
-    return _get_model(gemini_model=DEFAULT_GEMINI_MODEL, ollama_model="llama3", temperature=0.7)
+    return _get_model(gemini_model=DEFAULT_GEMINI_MODEL, temperature=0.7)
 
 
 def get_causal_checker_model():
     """Causal relationship validation and evidence assessment"""
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
-        ollama_model="command-r",
         temperature=0.5,  # Lower temperature for rigorous causal reasoning
     )
 
@@ -136,7 +146,6 @@ def get_hypothesis_validator_model():
     """Hypothesis ranking and probability assessment"""
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
-        ollama_model="command-r",
         temperature=0.5,  # Lower temperature for consistent ranking
     )
 
@@ -145,7 +154,6 @@ def get_root_cause_synthesizer_model():
     """Root cause analysis report synthesis"""
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
-        ollama_model="llama3",
         temperature=0.8,  # Slightly higher for comprehensive reporting
     )
 
@@ -157,7 +165,6 @@ def get_code_executor_model():
     """Code generation and execution planning"""
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
-        ollama_model="llama3",
         temperature=0.3,  # Lower temperature for precise code generation
     )
 
@@ -169,7 +176,6 @@ def get_code_assistant_model():
     """Code analysis and explanation for codebase queries"""
     return _get_model(
         gemini_model=DEFAULT_GEMINI_MODEL,
-        ollama_model="llama3",
         temperature=0.5,  # Lower temperature for accurate code analysis
     )
 
@@ -184,6 +190,5 @@ def get_graph_selector_model():
     """
     return _get_model(
         gemini_model="gemini-1.5-flash",  # Fast model is sufficient for classification
-        ollama_model="llama3",
         temperature=0.1,  # Very low temperature for deterministic classification
     )
