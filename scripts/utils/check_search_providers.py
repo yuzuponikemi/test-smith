@@ -6,6 +6,7 @@ Checks the health and configuration of all search providers.
 Useful for diagnosing search issues and verifying API keys.
 """
 
+import argparse
 import os
 import sys
 
@@ -19,6 +20,19 @@ from src.utils.search_providers import SearchProviderManager
 
 def main():
     """Run health check on all search providers"""
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(
+        description="Test search providers",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--provider",
+        type=str,
+        help="Specific provider to test (e.g., mcp, tavily, duckduckgo). "
+        "If not specified, tests all configured providers.",
+    )
+    args = parser.parse_args()
+
     # Load environment variables
     load_dotenv()
 
@@ -27,9 +41,16 @@ def main():
     print("=" * 80)
     print()
 
+    # Override priority if specific provider requested
+    priority = None
+    if args.provider:
+        priority = [args.provider]
+        print(f"Testing specific provider: {args.provider}")
+        print()
+
     # Initialize provider manager
     try:
-        manager = SearchProviderManager()
+        manager = SearchProviderManager(priority=priority)
     except Exception as e:
         print(f"❌ Failed to initialize provider manager: {e}")
         return 1

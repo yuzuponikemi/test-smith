@@ -33,7 +33,6 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from langchain.schema import Document
 from langchain_chroma import Chroma
@@ -162,7 +161,7 @@ class CodebaseIngestion:
         repo_path: str,
         chroma_db_dir: str = CHROMA_DB_DIR,
         collection_name: str = DEFAULT_COLLECTION_NAME,
-        skip_dirs: Optional[set[str]] = None,
+        skip_dirs: set[str] | None = None,
         min_quality_score: float = 0.0,
         embedding_model: str = DEFAULT_EMBEDDING_MODEL,
     ):

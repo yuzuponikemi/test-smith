@@ -35,7 +35,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import structlog
 
@@ -465,7 +465,7 @@ def setup_file_logging(log_dir: str = "logs/structured", _json_format: bool = Tr
 # ==============================================
 
 
-def print_node_header_structured(node_name: str, state: Optional[dict[str, Any]] = None):
+def print_node_header_structured(node_name: str, state: dict[str, Any] | None = None):
     """
     Structured logging version of print_node_header.
 
