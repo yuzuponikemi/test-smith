@@ -316,6 +316,7 @@ dev-dependencies = [
     "pytest>=8.4.2",
     "pytest-cov",
     "pytest-mock",
+    "deepeval>=3.8.4",
 ]
 
 [tool.uv.sources]
