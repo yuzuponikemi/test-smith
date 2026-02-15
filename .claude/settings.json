@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./*.log)",
+      "Read(./logs/**)",
+      "Read(./reports/**)",
+      "Read(./evaluation/results/**)",
+      "Read(./chroma_db/**)",
+      "Read(./**/*.sqlite)",
+      "Read(./**/*.db)"
+    ]
+  }
+}
