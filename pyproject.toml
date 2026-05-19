@@ -304,7 +304,9 @@ skips = ["B101"]  # assert_used - expected in tests
 # Hatchling Build Configuration
 # ============================================================================
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+# `src` is the internal layout; `test_smith` is the public façade re-exporting
+# selected symbols for external consumers (factfull, etc.).
+packages = ["src", "test_smith"]
 
 # ============================================================================
 # UV Configuration

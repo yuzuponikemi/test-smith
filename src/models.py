@@ -18,6 +18,7 @@ OLLAMA_CONTEXT_LENGTHS: dict[str, int] = {
     "qwen3-next": 262144,
     "command-r": 131072,
     "llama3": 8192,
+    "gemma4:e4b": 131072,
 }
 
 # Default Ollama model (used by _get_model() fallback)
@@ -33,11 +34,13 @@ class QualityProfile(str, Enum):
     DRAFT:      Pipeline connectivity testing. All llama3, minimal context.
     STANDARD:   Logic verification. All command-r, moderate context.
     PRODUCTION: Best quality. Hybrid qwen3-next (quality) + command-r (speed).
+    GEMMA4:     gemma4:e4b across all roles. Fast and multilingual.
     """
 
     DRAFT = "draft"
     STANDARD = "standard"
     PRODUCTION = "production"
+    GEMMA4 = "gemma4"
 
 
 # Node roles: determines which model tier is used per quality profile
@@ -70,12 +73,19 @@ QUALITY_PROFILES: dict[QualityProfile, dict[str, dict[str, str | int]]] = {
         ROLE_BALANCED: {"model": "command-r", "num_ctx": 32768},
         ROLE_QUALITY: {"model": "qwen3-next", "num_ctx": 65536},
     },
+    QualityProfile.GEMMA4: {
+        #   gemma4:26b: multilingual, 128K ctx, good for Japanese/French research.
+        ROLE_FAST: {"model": "gemma4:26b", "num_ctx": 16384},
+        ROLE_BALANCED: {"model": "gemma4:26b", "num_ctx": 32768},
+        ROLE_QUALITY: {"model": "gemma4:26b", "num_ctx": 16384},
+    },
 }
 
 # Expected performance characteristics per profile:
 #   DRAFT:      ~2-5 min (quick_research), low quality, minimal VRAM (~5GB)
 #   STANDARD:   ~5-8 min (quick_research), moderate quality, ~27GB VRAM
 #   PRODUCTION: ~15-25 min (quick_research), high quality, ~75GB VRAM
+#   GEMMA4:     ~5-10 min (quick_research), good multilingual quality, ~25GB VRAM
 #               (command-r 20GB + qwen3-next 55GB coexist in 96GB)
 
 
@@ -102,6 +112,7 @@ def get_profile_info() -> dict[str, str]:
         "draft": "動作確認用: llama3 (8B), ~56 tps, ~5GB VRAM",
         "standard": "ロジック確認用: command-r (32B), ~15 tps, ~27GB VRAM",
         "production": "本番用: qwen3-next + command-r, best quality, ~75GB VRAM",
+        "gemma4": "多言語用: gemma4:e4b, 日本語・フランス語対応, ~25GB VRAM",
     }
 
 
