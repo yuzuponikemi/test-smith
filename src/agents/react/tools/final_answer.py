@@ -13,6 +13,10 @@ class FinalAnswerTool(Tool):
         return "final_answer"
 
     @property
+    def is_terminal_intent(self) -> bool:
+        return True
+
+    @property
     def description(self) -> str:
         return (
             "Provide the final answer to the user and stop the loop. "

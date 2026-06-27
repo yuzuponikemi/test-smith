@@ -41,6 +41,19 @@ class Tool(ABC):
     def input_schema(self) -> str:
         """Human-readable JSON schema example shown in the system prompt."""
 
+    @property
+    def is_terminal_intent(self) -> bool:
+        """True if calling this tool is the agent's signal to stop.
+
+        Used by the parser to disambiguate multi-action LLM responses:
+        when an LLM produces several Action / Action Input pairs in a
+        single turn, a terminal-intent tool wins over scratch tools
+        (web_search, web_fetch) regardless of position. Override to
+        ``True`` in :class:`FinalAnswerTool`-style and "submit"-style
+        terminals.
+        """
+        return False
+
     @abstractmethod
     def run(self, args: dict[str, Any]) -> ToolResult: ...
 

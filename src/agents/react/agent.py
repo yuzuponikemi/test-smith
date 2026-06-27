@@ -117,6 +117,20 @@ def _strip_code_fences(s: str) -> str:
     return s.strip()
 
 
+def _count_trailing_repeats(history: list[tuple[str, str]]) -> int:
+    """Return how many of the tail entries are equal to the last entry."""
+    if not history:
+        return 0
+    last = history[-1]
+    count = 0
+    for entry in reversed(history):
+        if entry == last:
+            count += 1
+        else:
+            break
+    return count
+
+
 def _parse_action_input(raw: str) -> dict[str, Any]:
     """Tolerant JSON parser for Action Input."""
     raw = _strip_code_fences(raw)
@@ -143,27 +157,59 @@ class ReActAgent:
         max_iterations: int = 10,
         verbose: bool = True,
         stream: Any = sys.stdout,
+        extra_system_context: str | None = None,
     ):
+        """
+        Args:
+            llm: LangChain chat model.
+            tools: Tool list; must include at least one terminal tool.
+            max_iterations: Hard cap on ReAct loop length.
+            verbose: Stream Thought/Action/Observation log to ``stream``.
+            stream: File-like for verbose output.
+            extra_system_context: Optional text prepended to the agent's
+                system prompt. Used by domain wrappers (e.g. Multiagents'
+                ReActPersonaAgent) to inject a persona / role / arc42
+                context that the agent should embody while solving the
+                task. The trailing ReAct protocol instructions are
+                preserved; this only adds context before them.
+        """
         self._llm = llm
         self._tools = {t.name: t for t in tools}
-        if "final_answer" not in self._tools:
-            raise ValueError("Tool list must include a `final_answer` tool.")
+        # The agent must have at least one tool capable of terminating the
+        # loop. `final_answer` is the canonical one, but domain-specific
+        # terminal tools (e.g. SubmitChaptersTool that returns a structured
+        # ChapterStructure) are also accepted.
+        if not tools:
+            raise ValueError("ReActAgent requires at least one tool.")
+        # Names of tools whose call should be treated as the agent's
+        # terminal intent — used by the parser to disambiguate
+        # multi-action LLM responses. Always includes "final_answer" as
+        # a safety net so the bare-text recovery path keeps working.
+        self._terminal_intent_names: set[str] = {
+            t.name for t in tools if t.is_terminal_intent
+        } | {"final_answer"}
         self._max_iterations = max_iterations
         self._verbose = verbose
         self._stream = stream
+        self._extra_system_context = extra_system_context
 
     def run(self, question: str) -> ReActResult:
         started = time.time()
         scratchpad = ""
         system_prompt = self._build_system_prompt(question)
         result = ReActResult(answer=None)
+        # (action_name, json.dumps(action_input, sort_keys=True)) per step.
+        # Used to detect when the model is spinning on the same action
+        # with identical arguments — a common failure on weaker local
+        # LLMs that lack the discipline to commit via final_answer.
+        action_history: list[tuple[str, str]] = []
 
         for iteration in range(1, self._max_iterations + 1):
             self._log(f"\n══ Iteration {iteration} ══")
             response = self._call_llm(system_prompt, scratchpad)
             self._log(f"\n[LLM raw output]\n{response}\n")
 
-            parsed = self._parse_step(response)
+            parsed = self._parse_step(response, self._terminal_intent_names)
             if parsed is None:
                 observation = (
                     "Your previous message did not follow the required format. "
@@ -237,6 +283,30 @@ class ReActAgent:
                 result.total_seconds = time.time() - started
                 return result
 
+            # Stuck-loop detection: if the last N actions are byte-for-byte
+            # identical, the agent is spinning. Inject a hard nudge once;
+            # if it spins again, terminate so the caller can fall back.
+            action_key = (action, json.dumps(action_input, sort_keys=True, ensure_ascii=False))
+            action_history.append(action_key)
+            stuck_streak = _count_trailing_repeats(action_history)
+            stuck_hint = ""
+            if stuck_streak >= 4:
+                self._log(
+                    f"  [stuck-loop] {stuck_streak} identical `{action}` calls in a row. "
+                    "Aborting agent loop."
+                )
+                result.stopped_reason = "stuck_loop"
+                result.total_seconds = time.time() - started
+                return result
+            if stuck_streak == 3:
+                stuck_hint = (
+                    "\n\n[SYSTEM HINT] You have now called this exact action "
+                    f"three times in a row with the same arguments. Either try "
+                    f"a substantively different action (different URL, different "
+                    f"keywords, a different tool entirely) or commit your current "
+                    f"best answer via the terminal tool. Do NOT repeat this call."
+                )
+
             scratchpad_obs = observation
             if len(scratchpad_obs) > _MAX_OBSERVATION_IN_SCRATCHPAD:
                 kept = _MAX_OBSERVATION_IN_SCRATCHPAD
@@ -249,7 +319,7 @@ class ReActAgent:
                 f"\nThought: {thought.strip()}\n"
                 f"Action: {action}\n"
                 f"Action Input: {json.dumps(action_input, ensure_ascii=False)}\n"
-                f"Observation: {scratchpad_obs}\n"
+                f"Observation: {scratchpad_obs}{stuck_hint}\n"
             )
 
         result.stopped_reason = "max_iterations"
@@ -258,7 +328,10 @@ class ReActAgent:
 
     def _build_system_prompt(self, question: str) -> str:
         tools_block = "\n".join(t.render_for_prompt() for t in self._tools.values())
-        return _SYSTEM_PROMPT_TEMPLATE.format(tools_block=tools_block, question=question)
+        body = _SYSTEM_PROMPT_TEMPLATE.format(tools_block=tools_block, question=question)
+        if self._extra_system_context:
+            return f"{self._extra_system_context.rstrip()}\n\n---\n\n{body}"
+        return body
 
     def _call_llm(self, system_prompt: str, scratchpad: str) -> str:
         messages = [
@@ -288,7 +361,12 @@ class ReActAgent:
         raise RuntimeError(f"LLM call failed after {_LLM_RETRY_COUNT} attempts: {last_err}")
 
     @staticmethod
-    def _parse_step(text: str) -> tuple[str, str, str] | None:
+    def _parse_step(
+        text: str,
+        terminal_intent_names: set[str] | None = None,
+    ) -> tuple[str, str, str] | None:
+        terminal_intent_names = terminal_intent_names or {"final_answer"}
+
         # Strip leaked chat-template markers like `<channel|>` so the
         # downstream regexes see clean newlines.
         text = _CHANNEL_MARKER.sub("\n", text)
@@ -298,20 +376,22 @@ class ReActAgent:
         if obs_split:
             text = text[: obs_split.start()]
 
-        # Priority 1: detect any `final_answer` in the output and prefer it.
-        # When the model produces multiple Action steps in one response (a
-        # common gemma4 quirk), the trailing `final_answer` is the model's
-        # actual decision; the leading web_searches are noise.
-        proper_final = re.search(
-            r"(?im)^\s*Action\s*:\s*final_answer\s*$", text
-        )
-        if proper_final:
-            after = text[proper_final.end():]
-            input_match = _ACTION_INPUT_PATTERN.search(after)
-            if input_match:
-                thought_match = _THOUGHT_PATTERN.search(text[: proper_final.start()])
-                thought = thought_match.group(1) if thought_match else ""
-                return thought, "final_answer", input_match.group(1)
+        # Priority 1: a terminal-intent tool call wins over any other
+        # action in the same response. Models routinely produce multiple
+        # Action / Action Input pairs in one turn; if any of them is a
+        # terminal tool (final_answer / submit_chapters / etc.), that's
+        # the agent's real decision — the surrounding scratch actions
+        # are noise the model wrote while "thinking out loud".
+        action_matches = list(_ACTION_PATTERN.finditer(text))
+        for am in action_matches:
+            action_name = am.group(1).strip().strip("`'\" ")
+            if action_name in terminal_intent_names:
+                after = text[am.end():]
+                input_match = _ACTION_INPUT_PATTERN.search(after)
+                if input_match:
+                    thought_match = _THOUGHT_PATTERN.search(text[: am.start()])
+                    thought = thought_match.group(1) if thought_match else ""
+                    return thought, action_name, input_match.group(1)
 
         bare = _BARE_FINAL_ANSWER.search(text)
         if bare:
@@ -321,9 +401,8 @@ class ReActAgent:
                 return ("(recovered from bare final_answer)", "final_answer", payload)
 
         # Priority 2: take the LAST proper Action + Action Input pair.
-        # gemma4 sometimes lists several candidate actions; the last one
-        # is the model's latest decision.
-        action_matches = list(_ACTION_PATTERN.finditer(text))
+        # gemma4 / qwen sometimes list several candidate actions; the
+        # last one is the model's latest decision.
         if action_matches:
             last_action = action_matches[-1]
             after = text[last_action.end():]
