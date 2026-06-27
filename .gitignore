@@ -250,3 +250,4 @@ postgres_data/
 *.pid.lock
 
 research_data/
+.claude/
