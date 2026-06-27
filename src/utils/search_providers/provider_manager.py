@@ -11,6 +11,8 @@ from typing import Any
 from .base_provider import BaseSearchProvider
 from .duckduckgo_provider import DuckDuckGoProvider
 from .mcp_provider import MCPSearchProvider
+from .perplexity_provider import PerplexityProvider
+from .searxng_provider import SearxngProvider
 from .tavily_provider import TavilyProvider
 
 
@@ -54,6 +56,13 @@ class SearchProviderManager:
 
         # DuckDuckGo (no API key needed)
         self.providers["duckduckgo"] = DuckDuckGoProvider()
+
+        # Perplexity (LLM-synthesised answers with citations)
+        perplexity_key = os.environ.get("PERPLEXITY_API_KEY")
+        self.providers["perplexity"] = PerplexityProvider(api_key=perplexity_key)
+
+        # SearXNG (self-hosted meta-search; no API key, just a host URL)
+        self.providers["searxng"] = SearxngProvider()
 
         # MCP (Model Context Protocol) - local server
         mcp_command = os.environ.get("MCP_SERVER_COMMAND")
